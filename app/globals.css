@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Lato", "Helvetica Neue", sans-serif;
+  --font-sans: "Lato", "Helvetica Neue", sans-serif;
+  --color-cream: #f7f5f0;
+  --color-charcoal: #1a1a1a;
+  --color-ink: #2d2d2d;
+  --color-stone: #8c8c8c;
+  --color-accent: #5c4d3d;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream text-charcoal antialiased;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
