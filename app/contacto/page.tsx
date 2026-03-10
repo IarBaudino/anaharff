@@ -24,7 +24,7 @@ export default function ContactoPage() {
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async () => {
     // TODO: integrar con Resend o API route
     await new Promise((r) => setTimeout(r, 1000));
     setSent(true);

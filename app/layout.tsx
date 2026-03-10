@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Cormorant_Garamond, Lato } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="es" className={`${cormorant.variable} ${lato.variable}`}>

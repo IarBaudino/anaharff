@@ -25,16 +25,20 @@ export function SeriesContent({ label }: SeriesContentProps) {
           {label}
         </motion.h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {Array.from({ length: 6 }).map((_, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: i * 0.05 }}
-              className="aspect-[3/4] bg-charcoal/10"
+              className="max-w-sm overflow-hidden rounded-lg border border-charcoal/10 bg-cream p-0 shadow-sm transition-all duration-300 hover:border-charcoal/20 hover:shadow-md"
             >
-              <div className="w-full h-full bg-charcoal/5" />
+              <div className="overflow-hidden rounded-t-lg">
+                <div className="relative aspect-[3/4] bg-charcoal/[0.04]">
+                  <div className="absolute inset-0 bg-charcoal/5" />
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>

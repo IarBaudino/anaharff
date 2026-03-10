@@ -47,9 +47,9 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* Featured images grid - placeholder until Cloudinary configured */}
+      {/* Featured images grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-charcoal/10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {[1, 2, 3].map((i) => (
             <motion.div
               key={i}
@@ -57,11 +57,17 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="relative aspect-[3/4] bg-charcoal/10 overflow-hidden group"
+              className="max-w-sm"
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-charcoal/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
-              <Link href="/portfolio" className="block w-full h-full">
-                <div className="w-full h-full bg-charcoal/5" />
+              <Link
+                href="/portfolio"
+                className="group block overflow-hidden rounded-lg border border-charcoal/10 bg-cream p-0 shadow-sm transition-all duration-300 hover:border-charcoal/20 hover:shadow-md"
+              >
+                <div className="overflow-hidden rounded-t-lg">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-charcoal/[0.04]">
+                    <div className="absolute inset-0 bg-charcoal/5" />
+                  </div>
+                </div>
               </Link>
             </motion.div>
           ))}
