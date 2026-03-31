@@ -1,8 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { defaultSiteContent } from "@/lib/site-content";
 
 export default function SobreMiPage() {
+  const { content } = useSiteContent();
+  const sobreMi = content?.sobreMi ?? defaultSiteContent.sobreMi;
+
   return (
     <div className="pt-24 pb-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
@@ -17,16 +22,10 @@ export default function SobreMiPage() {
           </h1>
           <div className="prose prose-lg max-w-none text-charcoal/90 leading-relaxed space-y-6">
             <p>
-              Fotógrafa analógica radicada en Buenos Aires. Mi trabajo explora la
-              representación del cuerpo, la diversidad y la autenticidad. A
-              través de la fotografía analógica busco capturar momentos de
-              vulnerabilidad y verdad.
+              {sobreMi.bio1}
             </p>
             <p>
-              Mi práctica fotográfica se centra en desnudos artísticos, retratos
-              íntimos y series que cuestionan los estereotipos corporales. Creo
-              en la importancia de la representación diversa y en la lucha por la
-              emancipación del cuerpo.
+              {sobreMi.bio2}
             </p>
           </div>
         </motion.section>
@@ -41,12 +40,7 @@ export default function SobreMiPage() {
             Sesión de fotos
           </h2>
           <p className="text-charcoal/90 leading-relaxed mb-6">
-            Ofrezco sesiones de fotografía analógica personalizadas. Si te
-            interesa reservar una sesión, no dudes en{" "}
-            <a href="/contacto" className="text-accent underline hover:no-underline">
-              contactarme
-            </a>
-            .
+            {sobreMi.sesionTexto}
           </p>
         </motion.section>
       </div>

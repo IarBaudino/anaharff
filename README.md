@@ -1,40 +1,58 @@
 # Ana Harff | Fotografía Analógica
 
-Sitio web de portfolio y tienda para Ana Harff, fotógrafa analógica de Buenos Aires. Construido con Next.js 15, Tailwind CSS y MercadoPago para la venta de imágenes.
+Sitio web de portfolio y tienda para Ana Harff, fotógrafa analógica de Buenos Aires. Next.js 15, Tailwind CSS, Firebase (contenido, clientes, pedidos) y MercadoPago.
 
 ## Estructura
 
-- **Home** – Hero con mensaje de la artista
-- **Sobre mí** – Biografía y sesiones
-- **Portfolio** – Categorías: Desnudos, Retratos, Artístico, Experimental
-- **Series** – Unica, Ser Gorda, Venus as a Boy, Desde la Distancia
-- **Blog** – Sección en desarrollo
-- **Tienda** – Venta de imágenes con MercadoPago
+- **Home** – Hero editable desde el panel
+- **Sobre mí** – Textos editables
+- **Portfolio** / **Series** / **Blog**
+- **Tienda** – MercadoPago + registro de pedidos en Firestore
+- **Cuenta** – Registro e ingreso de clientes (Firebase Auth)
+- **Admin** (`/admin`) – Contenido, pedidos y clientes
 
-## Tecnologías
-
-- Next.js 15 (App Router)
-- React 19
-- Tailwind CSS 4
-- Framer Motion
-- Cloudinary (imágenes)
-- MercadoPago (pagos)
-- Resend (emails)
-- Firebase (opcional)
-
-## Configuración
+## Configuración rápida
 
 1. Copiar `.env.example` a `.env.local`
-2. Configurar credenciales de MercadoPago (para la tienda)
-3. Configurar Cloudinary (para imágenes)
-4. Ejecutar `npm install` y `npm run dev`
+2. `npm install` y `npm run dev`
+3. En Vercel: mismas variables de entorno que en local
+
+## Firebase
+
+Variables `NEXT_PUBLIC_FIREBASE_*` según tu proyecto en la consola de Firebase.
+
+**Firestore:** desplegar reglas desde `firestore.rules` (Firebase Console → Firestore → Reglas).
+
+**Admin del panel:** creá un usuario en Authentication (email/contraseña). Copiá su **UID** y en Firestore creá el documento `admins/{UID}` con por ejemplo:
+
+```json
+{ "role": "admin", "email": "tu@email.com" }
+```
+
+Solo esos usuarios pueden entrar a `/admin` (después de iniciar sesión en `/admin/login`).
+
+**Firebase Admin (servidor):** en Project settings → Service accounts → *Generate new private key*. Pegá el JSON completo en **una sola línea** en `FIREBASE_SERVICE_ACCOUNT_KEY` (Vercel: Environment Variables). Sirve para:
+
+- Guardar sesiones de checkout al crear preferencias de MercadoPago
+- Registrar pedidos desde el webhook y desde la página de éxito
 
 ## MercadoPago
 
-- Crear una aplicación en [MercadoPago Developers](https://www.mercadopago.com.ar/developers)
-- Obtener el Access Token (producción o prueba)
-- Agregar `MERCADOPAGO_ACCESS_TOKEN` en `.env.local`
+- Access token en `MERCADOPAGO_ACCESS_TOKEN`
+- URL pública en `NEXT_PUBLIC_APP_URL` (ej. tu dominio de Vercel)
+
+**Webhook (recomendado):** en el panel de MercadoPago, notificaciones → URL:
+
+`https://TU-DOMINIO/api/mercadopago/webhook`
+
+- Tienda activa por defecto. Para modo “Próximamente”: `NEXT_PUBLIC_TIENDA_ENABLED=false`
+
+## Panel admin
+
+- **Contenido:** textos del sitio y productos de tienda (precios URLs, etc.)
+- **Pedidos:** órdenes sincronizadas desde pagos aprobados (webhook o `/tienda/exito` con `payment_id`)
+- **Clientes:** usuarios que se registraron en `/cuenta/registro`
 
 ## Despliegue
 
-Configurar `NEXT_PUBLIC_APP_URL` con la URL de producción para que los redirects de MercadoPago funcionen correctamente.
+Configurá todas las variables en Vercel y desplegá las reglas de Firestore antes de producción.

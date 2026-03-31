@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ImageCard } from "./ImageCard";
+import { defaultSiteContent } from "@/lib/site-content";
 
 export interface ImagenTienda {
   id: string;
@@ -12,18 +13,10 @@ export interface ImagenTienda {
   imagenUrl?: string;
 }
 
-// Datos hardcodeados - reemplazar por CMS/Cloudinary cuando esté configurado
-const imagenesEjemplo: ImagenTienda[] = [
-  { id: "1", titulo: "Serie Unica - #1", descripcion: "Fotografía analógica 35mm", precio: 15000, imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=1" },
-  { id: "2", titulo: "Serie Unica - #2", descripcion: "Fotografía analógica 35mm", precio: 15000, imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=2" },
-  { id: "3", titulo: "Retrato - #1", descripcion: "Impresión fine art", precio: 25000, imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=3" },
-  { id: "4", titulo: "Retrato - #2", descripcion: "Impresión fine art", precio: 25000, imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=4" },
-  { id: "5", titulo: "Experimental - #1", descripcion: "Edición limitada", precio: 18000, imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=5" },
-  { id: "6", titulo: "Experimental - #2", descripcion: "Edición limitada", precio: 18000, imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=6" },
-];
+const imagenesEjemplo: ImagenTienda[] = defaultSiteContent.tienda.items;
 
-export function TiendaGrid() {
-  const [imagenes] = useState<ImagenTienda[]>(imagenesEjemplo);
+export function TiendaGrid({ items }: { items?: ImagenTienda[] }) {
+  const [imagenes] = useState<ImagenTienda[]>(items && items.length ? items : imagenesEjemplo);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">

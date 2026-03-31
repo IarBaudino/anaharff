@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { defaultSiteContent } from "@/lib/site-content";
 
 export default function HomePage() {
+  const { content } = useSiteContent();
+  const home = content?.home ?? defaultSiteContent.home;
+
   return (
     <div className="pt-20">
       {/* Hero */}
@@ -15,20 +20,13 @@ export default function HomePage() {
           className="max-w-3xl"
         >
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-light tracking-tight text-charcoal mb-8">
-            ANA HARFF
+            {home.titulo}
           </h1>
           <p className="text-lg md:text-xl text-charcoal/90 leading-relaxed mb-6">
-            Abrazar la diversidad y la autenticidad es crucial para liberarnos de
-            los estereotipos. Te invito a reflexionar sobre la importancia de la
-            representación del cuerpo y a ser parte de una necesaria reflexión
-            sobre la igualdad, la emancipación y la lucha por la autenticidad
-            corporal.
+            {home.parrafoEs}
           </p>
           <p className="text-base md:text-lg text-stone italic leading-relaxed">
-            Embracing diversity and authenticity is crucial to liberate ourselves
-            from stereotypes. I invite you to reflect on the importance of body
-            representation and to be part of a necessary reflection about
-            equality, emancipation and the struggle for body authenticity.
+            {home.parrafoEn}
           </p>
           <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <Link

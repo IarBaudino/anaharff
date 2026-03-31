@@ -2,14 +2,17 @@
 
 import { ChevronRight } from "lucide-react";
 import { ImagenTienda } from "./TiendaGrid";
+import { useAuth } from "@/components/AuthProvider";
 
 interface CheckoutButtonProps {
   imagen: ImagenTienda;
 }
 
-const TIENDA_HABILITADA = false;
+const TIENDA_HABILITADA = process.env.NEXT_PUBLIC_TIENDA_ENABLED !== "false";
 
 export function CheckoutButton({ imagen }: CheckoutButtonProps) {
+  const { user } = useAuth();
+
   if (!TIENDA_HABILITADA) {
     return (
       <button
@@ -29,6 +32,8 @@ export function CheckoutButton({ imagen }: CheckoutButtonProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            customerUid: user?.uid ?? null,
+            customerEmail: user?.email ?? null,
             items: [
               {
                 id: imagen.id,
@@ -42,8 +47,13 @@ export function CheckoutButton({ imagen }: CheckoutButtonProps) {
           }),
         });
         const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "No se pudo iniciar el pago");
+          return;
+        }
         if (data.initPoint) window.location.href = data.initPoint;
-        else if (data.preferenceId) window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
+        else if (data.preferenceId)
+          window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
       }}
       className="inline-flex items-center rounded-lg border border-charcoal/20 bg-cream px-4 py-2.5 text-sm font-medium leading-5 text-charcoal shadow-sm transition-colors hover:bg-charcoal/5 hover:text-charcoal focus:outline-none focus:ring-4 focus:ring-charcoal/10"
     >

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/AuthProvider";
 
 const navItems = [
   { href: "/", label: "HOME" },
@@ -42,6 +43,7 @@ const navItems = [
 ];
 
 export function Header() {
+  const { user, ready } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
@@ -57,7 +59,7 @@ export function Header() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
             {navItems.map((item) => (
               <div
                 key={item.href}
@@ -103,6 +105,23 @@ export function Header() {
                 )}
               </div>
             ))}
+            {!ready ? null : user ? (
+              <Link
+                href="/cuenta"
+                className="text-xs tracking-[0.2em] uppercase font-medium text-charcoal hover:text-accent transition-colors"
+              >
+                Mi cuenta
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/cuenta/ingresar"
+                  className="text-xs tracking-[0.2em] uppercase font-medium text-charcoal hover:text-accent transition-colors"
+                >
+                  Ingresar
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Mobile menu button */}
@@ -151,6 +170,34 @@ export function Header() {
                   )}
                 </div>
               ))}
+              <div className="pt-2 border-t border-charcoal/10">
+                {ready && user ? (
+                  <Link
+                    href="/cuenta"
+                    onClick={() => setMobileOpen(false)}
+                    className="block py-2 text-sm tracking-widest text-charcoal hover:text-accent"
+                  >
+                    Mi cuenta
+                  </Link>
+                ) : ready ? (
+                  <Link
+                    href="/cuenta/ingresar"
+                    onClick={() => setMobileOpen(false)}
+                    className="block py-2 text-sm tracking-widest text-charcoal hover:text-accent"
+                  >
+                    Ingresar
+                  </Link>
+                ) : null}
+                {ready && !user && (
+                  <Link
+                    href="/cuenta/registro"
+                    onClick={() => setMobileOpen(false)}
+                    className="block py-2 text-sm tracking-widest text-stone hover:text-accent"
+                  >
+                    Crear cuenta
+                  </Link>
+                )}
+              </div>
             </div>
           </motion.nav>
         )}

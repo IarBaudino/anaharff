@@ -23,7 +23,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-cream/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-cream/70">
-          <nav className="flex gap-6">
+          <nav className="flex flex-wrap justify-center gap-6">
             <Link href="/sobre-mi" className="hover:text-cream transition-colors">
               Sobre mí
             </Link>
@@ -34,7 +34,15 @@ export function Footer() {
               Tienda
             </Link>
           </nav>
-          <p>© {new Date().getFullYear()} Ana Harff. Todos los derechos reservados.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <p>© {new Date().getFullYear()} Ana Harff. Todos los derechos reservados.</p>
+            <Link
+              href="/admin"
+              className="inline-flex items-center rounded border border-cream/25 px-3 py-1.5 text-xs tracking-widest uppercase text-cream/70 hover:border-cream/50 hover:text-cream transition-colors"
+            >
+              Admin
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
