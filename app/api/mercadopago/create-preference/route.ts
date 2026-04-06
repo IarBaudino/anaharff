@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
   const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
   if (!accessToken) {
     return NextResponse.json(
-      { error: "MercadoPago no configurado. Agregá MERCADOPAGO_ACCESS_TOKEN en .env.local" },
+      {
+        error:
+          "Los pagos no están activos en el sitio todavía. Contactá a quien administra la tienda.",
+      },
       { status: 500 }
     );
   }

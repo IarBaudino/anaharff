@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { auth, db, isFirebaseConfigured } from "@/lib/firebase-client";
 import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 function inputClass() {
   return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
@@ -27,7 +28,7 @@ export default function RegistroPage() {
     e.preventDefault();
     setError(null);
     if (!isFirebaseConfigured || !auth || !db) {
-      setError("Firebase no está configurado.");
+      setError("No se pueden crear cuentas en este momento. Probá más tarde.");
       return;
     }
 
@@ -103,10 +104,8 @@ export default function RegistroPage() {
             <label className="block text-xs tracking-widest mb-2" htmlFor="pass">
               Contraseña
             </label>
-            <input
+            <PasswordField
               id="pass"
-              type="password"
-              className={inputClass()}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

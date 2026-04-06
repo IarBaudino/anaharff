@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
 import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 function inputClass() {
   return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
@@ -24,7 +25,7 @@ export default function IngresarPage() {
     e.preventDefault();
     setError(null);
     if (!isFirebaseConfigured || !auth) {
-      setError("Firebase no está configurado.");
+      setError("El inicio de sesión no está disponible en este momento.");
       return;
     }
 
@@ -66,10 +67,8 @@ export default function IngresarPage() {
             <label className="block text-xs tracking-widest mb-2" htmlFor="pass">
               Contraseña
             </label>
-            <input
+            <PasswordField
               id="pass"
-              type="password"
-              className={inputClass()}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

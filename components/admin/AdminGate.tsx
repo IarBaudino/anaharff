@@ -53,7 +53,9 @@ export function AdminGate({ children }: { children: ReactNode }) {
   if (!isFirebaseConfigured) {
     return (
       <div className="pt-4 px-4 md:pt-8">
-        <p className="text-red-700">Configurá Firebase para usar el panel protegido.</p>
+        <p className="text-red-700">
+          El panel de administración no está disponible: falta completar la configuración del sitio.
+        </p>
         {children}
       </div>
     );

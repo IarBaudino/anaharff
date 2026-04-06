@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
 import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 function inputClass() {
   return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
@@ -24,7 +25,7 @@ export default function AdminLoginPage() {
     setError(null);
 
     if (!isFirebaseConfigured || !auth) {
-      setError("Firebase no configurado.");
+      setError("El acceso al panel no está disponible en este entorno.");
       return;
     }
 
@@ -49,8 +50,8 @@ export default function AdminLoginPage() {
       >
         <h1 className="font-display text-3xl font-light mb-2">Admin</h1>
         <p className="text-sm text-stone mb-8">
-          Ingresá con tu cuenta autorizada. El usuario debe existir en Firestore en{" "}
-          <code className="text-xs">admins/&lt;tu uid&gt;</code>.
+          Usá el correo y la contraseña que te dieron para administrar el sitio. Si no podés entrar,
+          quien te habilitó puede revisar que tu usuario tenga permisos de administración.
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -70,10 +71,8 @@ export default function AdminLoginPage() {
             <label className="block text-xs tracking-widest mb-2" htmlFor="pass">
               Contraseña
             </label>
-            <input
+            <PasswordField
               id="pass"
-              type="password"
-              className={inputClass()}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

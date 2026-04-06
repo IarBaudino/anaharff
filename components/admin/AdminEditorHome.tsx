@@ -37,8 +37,8 @@ export function AdminEditorHome() {
     if (res.ok) {
       setMessage(
         res.offline
-          ? "Guardado local (sin Firebase configurado)."
-          : "Guardado correctamente en Firebase."
+          ? "Guardado solo en este navegador; aún no está en el sitio en vivo."
+          : "Listo. Los cambios ya están publicados en el sitio."
       );
       return;
     }
@@ -89,8 +89,9 @@ export function AdminEditorHome() {
     <div className="space-y-10">
       {!isFirebaseConfigured && (
         <div className="border border-amber-500/30 bg-amber-100/50 p-4 text-sm text-amber-900">
-          Firebase no está configurado en entorno. Podés editar visualmente, pero no se
-          persistirá en la nube hasta configurar variables.
+          Podés editar aquí, pero los cambios <strong>no se publicarán</strong> en el sitio hasta que
+          esté todo conectado. Si ves este aviso en la web ya publicada, contactá a quien te dio
+          acceso.
         </div>
       )}
 
@@ -188,6 +189,7 @@ export function AdminEditorHome() {
           computadora. No se puede guardar dejando solo la imagen de muestra.
         </HelpText>
         <CloudinaryUploadField
+          previewUrl={content.home.heroImagenUrl}
           onUploaded={(secureUrl) =>
             setContent({
               ...content,

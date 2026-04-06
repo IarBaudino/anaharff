@@ -51,7 +51,7 @@ export function useSiteContent() {
         }
       } catch {
         if (!cancelled) {
-          setError("No se pudo cargar contenido desde Firebase.");
+          setError("No se pudo cargar el contenido. Probá recargar la página.");
         }
       } finally {
         if (!cancelled) {
@@ -80,7 +80,7 @@ export function useSiteContent() {
       await setDoc(doc(db, CONTENT_DOC), nextContent, { merge: true });
       return { ok: true, offline: false };
     } catch {
-      setError("Error guardando en Firebase.");
+      setError("No se pudo guardar. Probá de nuevo en unos minutos.");
       return { ok: false, offline: false };
     } finally {
       setSaving(false);

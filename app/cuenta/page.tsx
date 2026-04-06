@@ -26,6 +26,7 @@ import { useAuth } from "@/components/AuthProvider";
 import type { CustomerRecord, OrderRecord, OrderStatus } from "@/lib/commerce-types";
 import { cn } from "@/lib/utils";
 import { siteButtonGhost, siteButtonOutline, siteButtonSolid } from "@/lib/site-buttons";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 function inputClass() {
   return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
@@ -303,8 +304,7 @@ export default function CuentaPage() {
               />
             </div>
             <p className="text-xs text-stone">
-              El email se cambia desde Firebase Authentication (contactá soporte técnico si lo
-              necesitás).
+              Para cambiar el correo de la cuenta, tenés que pedirlo a quien administra el sitio.
             </p>
             <button
               type="submit"
@@ -326,10 +326,8 @@ export default function CuentaPage() {
               <label className="mb-2 block text-xs tracking-widest" htmlFor="pass-old">
                 Contraseña actual
               </label>
-              <input
+              <PasswordField
                 id="pass-old"
-                type="password"
-                className={inputClass()}
                 value={passCurrent}
                 onChange={(e) => setPassCurrent(e.target.value)}
                 autoComplete="current-password"
@@ -339,10 +337,8 @@ export default function CuentaPage() {
               <label className="mb-2 block text-xs tracking-widest" htmlFor="pass-new">
                 Nueva contraseña
               </label>
-              <input
+              <PasswordField
                 id="pass-new"
-                type="password"
-                className={inputClass()}
                 value={passNew}
                 onChange={(e) => setPassNew(e.target.value)}
                 minLength={6}
@@ -353,10 +349,8 @@ export default function CuentaPage() {
               <label className="mb-2 block text-xs tracking-widest" htmlFor="pass-confirm">
                 Repetir nueva contraseña
               </label>
-              <input
+              <PasswordField
                 id="pass-confirm"
-                type="password"
-                className={inputClass()}
                 value={passConfirm}
                 onChange={(e) => setPassConfirm(e.target.value)}
                 minLength={6}

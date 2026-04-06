@@ -66,7 +66,11 @@ export function AdminOrders() {
   }, []);
 
   if (!isFirebaseConfigured) {
-    return <p className="text-stone">Configurá Firebase para ver pedidos.</p>;
+    return (
+      <p className="text-stone">
+        No se puede mostrar el listado de pedidos: revisá la configuración del sitio.
+      </p>
+    );
   }
 
   if (loading) {
@@ -78,8 +82,8 @@ export function AdminOrders() {
       <div>
         <h2 className="font-display text-2xl mb-2">Pedidos</h2>
         <p className="text-sm text-stone">
-          Órdenes generadas por MercadoPago (webhook o página de éxito). Podés actualizar estado
-          interno y notas para entregas.
+          Pedidos que llegan desde la tienda (pago y confirmación). Podés actualizar el estado y
+          dejar notas para las entregas.
         </p>
       </div>
 

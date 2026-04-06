@@ -57,7 +57,7 @@ export function CheckoutButton({ imagen }: CheckoutButtonProps) {
       }}
       className="inline-flex items-center rounded-full border border-charcoal/25 bg-cream px-5 py-2.5 text-sm font-medium leading-5 text-charcoal shadow-sm transition-colors hover:border-charcoal/40 hover:bg-charcoal/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15"
     >
-      Comprar con MercadoPago
+      Comprar
       <ChevronRight className="ms-1.5 h-4 w-4" />
     </button>
   );

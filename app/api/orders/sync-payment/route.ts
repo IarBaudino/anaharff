@@ -11,11 +11,20 @@ export async function POST(request: NextRequest) {
   const db = getAdminDb();
 
   if (!accessToken) {
-    return NextResponse.json({ error: "MercadoPago no configurado" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "No se pudo conectar con el sistema de pagos. Probá más tarde o contactá a soporte.",
+      },
+      { status: 500 }
+    );
   }
 
   if (!db) {
-    return NextResponse.json({ error: "Firebase Admin no configurado" }, { status: 500 });
+    return NextResponse.json(
+      { error: "El servidor no está configurado para sincronizar pagos." },
+      { status: 500 }
+    );
   }
 
   try {

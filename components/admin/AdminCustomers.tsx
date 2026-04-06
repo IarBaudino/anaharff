@@ -44,7 +44,11 @@ export function AdminCustomers() {
   }, []);
 
   if (!isFirebaseConfigured) {
-    return <p className="text-stone">Configurá Firebase para ver clientes.</p>;
+    return (
+      <p className="text-stone">
+        No se puede mostrar el listado de clientes: revisá la configuración del sitio.
+      </p>
+    );
   }
 
   if (loading) {
@@ -56,8 +60,8 @@ export function AdminCustomers() {
       <div>
         <h2 className="font-display text-2xl mb-2">Clientes registrados</h2>
         <p className="text-sm text-stone">
-          Usuarios que se crearon cuenta en el sitio. Compras como invitado aparecen en pedidos con
-          email de MercadoPago.
+          Personas que se registraron en el sitio. Las compras sin cuenta aparecen en pedidos con
+          el correo que usaron al pagar.
         </p>
       </div>
 

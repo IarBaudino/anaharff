@@ -9,9 +9,11 @@ type Props = {
   // eslint-disable-next-line no-unused-vars
   onUploaded: (secureUrl: string) => void;
   disabled?: boolean;
+  /** Imagen ya elegida o guardada, para mostrar vista previa debajo del botón */
+  previewUrl?: string | null;
 };
 
-export function CloudinaryUploadField({ onUploaded, disabled }: Props) {
+export function CloudinaryUploadField({ onUploaded, disabled, previewUrl }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -57,6 +59,8 @@ export function CloudinaryUploadField({ onUploaded, disabled }: Props) {
     }
   }
 
+  const preview = previewUrl?.trim() ?? "";
+
   return (
     <div className="space-y-1">
       <label className="inline-flex items-center gap-2 cursor-pointer w-fit">
@@ -74,6 +78,20 @@ export function CloudinaryUploadField({ onUploaded, disabled }: Props) {
       </label>
       {err && <p className="text-xs text-red-700">{err}</p>}
       <p className="text-xs text-stone">JPG, PNG, WebP, GIF o AVIF · máximo 12 MB</p>
+      {preview ? (
+        <div className="mt-3 space-y-1.5">
+          <p className="text-xs font-medium tracking-wide text-charcoal/80">Vista previa</p>
+          <div className="inline-block max-w-full overflow-hidden rounded-lg border border-charcoal/15 bg-cream/60 p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={preview}
+              alt=""
+              className="max-h-64 w-auto max-w-full object-contain"
+            />
+          </div>
+          <p className="text-xs text-stone">Podés subir otra imagen para reemplazarla.</p>
+        </div>
+      ) : null}
     </div>
   );
 }
