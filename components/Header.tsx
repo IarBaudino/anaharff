@@ -156,10 +156,10 @@ function NavDesktop() {
   return (
     <nav
       ref={navRef}
-      className="mx-auto hidden min-w-0 max-w-full flex-1 justify-center overflow-visible md:flex"
+      className="mx-auto hidden min-w-0 max-w-full flex-1 justify-center overflow-visible lg:flex"
       aria-label="Principal"
     >
-      <ul className="flex flex-wrap items-center justify-center gap-x-0.5 gap-y-0 lg:gap-x-1">
+      <ul className="flex flex-wrap items-center justify-center gap-x-0.5 gap-y-1 lg:gap-x-1 xl:flex-nowrap xl:gap-y-0">
         {navItems.map((item) => {
           if (!("subItems" in item) || !item.subItems) {
             return (
@@ -292,6 +292,25 @@ export function Header() {
   const isAdmin = pathname.startsWith("/admin");
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    function onResize() {
+      if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+        setMobileOpen(false);
+      }
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin || !mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isAdmin, mobileOpen]);
+
   if (isAdmin) {
     return (
       <header className="fixed top-0 left-0 right-0 z-50 flex h-12 items-center justify-between border-b border-charcoal/10 bg-cream/95 px-4 backdrop-blur-md">
@@ -313,24 +332,24 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 shrink-0 overflow-visible border-b border-charcoal/10 bg-cream/90 shadow-[0_1px_0_0_rgba(26,26,26,0.04)] backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-3 overflow-visible px-4 sm:gap-4 sm:px-6 md:h-[3.75rem] lg:px-10">
+      <div className="mx-auto flex min-h-14 max-w-[1600px] flex-wrap items-center gap-x-3 gap-y-2 overflow-visible px-4 py-2.5 sm:px-6 sm:py-2 lg:min-h-[3.75rem] lg:flex-nowrap lg:gap-y-0 lg:px-10 lg:py-0">
         <Link
           href="/"
-          className="shrink-0 font-display text-lg font-light tracking-tight text-charcoal transition-colors hover:text-accent md:text-xl"
+          className="shrink-0 font-display text-lg font-light tracking-tight text-charcoal transition-colors hover:text-accent lg:text-xl"
         >
           Ana Harff
         </Link>
 
         <NavDesktop />
 
-        <div className="ml-auto hidden shrink-0 items-center md:flex">
+        <div className="ml-auto hidden shrink-0 items-center lg:flex">
           <AuthDesktop />
         </div>
 
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-md border border-charcoal/10 text-charcoal transition-colors hover:border-charcoal/20 hover:bg-charcoal/[0.04] md:hidden"
+          className="ml-auto flex size-11 min-h-11 min-w-11 shrink-0 touch-manipulation items-center justify-center rounded-md border border-charcoal/10 text-charcoal transition-colors hover:border-charcoal/20 hover:bg-charcoal/[0.04] lg:hidden"
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
         >
@@ -346,7 +365,7 @@ export function Header() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[55] bg-charcoal/25 backdrop-blur-[1px] md:hidden"
+              className="fixed inset-0 z-[55] bg-charcoal/25 backdrop-blur-[1px] lg:hidden"
               aria-label="Cerrar menú"
               onClick={() => setMobileOpen(false)}
             />
@@ -355,13 +374,13 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-y-0 right-0 z-[60] flex w-[min(100vw-2rem,18rem)] flex-col border-l border-charcoal/10 bg-cream pt-4 shadow-lg md:hidden"
+              className="fixed right-0 top-0 z-[60] flex h-[100dvh] max-h-[100dvh] w-[min(92vw,20rem)] flex-col border-l border-charcoal/10 bg-cream pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-lg lg:hidden"
             >
-              <div className="flex min-h-0 flex-1 flex-col px-4 pb-8">
-                <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4">
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
                   <NavDrawer onNavigate={() => setMobileOpen(false)} />
                 </div>
-                <div className="mt-6 shrink-0 border-t border-charcoal/10 pt-4">
+                <div className="mt-4 shrink-0 border-t border-charcoal/10 pt-4">
                   <AuthDrawer onNavigate={() => setMobileOpen(false)} />
                 </div>
               </div>
