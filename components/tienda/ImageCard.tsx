@@ -13,8 +13,11 @@ export function ImageCard({ imagen }: ImageCardProps) {
   const tieneImagen = imagen.imagenUrl && imagen.imagenUrl.length > 0;
 
   return (
-    <Card as="article" className="max-w-none">
-      <div className="overflow-hidden rounded-t-lg">
+    <Card
+      as="article"
+      className="relative max-w-[16.5rem] before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-[3px] before:rounded-l-xl before:bg-accent/0 before:transition-colors hover:before:bg-accent/90 sm:max-w-[17rem]"
+    >
+      <div className="overflow-hidden rounded-t-xl">
         <div className="relative aspect-[3/4] overflow-hidden bg-charcoal/[0.04]">
           {tieneImagen ? (
             <Image
@@ -32,13 +35,13 @@ export function ImageCard({ imagen }: ImageCardProps) {
         </div>
       </div>
       <CardContent>
-        <h2 className="mb-2 font-display text-2xl font-semibold tracking-tight text-charcoal">
+        <h2 className="mb-1.5 font-display text-xl font-semibold tracking-tight text-charcoal">
           {imagen.titulo}
         </h2>
         {imagen.descripcion && (
-          <p className="mb-6 text-stone">{imagen.descripcion}</p>
+          <p className="mb-4 text-sm text-stone">{imagen.descripcion}</p>
         )}
-        <p className="mb-6 text-base font-medium text-charcoal">
+        <p className="mb-4 text-sm font-medium text-charcoal">
           ${imagen.precio.toLocaleString("es-AR")} ARS
         </p>
         <CheckoutButton imagen={imagen} />

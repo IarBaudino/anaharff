@@ -52,7 +52,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
 
   if (!isFirebaseConfigured) {
     return (
-      <div className="pt-24 px-4">
+      <div className="pt-4 px-4 md:pt-8">
         <p className="text-red-700">Configurá Firebase para usar el panel protegido.</p>
         {children}
       </div>
@@ -61,7 +61,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
 
   if (!ready || allowed === null) {
     return (
-      <div className="pt-32 text-center text-stone">
+      <div className="pt-20 text-center text-stone md:pt-32">
         Comprobando acceso…
       </div>
     );

@@ -22,7 +22,7 @@ function ensureConfig() {
   const api_key = process.env.CLOUDINARY_API_KEY;
   const api_secret = process.env.CLOUDINARY_API_SECRET;
   if (!cloud_name || !api_key || !api_secret) {
-    throw new Error("Cloudinary no configurado");
+    throw new Error("Servicio de imágenes no configurado");
   }
   cloudinary.config({ cloud_name, api_key, api_secret });
 }

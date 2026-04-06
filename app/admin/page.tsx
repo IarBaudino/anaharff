@@ -10,7 +10,7 @@ export default function AdminPage() {
   const { user } = useAuth();
 
   return (
-    <div className="pt-24 pb-20">
+    <div className="pt-4 pb-20 md:pt-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
           <div>

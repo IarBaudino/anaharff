@@ -17,7 +17,7 @@ export function CheckoutButton({ imagen }: CheckoutButtonProps) {
     return (
       <button
         disabled
-        className="inline-flex items-center rounded-lg border border-charcoal/20 bg-cream px-4 py-2.5 text-sm font-medium leading-5 text-stone shadow-sm cursor-not-allowed"
+        className="inline-flex cursor-not-allowed items-center rounded-full border border-charcoal/20 bg-cream px-5 py-2.5 text-sm font-medium leading-5 text-stone shadow-sm"
       >
         Próximamente
         <ChevronRight className="ms-1.5 h-4 w-4" />
@@ -55,7 +55,7 @@ export function CheckoutButton({ imagen }: CheckoutButtonProps) {
         else if (data.preferenceId)
           window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
       }}
-      className="inline-flex items-center rounded-lg border border-charcoal/20 bg-cream px-4 py-2.5 text-sm font-medium leading-5 text-charcoal shadow-sm transition-colors hover:bg-charcoal/5 hover:text-charcoal focus:outline-none focus:ring-4 focus:ring-charcoal/10"
+      className="inline-flex items-center rounded-full border border-charcoal/25 bg-cream px-5 py-2.5 text-sm font-medium leading-5 text-charcoal shadow-sm transition-colors hover:border-charcoal/40 hover:bg-charcoal/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/15"
     >
       Comprar con MercadoPago
       <ChevronRight className="ms-1.5 h-4 w-4" />

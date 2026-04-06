@@ -5,10 +5,27 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase-client";
 import {
   defaultSiteContent,
+  normalizeBlog,
+  normalizeHome,
+  normalizeSobreMi,
   type SiteContent,
 } from "@/lib/site-content";
 
 const CONTENT_DOC = "site/content";
+
+/** Une Firestore parcial con defaults y migraciones (p. ej. párrafos ES/EN → idiomas). */
+function mergeFromFirestore(partial: Partial<SiteContent>): SiteContent {
+  return {
+    home: normalizeHome(partial.home),
+    sobreMi: normalizeSobreMi(partial.sobreMi),
+    blog: normalizeBlog(partial.blog),
+    tienda: {
+      ...defaultSiteContent.tienda,
+      ...partial.tienda,
+      items: partial.tienda?.items ?? defaultSiteContent.tienda.items,
+    },
+  };
+}
 
 export function useSiteContent() {
   const [content, setContent] = useState<SiteContent>(defaultSiteContent);
@@ -28,10 +45,9 @@ export function useSiteContent() {
       try {
         const snap = await getDoc(doc(db, CONTENT_DOC));
         if (!cancelled && snap.exists()) {
-          setContent({
-            ...defaultSiteContent,
-            ...(snap.data() as Partial<SiteContent>),
-          });
+          setContent(
+            mergeFromFirestore(snap.data() as Partial<SiteContent>)
+          );
         }
       } catch {
         if (!cancelled) {

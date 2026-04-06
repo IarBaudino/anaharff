@@ -20,7 +20,7 @@ interface CardProps {
 
 export function Card({ children, as: Component = "div", href, className }: CardProps) {
   const base =
-    "group block max-w-sm overflow-hidden rounded-lg border border-charcoal/10 bg-cream p-0 shadow-sm transition-all duration-300 hover:border-charcoal/20 hover:shadow-md";
+    "group mx-auto block w-full max-w-[17rem] overflow-hidden rounded-xl border border-charcoal/10 bg-cream p-0 shadow-sm transition-all duration-500 hover:border-charcoal/[0.18] hover:shadow-[0_12px_40px_-12px_rgba(26,26,26,0.12)] sm:max-w-[17.5rem]";
 
   if (href && Component === "a") {
     return (
@@ -68,7 +68,7 @@ export function CardImage({ src, alt, aspectRatio = "3/4" }: CardImageProps) {
 
 export function CardContent({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("p-6", className)}>
+    <div className={cn("p-5", className)}>
       {children}
     </div>
   );

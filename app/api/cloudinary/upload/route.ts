@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   if (!isCloudinaryServerConfigured()) {
     return NextResponse.json(
-      { error: "Cloudinary no configurado en el servidor" },
+      { error: "El servicio de subida de imágenes no está configurado en el servidor" },
       { status: 503 }
     );
   }

@@ -1,48 +1,51 @@
 import Link from "next/link";
 import { Instagram } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function Footer() {
+export function Footer({ className }: { className?: string }) {
   return (
-    <footer className="border-t border-charcoal/10 bg-charcoal text-cream mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-center md:text-left">
-            <p className="font-display text-lg mb-1">ANA HARFF</p>
-            <p className="text-sm text-cream/80">Fotografía Analógica | Buenos Aires</p>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link
-              href="https://instagram.com/anaharff"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-cream/80 hover:text-cream transition-colors"
-              aria-label="Instagram"
-            >
-              <Instagram size={22} />
-            </Link>
-          </div>
+    <footer
+      className={cn(
+        "mt-auto border-t border-cream/20 bg-charcoal text-cream",
+        className
+      )}
+    >
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-3 text-[0.7rem] sm:justify-between sm:px-5 sm:py-2.5">
+        <div className="flex items-center gap-3">
+          <span className="font-display text-sm tracking-tight text-cream md:text-base">
+            ANA HARFF
+          </span>
+          <span className="hidden text-cream/55 sm:inline">·</span>
+          <span className="hidden text-cream/60 sm:inline">Buenos Aires</span>
         </div>
-        <div className="mt-8 pt-8 border-t border-cream/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-cream/70">
-          <nav className="flex flex-wrap justify-center gap-6">
-            <Link href="/sobre-mi" className="hover:text-cream transition-colors">
-              Sobre mí
-            </Link>
-            <Link href="/contacto" className="hover:text-cream transition-colors">
-              Contacto
-            </Link>
-            <Link href="/tienda" className="hover:text-cream transition-colors">
-              Tienda
-            </Link>
-          </nav>
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <p>© {new Date().getFullYear()} Ana Harff. Todos los derechos reservados.</p>
-            <Link
-              href="/admin"
-              className="inline-flex items-center rounded border border-cream/25 px-3 py-1.5 text-xs tracking-widest uppercase text-cream/70 hover:border-cream/50 hover:text-cream transition-colors"
-            >
-              Admin
-            </Link>
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-cream/70">
+          <Link href="/sobre-mi" className="transition-colors hover:text-cream">
+            Sobre mí
+          </Link>
+          <Link href="/contacto" className="transition-colors hover:text-cream">
+            Contacto
+          </Link>
+          <Link href="/tienda" className="transition-colors hover:text-cream">
+            Tienda
+          </Link>
+          <Link
+            href="https://instagram.com/anaharff"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cream/65 transition-colors hover:text-cream"
+            aria-label="Instagram"
+          >
+            <Instagram size={16} strokeWidth={1.5} />
+          </Link>
+        </div>
+        <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-end">
+          <span className="text-cream/50">© {new Date().getFullYear()}</span>
+          <Link
+            href="/admin"
+            className="rounded-full border border-cream/20 px-2.5 py-0.5 text-[0.6rem] tracking-wide text-cream/55 transition-colors hover:border-cream/35 hover:text-cream"
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </footer>

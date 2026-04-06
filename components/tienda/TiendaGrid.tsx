@@ -19,7 +19,7 @@ export function TiendaGrid({ items }: { items?: ImagenTienda[] }) {
   const [imagenes] = useState<ImagenTienda[]>(items && items.length ? items : imagenesEjemplo);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+    <div className="grid grid-cols-1 justify-items-center gap-12 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3 lg:gap-12">
       {imagenes.map((img, i) => (
         <motion.div
           key={img.id}

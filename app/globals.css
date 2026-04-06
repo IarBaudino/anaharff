@@ -18,8 +18,20 @@
   body {
     @apply bg-cream text-charcoal antialiased;
     font-family: var(--font-body);
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  .section-kicker {
+    @apply border-l-[3px] border-accent pl-4 text-[0.7rem] font-medium uppercase tracking-[0.28em] text-stone;
+  }
+
+  /* Regla horizontal reutilizable (solo líneas, sin ornamento) */
+  .rule-fade {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-charcoal/18 to-transparent;
   }
 }

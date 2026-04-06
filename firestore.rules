@@ -3,24 +3,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
-      return request.auth != null &&
+      return isSignedIn() &&
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function isCustomerSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    /** Pedido asociado al usuario logueado (uid en metadata MP o mismo email que en Auth). */
+    function isOrderOwner() {
+      return isSignedIn()
+        && resource.data != null
+        && (
+          ('customerUid' in resource.data
+            && resource.data.customerUid != null
+            && resource.data.customerUid == request.auth.uid)
+          || ('customerEmail' in resource.data
+            && resource.data.customerEmail != null
+            && request.auth.token.email != null
+            && resource.data.customerEmail == request.auth.token.email)
+        );
+    }
+
+    function customerCreatesOwnProfile() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && 'ordersCount' in request.resource.data
+        && request.resource.data.ordersCount == 0;
+    }
+
+    // Contenido público del sitio (CMS)
     match /site/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    // Perfil de compradores (no admin vía esta colección)
     match /customers/{uid} {
-      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update: if request.auth != null && request.auth.uid == uid;
+      allow read: if isCustomerSelf(uid) || isAdmin();
+      allow create: if isCustomerSelf(uid) && customerCreatesOwnProfile();
+      allow update: if isCustomerSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono']);
+      allow delete: if false;
     }
 
+    // Pedidos: el cliente solo lee los propios (consultas con where por uid o email);
+    // crear/actualizar interno vía Admin SDK en servidor.
     match /orders/{orderId} {
-      allow read, update: if isAdmin();
+      allow read: if isAdmin() || isOrderOwner();
+      allow update: if isAdmin();
       allow create, delete: if false;
     }
 
@@ -28,9 +65,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Solo puede leer su propio doc (existencia = es admin en la app)
     match /admins/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if isSignedIn() && request.auth.uid == uid;
       allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

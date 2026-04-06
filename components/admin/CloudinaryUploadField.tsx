@@ -62,7 +62,7 @@ export function CloudinaryUploadField({ onUploaded, disabled }: Props) {
       <label className="inline-flex items-center gap-2 cursor-pointer w-fit">
         <span className="inline-flex items-center gap-2 rounded border border-charcoal/20 px-3 py-2 text-xs tracking-widest uppercase hover:border-charcoal/35 transition-colors">
           <Upload size={14} />
-          {loading ? "Subiendo…" : "Subir a Cloudinary"}
+          {loading ? "Subiendo…" : "Subir imagen"}
         </span>
         <input
           type="file"
@@ -73,11 +73,7 @@ export function CloudinaryUploadField({ onUploaded, disabled }: Props) {
         />
       </label>
       {err && <p className="text-xs text-red-700">{err}</p>}
-      <p className="text-xs text-stone">
-        JPG, PNG, WebP, GIF o AVIF · máx. 12 MB · carpeta en Cloudinary:{" "}
-        <code className="text-[11px]">anaharff/tienda</code> (o{" "}
-        <code className="text-[11px]">CLOUDINARY_UPLOAD_FOLDER</code>)
-      </p>
+      <p className="text-xs text-stone">JPG, PNG, WebP, GIF o AVIF · máximo 12 MB</p>
     </div>
   );
 }

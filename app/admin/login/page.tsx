@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { motion } from "framer-motion";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
+import { cn } from "@/lib/utils";
+import { siteButtonSolid } from "@/lib/site-buttons";
 
 function inputClass() {
-  return "w-full px-4 py-3 border border-charcoal/20 bg-cream focus:border-charcoal focus:outline-none";
+  return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
 }
 
 export default function AdminLoginPage() {
@@ -39,7 +41,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="pt-24 pb-20 min-h-[70vh] flex items-center justify-center px-4">
+    <div className="pt-4 pb-20 min-h-[70vh] flex items-center justify-center px-4 md:pt-8">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -81,7 +83,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-8 py-3 bg-charcoal text-cream text-sm tracking-widest uppercase hover:bg-ink transition-colors disabled:opacity-50"
+            className={cn(siteButtonSolid, "w-full")}
           >
             {loading ? "Entrando…" : "Entrar"}
           </button>

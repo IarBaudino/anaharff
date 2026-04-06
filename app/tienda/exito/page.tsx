@@ -5,7 +5,7 @@ export default function TiendaExitoPage() {
   return (
     <Suspense
       fallback={
-        <div className="pt-32 text-center text-stone">Cargando…</div>
+        <div className="pt-20 text-center text-stone md:pt-32">Cargando…</div>
       }
     >
       <ExitoContent />

@@ -44,8 +44,8 @@ export function AdminProducts() {
       <section className="space-y-4">
         <h2 className="font-display text-2xl">Productos y fotos ({itemCount})</h2>
         <p className="text-sm text-stone">
-          Acá cargás y editás los productos de tienda. Podés subir imágenes a Cloudinary
-          directamente desde cada tarjeta.
+          Acá cargás y editás los productos de la tienda. Podés subir la foto de cada producto
+          desde su tarjeta.
         </p>
         <input
           className={inputClass()}
@@ -109,7 +109,7 @@ export function AdminProducts() {
               onChange={(e) =>
                 updateItem(content, setContent, idx, { imagenUrl: e.target.value })
               }
-              placeholder="URL de imagen (Cloudinary o cualquier URL https)"
+              placeholder="URL de la imagen (opcional si ya subiste con el botón)"
             />
             <CloudinaryUploadField
               onUploaded={(secureUrl) =>

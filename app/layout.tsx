@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Cormorant_Garamond, Lato } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { PageBody } from "@/components/PageBody";
 import { AuthProvider } from "@/components/AuthProvider";
 
 const cormorant = Cormorant_Garamond({
@@ -38,8 +38,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col font-sans">
         <AuthProvider>
           <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <PageBody>{children}</PageBody>
         </AuthProvider>
       </body>
     </html>

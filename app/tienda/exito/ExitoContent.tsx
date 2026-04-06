@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle } from "lucide-react";
+import { siteButtonSolid } from "@/lib/site-buttons";
 
 export function ExitoContent() {
   const searchParams = useSearchParams();
@@ -41,7 +42,7 @@ export function ExitoContent() {
   }, [searchParams]);
 
   return (
-    <div className="pt-24 pb-20 min-h-[60vh] flex items-center justify-center">
+    <div className="pt-6 md:pt-24 pb-20 min-h-[60vh] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -56,10 +57,7 @@ export function ExitoContent() {
           de tu imagen.
         </p>
         {syncMsg && <p className="text-sm text-stone mb-6">{syncMsg}</p>}
-        <Link
-          href="/tienda"
-          className="inline-block px-8 py-3 bg-charcoal text-cream text-sm tracking-widest uppercase hover:bg-ink transition-colors"
-        >
+        <Link href="/tienda" className={siteButtonSolid}>
           Volver a la tienda
         </Link>
       </motion.div>
