@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "optimize:images": "node scripts/convert-to-avif.js",
     "optimize:image": "node scripts/optimize-image.js",
-    "grant-admin": "node scripts/grant-admin-by-email.cjs"
+    "grant-admin": "node --env-file=.env.local scripts/grant-admin-by-email.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
