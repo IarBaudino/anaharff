@@ -5,9 +5,10 @@ import { motion } from "framer-motion";
 
 interface SeriesContentProps {
   label: string;
+  statement?: string;
 }
 
-export function SeriesContent({ label }: SeriesContentProps) {
+export function SeriesContent({ label, statement }: SeriesContentProps) {
   return (
     <div className="pt-6 md:pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -20,10 +21,17 @@ export function SeriesContent({ label }: SeriesContentProps) {
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-display text-4xl md:text-5xl font-light mb-16"
+          className="font-display text-4xl md:text-5xl font-light"
         >
           {label}
         </motion.h1>
+        {statement ? (
+          <p className="mb-14 mt-5 max-w-3xl text-base leading-relaxed text-charcoal/80 md:text-lg">
+            {statement}
+          </p>
+        ) : (
+          <div className="mb-16" />
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {Array.from({ length: 6 }).map((_, i) => (

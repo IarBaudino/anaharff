@@ -13,14 +13,24 @@ import { defaultSiteContent, type StoreItem } from "@/lib/site-content";
 const PLACEHOLDER =
   "https://placehold.co/900x1200/f7f5f0/8c8c8c?text=Ana+Harff";
 
-function featuredItems(items: StoreItem[]): StoreItem[] {
-  if (items.length >= 3) return items.slice(0, 3);
-  const merged = [...items];
+function featuredItems(items: StoreItem[], limit: number): StoreItem[] {
+  const chosen = items
+    .filter((it) => it.destacarEnInicio)
+    .sort((a, b) => (a.destacadoOrden ?? Number.MAX_SAFE_INTEGER) - (b.destacadoOrden ?? Number.MAX_SAFE_INTEGER));
+
+  const merged = [...chosen];
+  if (merged.length >= limit) return merged.slice(0, limit);
+
+  for (const it of items) {
+    if (merged.length >= limit) break;
+    if (!merged.some((m) => m.id === it.id)) merged.push(it);
+  }
+
   for (const d of defaultSiteContent.tienda.items) {
-    if (merged.length >= 3) break;
+    if (merged.length >= limit) break;
     if (!merged.some((m) => m.id === d.id)) merged.push(d);
   }
-  return merged.slice(0, 3);
+  return merged.slice(0, limit);
 }
 
 function heroSrc(
@@ -43,13 +53,14 @@ export default function HomePage() {
   const destacadoLinks = ["/tienda", "/portfolio", "/series"] as const;
   const destacadoEtiquetas = ["Edición limitada", "Portfolio", "Series"] as const;
 
-  const destacados = featuredItems(tienda.items).map((item, i) => ({
+  const destacados = featuredItems(tienda.items, tienda.destacadosCantidad ?? 3).map((item, i) => ({
     id: item.id,
     url: item.imagenUrl?.trim() || PLACEHOLDER,
     titulo: item.titulo,
-    href: destacadoLinks[i] ?? "/portfolio",
+    href: destacadoLinks[i] ?? "/tienda",
     etiqueta: destacadoEtiquetas[i] ?? "Ver más",
   }));
+  const useEditorialLayout = destacados.length <= 3;
 
   return (
     <div className="pt-4 md:pt-12">
@@ -152,7 +163,13 @@ export default function HomePage() {
             </Link>
           </motion.div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-2 md:gap-5 lg:gap-6">
+          <div
+            className={
+              useEditorialLayout
+                ? "grid grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-2 md:gap-5 lg:gap-6"
+                : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5 lg:gap-6"
+            }
+          >
             {destacados.map((d, i) => (
               <motion.div
                 key={d.id}
@@ -161,21 +178,23 @@ export default function HomePage() {
                 viewport={{ once: true, margin: "-20px" }}
                 transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className={
-                  i === 0
+                  useEditorialLayout && i === 0
                     ? "md:col-span-7 md:row-span-2"
-                    : i === 1
+                    : useEditorialLayout && i === 1
                       ? "md:col-span-5 md:col-start-8 md:row-start-1"
-                      : "md:col-span-5 md:col-start-8 md:row-start-2"
+                      : useEditorialLayout && i === 2
+                        ? "md:col-span-5 md:col-start-8 md:row-start-2"
+                        : ""
                 }
               >
                 <Link
                   href={d.href}
-                  className="group relative block h-full overflow-hidden rounded-2xl border border-charcoal/15 bg-cream shadow-sm transition-all duration-500 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-2xl before:bg-accent/0 before:transition-colors hover:border-charcoal/25 hover:shadow-md hover:before:bg-accent/90"
+                  className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-charcoal/15 bg-cream shadow-sm transition-all duration-500 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-2xl before:bg-accent/0 before:transition-colors hover:border-charcoal/25 hover:shadow-md hover:before:bg-accent/90"
                 >
                   <div
                     className={
-                      i === 0
-                        ? "relative aspect-[3/4] min-h-[280px] md:min-h-[420px] lg:aspect-auto lg:min-h-[min(72vh,640px)]"
+                      useEditorialLayout && i === 0
+                        ? "relative min-h-[320px] flex-1 md:min-h-0"
                         : "relative aspect-[4/5] md:aspect-[16/11]"
                     }
                   >

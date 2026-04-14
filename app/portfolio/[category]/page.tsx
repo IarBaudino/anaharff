@@ -2,29 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryContent } from "@/components/portfolio/CategoryContent";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
-
-const categories: Record<string, { label: string; description: string }> = {
-  desnudos: {
-    label: "Desnudos (nude)",
-    description:
-      "Galería de desnudo artístico y editorial en fotografía analógica. Ana Harff, Buenos Aires.",
-  },
-  retratos: {
-    label: "Retratos (portrait)",
-    description:
-      "Retratos en fotografía analógica: mirada, identidad y presencia. Ana Harff, Buenos Aires.",
-  },
-  artistico: {
-    label: "Artístico (art & shows)",
-    description:
-      "Obra artística, muestras y proyectos editoriales en analógico. Ana Harff, Buenos Aires.",
-  },
-  experimental: {
-    label: "Experimental",
-    description:
-      "Procesos experimentales y lecturas libres del cuerpo y el espacio en analógico. Ana Harff.",
-  },
-};
+import { getServerSiteContent } from "@/lib/site-content-server";
 
 export async function generateMetadata({
   params,
@@ -32,22 +10,25 @@ export async function generateMetadata({
   params: Promise<{ category: string }>;
 }): Promise<Metadata> {
   const { category } = await params;
-  const cat = categories[category];
+  const content = await getServerSiteContent();
+  const cat = content.portfolio.categories.find((c) => c.slug === category);
   if (!cat) return {};
   const path = `/portfolio/${category}`;
+  const description = cat.description || `Galería ${cat.label} · ${siteConfig.name}`;
+
   return {
     title: { absolute: `${cat.label} · Portfolio · ${siteConfig.name}` },
-    description: cat.description,
+    description,
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: `${cat.label} · ${siteConfig.name}`,
-      description: cat.description,
+      description,
       url: absoluteUrl(path),
     },
     twitter: {
       card: "summary_large_image",
       title: `${cat.label} · ${siteConfig.name}`,
-      description: cat.description,
+      description,
     },
   };
 }
@@ -58,9 +39,8 @@ export default async function PortfolioCategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category } = await params;
-  const cat = categories[category];
-
+  const content = await getServerSiteContent();
+  const cat = content.portfolio.categories.find((c) => c.slug === category);
   if (!cat) notFound();
-
   return <CategoryContent label={cat.label} />;
 }

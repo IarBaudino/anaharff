@@ -7,8 +7,16 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/AuthProvider";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { defaultSiteContent } from "@/lib/site-content";
 
-const navItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  subItems?: { href: string; label: string }[];
+};
+
+const baseNavItems: NavItem[] = [
   { href: "/", label: "HOME" },
   {
     href: "/sobre-mi",
@@ -27,6 +35,7 @@ const navItems = [
       { href: "/portfolio/retratos", label: "RETRATOS" },
       { href: "/portfolio/artistico", label: "ARTÍSTICO" },
       { href: "/portfolio/experimental", label: "EXPERIMENTAL" },
+      { href: "/portfolio/familia", label: "FAMILIA" },
     ],
   },
   {
@@ -41,7 +50,7 @@ const navItems = [
   },
   { href: "/blog", label: "BLOG" },
   { href: "/tienda", label: "TIENDA" },
-] as const;
+];
 
 const drawerLinkClass =
   "font-display text-lg font-light leading-snug tracking-tight text-charcoal transition-colors hover:text-accent";
@@ -57,8 +66,10 @@ const dropdownLinkClass =
 
 function NavDrawer({
   onNavigate,
+  navItems,
 }: {
   onNavigate?: () => void;
+  navItems: NavItem[];
 }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const toggle = (key: string) => setOpenKey((k) => (k === key ? null : key));
@@ -133,7 +144,7 @@ function NavDrawer({
   );
 }
 
-function NavDesktop() {
+function NavDesktop({ navItems }: { navItems: NavItem[] }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
 
@@ -291,6 +302,35 @@ export function Header() {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { content } = useSiteContent();
+  const portfolioCategories = content?.portfolio.categories?.length
+    ? content.portfolio.categories
+    : defaultSiteContent.portfolio.categories;
+  const seriesProjects = content?.series.projects?.length
+    ? content.series.projects
+    : defaultSiteContent.series.projects;
+
+  const navItems: NavItem[] = baseNavItems.map((item) => {
+    if (item.href === "/portfolio") {
+      return {
+        ...item,
+        subItems: portfolioCategories.map((c) => ({
+          href: `/portfolio/${c.slug}`,
+          label: c.label.toUpperCase(),
+        })),
+      };
+    }
+    if (item.href === "/series") {
+      return {
+        ...item,
+        subItems: seriesProjects.map((s) => ({
+          href: `/series/${s.slug}`,
+          label: s.label,
+        })),
+      };
+    }
+    return item;
+  });
 
   useEffect(() => {
     function onResize() {
@@ -340,7 +380,7 @@ export function Header() {
           Ana Harff
         </Link>
 
-        <NavDesktop />
+        <NavDesktop navItems={navItems} />
 
         <div className="ml-auto hidden shrink-0 items-center lg:flex">
           <AuthDesktop />
@@ -378,7 +418,7 @@ export function Header() {
             >
               <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4">
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-                  <NavDrawer onNavigate={() => setMobileOpen(false)} />
+                  <NavDrawer navItems={navItems} onNavigate={() => setMobileOpen(false)} />
                 </div>
                 <div className="mt-4 shrink-0 border-t border-charcoal/10 pt-4">
                   <AuthDrawer onNavigate={() => setMobileOpen(false)} />

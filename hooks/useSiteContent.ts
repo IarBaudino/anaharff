@@ -7,6 +7,10 @@ import {
   defaultSiteContent,
   normalizeBlog,
   normalizeHome,
+  normalizeFeaturedOrder,
+  normalizePortfolioCategories,
+  normalizeSeriesProjects,
+  normalizeStoreItems,
   normalizeSobreMi,
   type SiteContent,
 } from "@/lib/site-content";
@@ -15,14 +19,25 @@ const CONTENT_DOC = "site/content";
 
 /** Une Firestore parcial con defaults y migraciones (p. ej. párrafos ES/EN → idiomas). */
 function mergeFromFirestore(partial: Partial<SiteContent>): SiteContent {
+  const normalizedItems = normalizeFeaturedOrder(normalizeStoreItems(partial.tienda?.items));
+  const cantidadRaw = partial.tienda?.destacadosCantidad;
+  const destacadosCantidad = cantidadRaw === 4 || cantidadRaw === 6 ? cantidadRaw : 3;
+
   return {
     home: normalizeHome(partial.home),
     sobreMi: normalizeSobreMi(partial.sobreMi),
     blog: normalizeBlog(partial.blog),
+    portfolio: {
+      categories: normalizePortfolioCategories(partial.portfolio?.categories),
+    },
+    series: {
+      projects: normalizeSeriesProjects(partial.series?.projects),
+    },
     tienda: {
       ...defaultSiteContent.tienda,
       ...partial.tienda,
-      items: partial.tienda?.items ?? defaultSiteContent.tienda.items,
+      destacadosCantidad,
+      items: normalizedItems.length ? normalizedItems : defaultSiteContent.tienda.items,
     },
   };
 }

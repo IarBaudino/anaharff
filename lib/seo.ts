@@ -18,12 +18,3 @@ export const siteConfig = {
   defaultDescription:
     "Fotografía analógica en Buenos Aires. Portfolio de retratos, desnudos artísticos y series. Igualdad, diversidad y autenticidad corporal.",
 } as const;
-
-export const portfolioSlugs = ["desnudos", "retratos", "artistico", "experimental"] as const;
-
-export const seriesSlugs = [
-  "unica",
-  "ser-gorda",
-  "venus-as-a-boy",
-  "desde-la-distancia",
-] as const;

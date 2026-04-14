@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
-
-const series = [
-  { slug: "unica", label: "Unica" },
-  { slug: "ser-gorda", label: "Ser Gorda" },
-  { slug: "venus-as-a-boy", label: "Venus as a Boy" },
-  { slug: "desde-la-distancia", label: "Desde la Distancia" },
-];
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { defaultSiteContent } from "@/lib/site-content";
 
 export default function SeriesPage() {
+  const { content } = useSiteContent();
+  const series = content?.series.projects?.length
+    ? content.series.projects
+    : defaultSiteContent.series.projects;
+
   return (
     <div className="pt-6 md:pt-24 pb-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -30,7 +30,7 @@ export default function SeriesPage() {
         <div className="grid grid-cols-1 gap-5 border-t border-charcoal/10 pt-10 sm:grid-cols-2 sm:gap-6 lg:grid-cols-12 lg:gap-8 lg:pt-12">
           {series.map((s, i) => (
             <motion.div
-              key={s.slug}
+              key={s.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06, duration: 0.45 }}
@@ -58,6 +58,9 @@ export default function SeriesPage() {
                   <h2 className="font-display text-xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-2xl">
                     {s.label}
                   </h2>
+                  <p className="mt-3 max-w-xl text-sm leading-relaxed text-charcoal/75 md:text-base">
+                    {s.statement}
+                  </p>
                   <span className="mt-3 inline-flex items-center text-xs uppercase tracking-[0.2em] text-stone transition-colors group-hover:text-charcoal">
                     Ver serie
                     <svg

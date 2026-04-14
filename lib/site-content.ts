@@ -4,6 +4,25 @@ export interface StoreItem {
   descripcion: string;
   precio: number;
   imagenUrl: string;
+  /** Si está activo, puede aparecer en "Trabajos recientes" del inicio. */
+  destacarEnInicio?: boolean;
+  /** Orden manual entre destacados (1 = primero). */
+  destacadoOrden?: number;
+}
+
+export interface PortfolioCategory {
+  id: string;
+  slug: string;
+  label: string;
+  description: string;
+}
+
+export interface SeriesProject {
+  id: string;
+  slug: string;
+  label: string;
+  statement: string;
+  description: string;
 }
 
 /** Bloque de texto de introducción en un idioma (etiqueta solo para el panel; en el sitio se muestran en orden). */
@@ -70,9 +89,17 @@ export interface SiteContent {
   home: HomeContent;
   sobreMi: SobreMiContent;
   blog: BlogContent;
+  portfolio: {
+    categories: PortfolioCategory[];
+  };
+  series: {
+    projects: SeriesProject[];
+  };
   tienda: {
     titulo: string;
     descripcion: string;
+    /** Cantidad de cards visibles en "Trabajos recientes" (inicio). */
+    destacadosCantidad: 3 | 4 | 6;
     items: StoreItem[];
   };
 }
@@ -129,10 +156,86 @@ export const defaultSiteContent: SiteContent = {
       "Próximamente: reflexiones, detrás de escena y textos sobre el proceso creativo.",
     entradas: [],
   },
+  portfolio: {
+    categories: [
+      {
+        id: "cat-desnudos",
+        slug: "desnudos",
+        label: "Desnudos (nude)",
+        description:
+          "Galería de desnudo artístico y editorial en fotografía analógica. Ana Harff, Buenos Aires.",
+      },
+      {
+        id: "cat-retratos",
+        slug: "retratos",
+        label: "Retratos (portrait)",
+        description:
+          "Retratos en fotografía analógica: mirada, identidad y presencia. Ana Harff, Buenos Aires.",
+      },
+      {
+        id: "cat-artistico",
+        slug: "artistico",
+        label: "Artístico (art & shows)",
+        description:
+          "Obra artística, muestras y proyectos editoriales en analógico. Ana Harff, Buenos Aires.",
+      },
+      {
+        id: "cat-experimental",
+        slug: "experimental",
+        label: "Experimental",
+        description:
+          "Procesos experimentales y lecturas libres del cuerpo y el espacio en analógico. Ana Harff.",
+      },
+      {
+        id: "cat-familia",
+        slug: "familia",
+        label: "Familia",
+        description:
+          "Books de embarazo, pareja y familia en fotografía analógica. Ana Harff, Buenos Aires.",
+      },
+    ],
+  },
+  series: {
+    projects: [
+      {
+        id: "series-unica",
+        slug: "unica",
+        label: "Unica",
+        statement: "Un relato íntimo sobre identidad, presencia y gesto en fotografía analógica.",
+        description:
+          'Serie fotográfica "Unica" — narrativa en analógico. Ana Harff, Buenos Aires.',
+      },
+      {
+        id: "series-ser-gorda",
+        slug: "ser-gorda",
+        label: "Ser Gorda",
+        statement: "Una mirada sobre cuerpo, representación y autonomía fuera de los estereotipos.",
+        description:
+          'Proyecto "Ser Gorda" — cuerpo, identidad y fotografía analógica. Ana Harff, Buenos Aires.',
+      },
+      {
+        id: "series-venus-as-a-boy",
+        slug: "venus-as-a-boy",
+        label: "Venus as a Boy",
+        statement: "Cruces entre ternura, ambigüedad y deseo desde una estética sensible.",
+        description:
+          'Serie "Venus as a Boy" — fotografía analógica y exploración visual. Ana Harff, Buenos Aires.',
+      },
+      {
+        id: "series-desde-la-distancia",
+        slug: "desde-la-distancia",
+        label: "Desde la Distancia",
+        statement: "Imágenes sobre memoria, ausencia y vínculo cuando el cuerpo no está cerca.",
+        description:
+          'Serie "Desde la Distancia" — distancia, memoria y analógico. Ana Harff, Buenos Aires.',
+      },
+    ],
+  },
   tienda: {
     titulo: "Tienda",
     descripcion:
       "Imágenes en edición limitada. Fotografía analógica impresa o en formato digital de alta resolución.",
+    destacadosCantidad: 3,
     items: [
       {
         id: "1",
@@ -140,6 +243,8 @@ export const defaultSiteContent: SiteContent = {
         descripcion: "Fotografía analógica 35mm",
         precio: 15000,
         imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=1",
+        destacarEnInicio: true,
+        destacadoOrden: 1,
       },
       {
         id: "2",
@@ -147,6 +252,8 @@ export const defaultSiteContent: SiteContent = {
         descripcion: "Fotografía analógica 35mm",
         precio: 15000,
         imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=2",
+        destacarEnInicio: true,
+        destacadoOrden: 2,
       },
       {
         id: "3",
@@ -154,6 +261,8 @@ export const defaultSiteContent: SiteContent = {
         descripcion: "Impresión fine art",
         precio: 25000,
         imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=3",
+        destacarEnInicio: true,
+        destacadoOrden: 3,
       },
       {
         id: "4",
@@ -347,6 +456,113 @@ export function normalizeBlog(partial: unknown): BlogContent {
     introduccion,
     entradas,
   };
+}
+
+export function slugifyLabel(input: string): string {
+  return (input || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function newManagedItemId(prefix = "item"): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function normalizePortfolioCategories(partial: unknown): PortfolioCategory[] {
+  const rows = Array.isArray(partial) ? partial : defaultSiteContent.portfolio.categories;
+  const out: PortfolioCategory[] = rows.map((row, i) => {
+    const r = (row ?? {}) as Partial<PortfolioCategory>;
+    const label = typeof r.label === "string" && r.label.trim() ? r.label.trim() : `Categoría ${i + 1}`;
+    const slugRaw = typeof r.slug === "string" ? r.slug : "";
+    const slug = slugifyLabel(slugRaw) || slugifyLabel(label) || `categoria-${i + 1}`;
+    return {
+      id: typeof r.id === "string" && r.id ? r.id : newManagedItemId("cat"),
+      slug,
+      label,
+      description: typeof r.description === "string" ? r.description : "",
+    };
+  });
+
+  const used = new Set<string>();
+  return out.map((row) => {
+    let candidate = row.slug;
+    let n = 2;
+    while (used.has(candidate)) {
+      candidate = `${row.slug}-${n}`;
+      n += 1;
+    }
+    used.add(candidate);
+    return { ...row, slug: candidate };
+  });
+}
+
+export function normalizeSeriesProjects(partial: unknown): SeriesProject[] {
+  const rows = Array.isArray(partial) ? partial : defaultSiteContent.series.projects;
+  const out: SeriesProject[] = rows.map((row, i) => {
+    const r = (row ?? {}) as Partial<SeriesProject>;
+    const label = typeof r.label === "string" && r.label.trim() ? r.label.trim() : `Serie ${i + 1}`;
+    const slugRaw = typeof r.slug === "string" ? r.slug : "";
+    const slug = slugifyLabel(slugRaw) || slugifyLabel(label) || `serie-${i + 1}`;
+    return {
+      id: typeof r.id === "string" && r.id ? r.id : newManagedItemId("series"),
+      slug,
+      label,
+      statement: typeof r.statement === "string" ? r.statement : "",
+      description: typeof r.description === "string" ? r.description : "",
+    };
+  });
+
+  const used = new Set<string>();
+  return out.map((row) => {
+    let candidate = row.slug;
+    let n = 2;
+    while (used.has(candidate)) {
+      candidate = `${row.slug}-${n}`;
+      n += 1;
+    }
+    used.add(candidate);
+    return { ...row, slug: candidate };
+  });
+}
+
+export function normalizeStoreItems(items: unknown): StoreItem[] {
+  const fallback = defaultSiteContent.tienda.items;
+  const source = Array.isArray(items) ? items : fallback;
+
+  return source.map((row, i) => {
+    const it = (row ?? {}) as Partial<StoreItem>;
+    return {
+      id: typeof it.id === "string" && it.id ? it.id : `item-${i + 1}`,
+      titulo: typeof it.titulo === "string" ? it.titulo : `Obra ${i + 1}`,
+      descripcion: typeof it.descripcion === "string" ? it.descripcion : "",
+      precio: typeof it.precio === "number" ? it.precio : 0,
+      imagenUrl: typeof it.imagenUrl === "string" ? it.imagenUrl : "",
+      destacarEnInicio: Boolean(it.destacarEnInicio),
+      destacadoOrden:
+        typeof it.destacadoOrden === "number" && Number.isFinite(it.destacadoOrden)
+          ? Math.max(1, Math.round(it.destacadoOrden))
+          : undefined,
+    };
+  });
+}
+
+export function normalizeFeaturedOrder(items: StoreItem[]): StoreItem[] {
+  const marked = items
+    .filter((it) => it.destacarEnInicio)
+    .sort((a, b) => (a.destacadoOrden ?? Number.MAX_SAFE_INTEGER) - (b.destacadoOrden ?? Number.MAX_SAFE_INTEGER));
+
+  const orderMap = new Map(marked.map((it, i) => [it.id, i + 1]));
+  return items.map((it) => {
+    if (!it.destacarEnInicio) return { ...it, destacadoOrden: undefined };
+    return { ...it, destacadoOrden: orderMap.get(it.id) ?? 1 };
+  });
 }
 
 /** Para validar guardado desde el panel: imagen real obligatoria (no solo placeholder por defecto). */

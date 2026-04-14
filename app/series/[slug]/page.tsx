@@ -2,29 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeriesContent } from "@/components/series/SeriesContent";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
-
-const series: Record<string, { label: string; description: string }> = {
-  unica: {
-    label: "Unica",
-    description:
-      'Serie fotográfica "Unica" — narrativa en analógico. Ana Harff, Buenos Aires.',
-  },
-  "ser-gorda": {
-    label: "Ser Gorda",
-    description:
-      'Proyecto "Ser Gorda" — cuerpo, identidad y fotografía analógica. Ana Harff, Buenos Aires.',
-  },
-  "venus-as-a-boy": {
-    label: "Venus as a Boy",
-    description:
-      'Serie "Venus as a Boy" — fotografía analógica y exploración visual. Ana Harff, Buenos Aires.',
-  },
-  "desde-la-distancia": {
-    label: "Desde la Distancia",
-    description:
-      'Serie "Desde la Distancia" — distancia, memoria y analógico. Ana Harff, Buenos Aires.',
-  },
-};
+import { getServerSiteContent } from "@/lib/site-content-server";
 
 export async function generateMetadata({
   params,
@@ -32,22 +10,25 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const s = series[slug];
-  if (!s) return {};
+  const content = await getServerSiteContent();
+  const project = content.series.projects.find((s) => s.slug === slug);
+  if (!project) return {};
   const path = `/series/${slug}`;
+  const description = project.description || project.statement || `Serie ${project.label}`;
+
   return {
-    title: { absolute: `${s.label} · Series · ${siteConfig.name}` },
-    description: s.description,
+    title: { absolute: `${project.label} · Series · ${siteConfig.name}` },
+    description,
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
-      title: `${s.label} · ${siteConfig.name}`,
-      description: s.description,
+      title: `${project.label} · ${siteConfig.name}`,
+      description,
       url: absoluteUrl(path),
     },
     twitter: {
       card: "summary_large_image",
-      title: `${s.label} · ${siteConfig.name}`,
-      description: s.description,
+      title: `${project.label} · ${siteConfig.name}`,
+      description,
     },
   };
 }
@@ -58,9 +39,8 @@ export default async function SeriesDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const s = series[slug];
-
-  if (!s) notFound();
-
-  return <SeriesContent label={s.label} />;
+  const content = await getServerSiteContent();
+  const project = content.series.projects.find((s) => s.slug === slug);
+  if (!project) notFound();
+  return <SeriesContent label={project.label} statement={project.statement} />;
 }

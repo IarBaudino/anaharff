@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
-import { getSiteOrigin, portfolioSlugs, seriesSlugs } from "@/lib/seo";
+import { getSiteOrigin } from "@/lib/seo";
+import { getServerSiteContent } from "@/lib/site-content-server";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteOrigin();
   const lastModified = new Date();
+  const content = await getServerSiteContent();
 
   const staticPaths = [
     "",
@@ -23,18 +25,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: path === "" ? 1 : 0.85,
   }));
 
-  for (const slug of portfolioSlugs) {
+  for (const cat of content.portfolio.categories) {
     out.push({
-      url: `${base}/portfolio/${slug}`,
+      url: `${base}/portfolio/${cat.slug}`,
       lastModified,
       changeFrequency: "monthly",
       priority: 0.75,
     });
   }
 
-  for (const slug of seriesSlugs) {
+  for (const series of content.series.projects) {
     out.push({
-      url: `${base}/series/${slug}`,
+      url: `${base}/series/${series.slug}`,
       lastModified,
       changeFrequency: "monthly",
       priority: 0.75,

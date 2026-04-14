@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { type SiteContent } from "@/lib/site-content";
+import { normalizeFeaturedOrder, type SiteContent } from "@/lib/site-content";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 
 function inputClass() {
@@ -14,6 +15,10 @@ export function AdminProducts() {
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
   const itemCount = useMemo(() => content.tienda.items.length, [content.tienda.items.length]);
+  const featuredCount = useMemo(
+    () => content.tienda.items.filter((it) => it.destacarEnInicio).length,
+    [content.tienda.items]
+  );
 
   async function onSave() {
     const res = await save(content);
@@ -71,11 +76,84 @@ export function AdminProducts() {
           }
           placeholder="Descripción general de la tienda"
         />
+        <div className="rounded-lg border border-charcoal/10 bg-cream/60 p-4">
+          <p className="text-sm font-medium text-charcoal">Trabajos recientes (inicio)</p>
+          <p className="mt-1 text-xs text-stone">
+            Podés destacar productos puntuales, ordenarlos y definir cuántas cards mostrar.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label htmlFor="destacados-cantidad" className="text-sm text-charcoal/90">
+              Cantidad visible:
+            </label>
+            <select
+              id="destacados-cantidad"
+              className={inputClass()}
+              value={content.tienda.destacadosCantidad ?? 3}
+              onChange={(e) =>
+                setContent({
+                  ...content,
+                  tienda: {
+                    ...content.tienda,
+                    destacadosCantidad: Number(e.target.value) as 3 | 4 | 6,
+                  },
+                })
+              }
+            >
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+              <option value={6}>6</option>
+            </select>
+            <span className="text-xs text-stone">
+              Marcados actualmente: {featuredCount} (si faltan, se completan automáticamente).
+            </span>
+          </div>
+        </div>
       </section>
 
       <div className="space-y-5">
         {content.tienda.items.map((item, idx) => (
           <div key={item.id} className="border border-charcoal/10 p-4 space-y-3 rounded-lg">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-charcoal/10 bg-cream/70 p-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-charcoal">
+                <input
+                  type="checkbox"
+                  checked={Boolean(item.destacarEnInicio)}
+                  onChange={(e) =>
+                    toggleFeatured(content, setContent, idx, e.target.checked)
+                  }
+                />
+                Destacar en inicio
+              </label>
+              {item.destacarEnInicio ? (
+                <div className="flex items-center gap-2">
+                  <span className="rounded border border-charcoal/20 px-2 py-1 text-xs text-charcoal/80">
+                    Orden {item.destacadoOrden ?? "—"}
+                  </span>
+                  <button
+                    type="button"
+                    className="inline-flex size-8 items-center justify-center rounded border border-charcoal/15 text-charcoal/80 transition-colors hover:bg-charcoal/5 disabled:opacity-40"
+                    onClick={() => moveFeatured(content, setContent, item.id, -1)}
+                    disabled={(item.destacadoOrden ?? 1) <= 1}
+                    aria-label="Subir destacado"
+                    title="Subir destacado"
+                  >
+                    <ArrowUp className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex size-8 items-center justify-center rounded border border-charcoal/15 text-charcoal/80 transition-colors hover:bg-charcoal/5 disabled:opacity-40"
+                    onClick={() => moveFeatured(content, setContent, item.id, 1)}
+                    disabled={(item.destacadoOrden ?? 1) >= featuredCount}
+                    aria-label="Bajar destacado"
+                    title="Bajar destacado"
+                  >
+                    <ArrowDown className="size-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-stone">No destacado</span>
+              )}
+            </div>
             <div className="grid md:grid-cols-2 gap-3">
               <input
                 className={inputClass()}
@@ -147,6 +225,53 @@ function updateItem(
 ) {
   const nextItems = [...content.tienda.items];
   nextItems[idx] = { ...nextItems[idx], ...patch };
+  setContent({
+    ...content,
+    tienda: { ...content.tienda, items: nextItems },
+  });
+}
+
+function toggleFeatured(
+  content: SiteContent,
+  // eslint-disable-next-line no-unused-vars
+  setContent: (next: SiteContent) => void,
+  idx: number,
+  nextValue: boolean
+) {
+  const nextItems = [...content.tienda.items];
+  nextItems[idx] = {
+    ...nextItems[idx],
+    destacarEnInicio: nextValue,
+    destacadoOrden: nextValue ? Number.MAX_SAFE_INTEGER : undefined,
+  };
+
+  setContent({
+    ...content,
+    tienda: { ...content.tienda, items: normalizeFeaturedOrder(nextItems) },
+  });
+}
+
+function moveFeatured(
+  content: SiteContent,
+  // eslint-disable-next-line no-unused-vars
+  setContent: (next: SiteContent) => void,
+  itemId: string,
+  direction: -1 | 1
+) {
+  const featured = content.tienda.items
+    .filter((it) => it.destacarEnInicio)
+    .sort((a, b) => (a.destacadoOrden ?? Number.MAX_SAFE_INTEGER) - (b.destacadoOrden ?? Number.MAX_SAFE_INTEGER));
+  const from = featured.findIndex((it) => it.id === itemId);
+  if (from < 0) return;
+  const to = from + direction;
+  if (to < 0 || to >= featured.length) return;
+  const swapped = [...featured];
+  [swapped[from], swapped[to]] = [swapped[to], swapped[from]];
+  const orderMap = new Map(swapped.map((it, i) => [it.id, i + 1]));
+
+  const nextItems = content.tienda.items.map((it) =>
+    it.destacarEnInicio ? { ...it, destacadoOrden: orderMap.get(it.id) ?? it.destacadoOrden } : it
+  );
   setContent({
     ...content,
     tienda: { ...content.tienda, items: nextItems },
