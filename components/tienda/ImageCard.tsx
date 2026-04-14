@@ -25,7 +25,7 @@ export function ImageCard({ imagen }: ImageCardProps) {
               fill
               alt={imagen.titulo}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+              className="object-contain p-2 transition-opacity duration-300 group-hover:opacity-95"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">

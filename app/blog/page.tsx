@@ -56,7 +56,7 @@ export default function BlogPage() {
                       src={entrada.imagenUrl.trim()}
                       alt={entrada.titulo.trim() || "Entrada del blog"}
                       fill
-                      className="object-cover"
+                      className="object-contain p-2"
                       sizes="(max-width: 768px) 100vw, 42rem"
                     />
                   </div>

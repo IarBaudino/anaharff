@@ -92,7 +92,7 @@ export default function HomePage() {
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 45vw"
-                  className="object-cover"
+                  className="object-contain p-2"
                 />
                 <div
                   className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/[0.12] via-transparent to-transparent opacity-60"
@@ -207,7 +207,7 @@ export default function HomePage() {
                           ? "(max-width: 768px) 100vw, 58vw"
                           : "(max-width: 768px) 100vw, 42vw"
                       }
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                      className="object-contain p-2 transition-opacity duration-300 group-hover:opacity-95"
                     />
                     <div className="pointer-events-none absolute inset-0 bg-charcoal/0 transition-colors duration-500 group-hover:bg-charcoal/[0.04]" />
                   </div>
