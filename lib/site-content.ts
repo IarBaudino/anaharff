@@ -32,6 +32,15 @@ export interface IntroduccionIdioma {
   texto: string;
 }
 
+/** Testimonio del inicio (orden visual: trabajo → línea → nombre → texto). */
+export interface HomeTestimonio {
+  id: string;
+  testimonio: string;
+  nombre: string;
+  /** Ej.: tipo de sesión, proyecto (antes `contexto` en datos viejos). */
+  trabajoRealizado?: string;
+}
+
 export interface HomeContent {
   /** Título muy visible que se muestra al público (encima de las líneas decorativas y en el hero). */
   titulo: string;
@@ -42,6 +51,10 @@ export interface HomeContent {
   heroImagenUrl: string;
   /** Línea pequeña de contexto encima de la foto del hero. */
   heroKicker: string;
+  /** Etiqueta pequeña de la sección de testimonios (debajo de la portada). */
+  testimoniosKicker: string;
+  testimoniosTitulo: string;
+  testimonios: HomeTestimonio[];
   introduccionIdiomas: IntroduccionIdioma[];
   destacadosKicker: string;
   destacadosTitulo: string;
@@ -112,6 +125,24 @@ export const defaultSiteContent: SiteContent = {
     titulo: "ANA HARFF",
     heroImagenUrl: HOME_HERO_DEFAULT,
     heroKicker: "Fotografía analógica · Buenos Aires",
+    testimoniosKicker: "Testimonios",
+    testimoniosTitulo: "Lo que dicen quienes pasaron por el estudio",
+    testimonios: [
+      {
+        id: "test-1",
+        trabajoRealizado: "Sesión retrato",
+        nombre: "M. R.",
+        testimonio:
+          "Una experiencia respetuosa y artística. Las fotos capturan algo que no sabía que quería mostrar.",
+      },
+      {
+        id: "test-2",
+        trabajoRealizado: "Serie personal",
+        nombre: "L. G.",
+        testimonio:
+          "Me sentí acompañada en todo momento. El resultado superó lo que imaginaba.",
+      },
+    ],
     introduccionIdiomas: [
       {
         id: "es",
@@ -302,6 +333,13 @@ export function newIntroduccionLangId(): string {
   return `lang-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export function newTestimonioId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export function normalizeHome(partial: unknown): HomeContent {
   const p = (partial ?? {}) as LegacyHome;
 
@@ -337,11 +375,52 @@ export function normalizeHome(partial: unknown): HomeContent {
 
   const def = defaultSiteContent.home;
 
+  const testimoniosKicker =
+    typeof p.testimoniosKicker === "string" && p.testimoniosKicker.trim()
+      ? p.testimoniosKicker.trim()
+      : def.testimoniosKicker;
+  const testimoniosTitulo =
+    typeof p.testimoniosTitulo === "string" && p.testimoniosTitulo.trim()
+      ? p.testimoniosTitulo.trim()
+      : def.testimoniosTitulo;
+
+  let testimonios: HomeTestimonio[] = def.testimonios;
+  if (Array.isArray(p.testimonios)) {
+    if (p.testimonios.length === 0) {
+      testimonios = [];
+    } else {
+      testimonios = p.testimonios.map((row) => {
+        const r = row as unknown as Record<string, unknown>;
+        const testimonio =
+          typeof r.testimonio === "string"
+            ? r.testimonio
+            : typeof r.cita === "string"
+              ? r.cita
+              : "";
+        const trabajoRaw =
+          typeof r.trabajoRealizado === "string"
+            ? r.trabajoRealizado.trim()
+            : typeof r.contexto === "string"
+              ? r.contexto.trim()
+              : "";
+        return {
+          id: typeof r.id === "string" && r.id ? r.id : newTestimonioId(),
+          testimonio,
+          nombre: typeof r.nombre === "string" ? r.nombre : "",
+          trabajoRealizado: trabajoRaw || undefined,
+        };
+      });
+    }
+  }
+
   return {
     titulo,
     heroImagenUrl,
     heroKicker:
       typeof p.heroKicker === "string" ? p.heroKicker : def.heroKicker,
+    testimoniosKicker,
+    testimoniosTitulo,
+    testimonios,
     introduccionIdiomas,
     destacadosKicker:
       typeof p.destacadosKicker === "string" ? p.destacadosKicker : def.destacadosKicker,

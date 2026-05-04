@@ -6,15 +6,66 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle } from "lucide-react";
 import { siteButtonSolid } from "@/lib/site-buttons";
+import { MP_CHECKOUT_MARKER_KEY } from "@/lib/mp-checkout-marker";
+import { useCartStore } from "@/stores/cart-store";
 
 export function ExitoContent() {
   const searchParams = useSearchParams();
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const tried = useRef(false);
+  const cartAfterPaymentApplied = useRef(false);
 
   useEffect(() => {
+    const applyCartAfterApprovedPayment = (status: string | undefined) => {
+      if (cartAfterPaymentApplied.current) return;
+      if (status !== "approved") return;
+
+      let raw: string | null = null;
+      try {
+        raw = sessionStorage.getItem(MP_CHECKOUT_MARKER_KEY);
+        if (raw) sessionStorage.removeItem(MP_CHECKOUT_MARKER_KEY);
+      } catch {
+        return;
+      }
+      if (!raw) return;
+
+      cartAfterPaymentApplied.current = true;
+
+      try {
+        const parsed = JSON.parse(raw) as {
+          mode?: string;
+          lines?: { id: string; q?: number }[];
+        };
+        if (parsed.mode === "cart") {
+          useCartStore.getState().clear();
+          return;
+        }
+        if (parsed.mode === "direct" && Array.isArray(parsed.lines)) {
+          const merged = new Map<string, number>();
+          for (const line of parsed.lines) {
+            const id = String(line.id);
+            const q = Math.max(0, Math.round(Number(line.q) || 0));
+            if (q <= 0) continue;
+            merged.set(id, (merged.get(id) ?? 0) + q);
+          }
+          const decrementBy = useCartStore.getState().decrementBy;
+          merged.forEach((q, id) => decrementBy(id, q));
+        }
+      } catch {
+        /* JSON inválido */
+      }
+    };
+
     const paymentId = searchParams.get("payment_id");
-    if (!paymentId || tried.current) return;
+    if (!paymentId) {
+      const urlOk =
+        searchParams.get("status") === "approved" ||
+        searchParams.get("collection_status") === "approved";
+      if (urlOk) applyCartAfterApprovedPayment("approved");
+      return;
+    }
+
+    if (tried.current) return;
     tried.current = true;
 
     fetch("/api/orders/sync-payment", {
@@ -25,6 +76,7 @@ export function ExitoContent() {
       .then((r) => r.json())
       .then((data) => {
         if (data.ok) {
+          applyCartAfterApprovedPayment(typeof data.status === "string" ? data.status : undefined);
           setSyncMsg(
             data.created
               ? "Tu pedido quedó registrado en el panel de administración."

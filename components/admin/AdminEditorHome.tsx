@@ -6,6 +6,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import {
   isPlaceholderHeroUrl,
   newIntroduccionLangId,
+  newTestimonioId,
   type IntroduccionIdioma,
 } from "@/lib/site-content";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
@@ -42,7 +43,7 @@ export function AdminEditorHome() {
       );
       return;
     }
-    setMessage("No se pudo guardar.");
+    setMessage(null);
   }
 
   function updateIdioma(id: string, patch: Partial<IntroduccionIdioma>) {
@@ -98,8 +99,9 @@ export function AdminEditorHome() {
       <div>
         <PanelTitle>Página principal</PanelTitle>
         <HelpText>
-          Todo lo de esta pestaña se ve en el <strong>inicio del sitio</strong> (la portada con
-          título grande, foto y textos al costado).
+          Todo lo de esta pestaña se ve en el <strong>inicio del sitio</strong>: portada a
+          pantalla completa, testimonios, título y textos. Las fotos del inicio se muestran{" "}
+          <strong>enteras, sin recortar</strong>.
         </HelpText>
       </div>
 
@@ -108,9 +110,9 @@ export function AdminEditorHome() {
         <div>
           <FieldLabel htmlFor="home-titulo">Nombre que se muestra como titular principal</FieldLabel>
           <HelpText>
-            Aparece muy grande arriba de todo (junto a Instagram y el enlace a contacto) y en el
-            encabezado del navegador si no definís otro. Suele ser tu nombre artístico en mayúsculas
-            o el que prefieras.
+            Aparece muy grande en el inicio (debajo de testimonios) y en el encabezado del navegador
+            si no definís otro. Los enlaces a Instagram y contacto están en la barra lateral del
+            sitio. Suele ser tu nombre artístico en mayúsculas o el que prefieras.
           </HelpText>
           <input
             id="home-titulo"
@@ -129,9 +131,9 @@ export function AdminEditorHome() {
       <section className="space-y-4">
         <SectionHeading>Introducción</SectionHeading>
         <HelpText>
-          Estos párrafos van en la <strong>columna derecha</strong> del bloque principal, al lado de
-          la foto. El orden es el del sitio: el primero como texto principal; los siguientes, más
-          suaves (cursiva). Podés añadir otro bloque con el botón de abajo.
+          Van <strong>debajo de la portada y de los testimonios</strong>. El primero como texto
+          principal; los siguientes, más suaves (cursiva). Podés añadir otro bloque con el botón de
+          abajo.
         </HelpText>
 
         <div className="space-y-6">
@@ -184,9 +186,9 @@ export function AdminEditorHome() {
       <section className="space-y-4">
         <SectionHeading>Foto principal del inicio</SectionHeading>
         <HelpText>
-          <strong>Obligatoria:</strong> la imagen grande que va a la izquierda del texto en
-          computadora (formato vertical recomendado). Usá el botón para subirla desde tu
-          computadora. No se puede guardar dejando solo la imagen de muestra.
+          <strong>Obligatoria:</strong> es la imagen de la portada a pantalla completa. Se muestra{" "}
+          <strong>completa, sin recortes</strong> (composición íntegra). Formato vertical recomendado.
+          Subila con el botón. No se puede guardar dejando solo la imagen de muestra.
         </HelpText>
         <CloudinaryUploadField
           previewUrl={content.home.heroImagenUrl}
@@ -201,11 +203,155 @@ export function AdminEditorHome() {
       </section>
 
       <section className="space-y-4">
+        <SectionHeading>Testimonios (debajo de la portada)</SectionHeading>
+        <HelpText>
+          Tres columnas en escritorio: arriba el <strong>trabajo realizado</strong> (pequeño), línea
+          fina, <strong>nombre</strong> y el <strong>testimonio</strong>. Sin marco de “card” en el
+          sitio. Añadí o quitá filas con los botones de abajo.
+        </HelpText>
+        <div className="space-y-3">
+          <div>
+            <FieldLabel htmlFor="test-kicker">Etiqueta pequeña</FieldLabel>
+            <input
+              id="test-kicker"
+              className={inputClass()}
+              value={content.home.testimoniosKicker}
+              onChange={(e) =>
+                setContent({
+                  ...content,
+                  home: { ...content.home, testimoniosKicker: e.target.value },
+                })
+              }
+            />
+          </div>
+          <div>
+            <FieldLabel htmlFor="test-titulo">Título de la sección</FieldLabel>
+            <input
+              id="test-titulo"
+              className={inputClass()}
+              value={content.home.testimoniosTitulo}
+              onChange={(e) =>
+                setContent({
+                  ...content,
+                  home: { ...content.home, testimoniosTitulo: e.target.value },
+                })
+              }
+            />
+          </div>
+        </div>
+        <div className="space-y-5">
+          {content.home.testimonios.map((t) => (
+            <div key={t.id} className="rounded-lg border border-charcoal/15 bg-cream/80 p-4 shadow-sm">
+              <div className="mb-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setContent({
+                      ...content,
+                      home: {
+                        ...content.home,
+                        testimonios: content.home.testimonios.filter((x) => x.id !== t.id),
+                      },
+                    })
+                  }
+                  className="inline-flex items-center gap-1 text-xs text-stone hover:text-red-700"
+                >
+                  <Trash2 className="size-3.5" />
+                  Quitar
+                </button>
+              </div>
+              <div>
+                <FieldLabel htmlFor={`test-trabajo-${t.id}`}>Trabajo realizado (opcional)</FieldLabel>
+                <input
+                  id={`test-trabajo-${t.id}`}
+                  className={`${inputClass()} mt-1`}
+                  value={t.trabajoRealizado ?? ""}
+                  placeholder="Ej.: Sesión retrato, edición limitada…"
+                  onChange={(e) =>
+                    setContent({
+                      ...content,
+                      home: {
+                        ...content.home,
+                        testimonios: content.home.testimonios.map((x) =>
+                          x.id === t.id
+                            ? { ...x, trabajoRealizado: e.target.value || undefined }
+                            : x
+                        ),
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="mt-3">
+                <FieldLabel htmlFor={`test-nombre-${t.id}`}>Nombre</FieldLabel>
+                <input
+                  id={`test-nombre-${t.id}`}
+                  className={`${inputClass()} mt-1`}
+                  value={t.nombre}
+                  onChange={(e) =>
+                    setContent({
+                      ...content,
+                      home: {
+                        ...content.home,
+                        testimonios: content.home.testimonios.map((x) =>
+                          x.id === t.id ? { ...x, nombre: e.target.value } : x
+                        ),
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="mt-3">
+                <FieldLabel htmlFor={`test-texto-${t.id}`}>Testimonio</FieldLabel>
+                <textarea
+                  id={`test-texto-${t.id}`}
+                  className={`${inputClass()} mt-1`}
+                  rows={4}
+                  value={t.testimonio}
+                  onChange={(e) =>
+                    setContent({
+                      ...content,
+                      home: {
+                        ...content.home,
+                        testimonios: content.home.testimonios.map((x) =>
+                          x.id === t.id ? { ...x, testimonio: e.target.value } : x
+                        ),
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            setContent({
+              ...content,
+              home: {
+                ...content.home,
+                testimonios: [
+                  ...content.home.testimonios,
+                  { id: newTestimonioId(), testimonio: "", nombre: "", trabajoRealizado: undefined },
+                ],
+              },
+            })
+          }
+          className="inline-flex items-center gap-2 border border-charcoal/20 px-4 py-2 text-sm text-charcoal transition-colors hover:border-charcoal/40"
+        >
+          <Plus className="size-4" />
+          Añadir testimonio
+        </button>
+      </section>
+
+      <section className="space-y-4">
         <SectionHeading>Línea sobre la foto</SectionHeading>
         <div>
-          <FieldLabel htmlFor="hero-kicker">Texto pequeño encima de la foto</FieldLabel>
+          <FieldLabel htmlFor="hero-kicker">Texto pequeño (encima del manifiesto)</FieldLabel>
           <HelpText>
-            Es la frase cortita que aparece arriba de la imagen (por ejemplo rubro y ciudad).
+            Frase cortita de contexto (rubro, ciudad…) que se muestra antes del texto principal del
+            inicio.
           </HelpText>
           <input
             id="hero-kicker"

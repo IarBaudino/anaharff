@@ -14,6 +14,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Misma base que el cuerpo (evita destellos / distinto tono detrás del nav fijo) */
+    background-color: var(--color-cream);
   }
   body {
     @apply bg-cream text-charcoal antialiased;

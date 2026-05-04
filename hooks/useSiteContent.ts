@@ -17,6 +17,11 @@ import {
 
 const CONTENT_DOC = "site/content";
 
+/** Firestore no admite `undefined` en campos; JSON elimina esas claves. */
+function cloneForFirestore<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data)) as T;
+}
+
 /** Une Firestore parcial con defaults y migraciones (p. ej. párrafos ES/EN → idiomas). */
 function mergeFromFirestore(partial: Partial<SiteContent>): SiteContent {
   const normalizedItems = normalizeFeaturedOrder(normalizeStoreItems(partial.tienda?.items));
@@ -92,10 +97,18 @@ export function useSiteContent() {
     setSaving(true);
     setError(null);
     try {
-      await setDoc(doc(db, CONTENT_DOC), nextContent, { merge: true });
+      const payload = cloneForFirestore(nextContent);
+      await setDoc(doc(db, CONTENT_DOC), payload, { merge: true });
       return { ok: true, offline: false };
-    } catch {
-      setError("No se pudo guardar. Probá de nuevo en unos minutos.");
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : String(e);
+      const hint =
+        raw.includes("permission") || raw.includes("PERMISSION_DENIED")
+          ? "Sin permiso para escribir en Firestore. Verificá que exista el documento admins/{tu uid} y las reglas publicadas."
+          : raw.includes("undefined") || raw.includes("Unsupported field value")
+            ? "Datos inválidos para Firestore (p. ej. campos vacíos). Recargá la página y probá de nuevo."
+            : `No se pudo guardar: ${raw}`;
+      setError(hint);
       return { ok: false, offline: false };
     } finally {
       setSaving(false);

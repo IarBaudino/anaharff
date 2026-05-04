@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ImagenTienda } from "./TiendaGrid";
 import { CheckoutButton } from "./CheckoutButton";
+import { AddToCartButton } from "./AddToCartButton";
 import { Card, CardContent } from "@/components/ui/Card";
 
 interface ImageCardProps {
@@ -44,7 +45,10 @@ export function ImageCard({ imagen }: ImageCardProps) {
         <p className="mb-4 text-sm font-medium text-charcoal">
           ${imagen.precio.toLocaleString("es-AR")} ARS
         </p>
-        <CheckoutButton imagen={imagen} />
+        <div className="flex flex-wrap items-center gap-2">
+          <AddToCartButton imagen={imagen} />
+          <CheckoutButton imagen={imagen} />
+        </div>
       </CardContent>
     </Card>
   );

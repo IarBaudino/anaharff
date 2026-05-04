@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
+import { HomeTestimoniosSection } from "@/components/home/HomeTestimoniosSection";
 import { SectionDivider } from "@/components/SectionDivider";
 import { cn } from "@/lib/utils";
 import { siteButtonOutline, siteButtonSolid } from "@/lib/site-buttons";
@@ -63,57 +64,60 @@ export default function HomePage() {
   const useEditorialLayout = destacados.length <= 3;
 
   return (
-    <div className="pt-4 md:pt-12">
-      {/* Título del sitio + Instagram / contacto (misma línea visual, encima de las dos líneas) */}
-      <HomeHeroTitle titulo={home.titulo} />
-
-      {/* Doble línea decorativa */}
-      <div className="border-b border-charcoal/[0.06] bg-cream">
-        <div className="mx-auto max-w-[1600px] px-4 pb-2 pt-1 sm:px-6 lg:px-10">
-          <SectionDivider variant="double" className="opacity-90" />
+    <div>
+      {/* Primer pantallazo: solo imagen de impacto (sin scroll dentro del bloque) */}
+      <section
+        aria-label="Imagen principal"
+        className="relative w-full bg-[var(--color-cream)] min-h-[calc(100dvh-3.5rem)] lg:min-h-dvh"
+      >
+        <Image
+          src={heroUrl}
+          alt={`Imagen principal — ${home.titulo}`}
+          fill
+          priority
+          sizes="100vw"
+          className="object-contain object-center"
+        />
+        <div className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-charcoal/55 lg:bottom-8">
+          <span className="text-[0.65rem] font-medium uppercase tracking-[0.28em]">Deslizá</span>
+          <span className="block h-6 w-px bg-gradient-to-b from-charcoal/35 to-transparent" aria-hidden />
         </div>
-      </div>
+      </section>
 
-      {/* Hero editorial: imagen + manifiesto (sin repetir el nombre como h1) */}
-      <section className="relative border-b border-charcoal/[0.12]">
-        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
-          <div className="grid grid-cols-1 gap-10 py-12 lg:grid-cols-12 lg:gap-14 lg:py-16 xl:gap-20">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-              className="relative lg:col-span-5 xl:col-span-6"
-            >
-              <p className="section-kicker mb-6 lg:mb-8">{home.heroKicker}</p>
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-charcoal/[0.04]">
-                <Image
-                  src={heroUrl}
-                  alt={`Imagen principal — ${home.titulo}`}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 45vw"
-                  className="object-contain p-2"
-                />
-                <div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/[0.12] via-transparent to-transparent opacity-60"
-                  aria-hidden
-                />
-              </div>
-            </motion.div>
+      <HomeTestimoniosSection
+        kicker={home.testimoniosKicker}
+        titulo={home.testimoniosTitulo}
+        items={home.testimonios}
+      />
 
+      <div className="bg-cream pt-6 md:pt-12">
+        {/* Título del sitio + Instagram / contacto */}
+        <HomeHeroTitle titulo={home.titulo} />
+
+        {/* Doble línea decorativa */}
+        <div className="border-b border-charcoal/[0.06] bg-cream">
+          <div className="mx-auto max-w-[1600px] px-4 pb-2 pt-1 sm:px-6 lg:px-10">
+            <SectionDivider variant="double" className="opacity-90" />
+          </div>
+        </div>
+
+        {/* Manifiesto (la imagen de impacto ya se vio arriba) */}
+        <section className="relative border-b border-charcoal/[0.12]">
+          <div className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 sm:py-14 lg:px-10 lg:py-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.75, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-              className="flex flex-col justify-center border-charcoal/10 lg:col-span-7 lg:border-l lg:pl-10 xl:col-span-6 xl:pl-14"
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="mx-auto max-w-3xl"
             >
-              <SectionDivider variant="line" className="mb-8 lg:hidden" />
+              <p className="section-kicker mb-8">{home.heroKicker}</p>
               <h2 className="sr-only">Manifiesto</h2>
               {home.introduccionIdiomas.map((bloque, i) => (
                 <p
                   key={bloque.id}
                   className={cn(
-                    "max-w-xl leading-[1.75] text-charcoal/90",
+                    "leading-[1.75] text-charcoal/90",
                     i === 0
                       ? "text-lg md:text-xl"
                       : "mt-6 text-base italic leading-relaxed text-stone md:text-lg"
@@ -122,7 +126,7 @@ export default function HomePage() {
                   {bloque.texto}
                 </p>
               ))}
-              <div className="rule-fade my-10 max-w-md" aria-hidden />
+              <div className="rule-fade my-10" aria-hidden />
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <Link href="/portfolio" className={siteButtonOutline}>
                   Ver portfolio
@@ -133,8 +137,7 @@ export default function HomePage() {
               </div>
             </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Destacados — rejilla asimétrica */}
       <section className="border-b border-charcoal/[0.12] bg-cream">
@@ -250,6 +253,7 @@ export default function HomePage() {
           </Link>
         </motion.div>
       </section>
+      </div>
     </div>
   );
 }

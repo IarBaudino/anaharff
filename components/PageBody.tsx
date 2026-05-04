@@ -15,7 +15,7 @@ export function PageBody({ children }: { children: ReactNode }) {
       <main
         className={cn(
           "min-w-0 flex-1",
-          isAdmin ? "pt-12" : SIDEBAR_PAD
+          isAdmin ? "pt-12" : cn("bg-[var(--color-cream)]", SIDEBAR_PAD)
         )}
       >
         {children}
