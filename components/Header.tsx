@@ -19,6 +19,8 @@ type NavItem = {
   subItems?: { href: string; label: string }[];
 };
 
+const galleryCategoryOrder = ["desnudos", "retratos", "artistico", "familia", "naturaleza", "experimental"];
+
 const baseNavItems: NavItem[] = [
   { href: "/", label: "HOME" },
   {
@@ -31,24 +33,16 @@ const baseNavItems: NavItem[] = [
     ],
   },
   {
-    href: "/portfolio",
-    label: "PORTFOLIO",
+    href: "/galeria",
+    label: "GALERÍA",
     subItems: [
-      { href: "/portfolio/desnudos", label: "DESNUDOS" },
+      { href: "/series", label: "SERIES" },
+      { href: "/portfolio/desnudos", label: "DESNUDO" },
       { href: "/portfolio/retratos", label: "RETRATOS" },
       { href: "/portfolio/artistico", label: "ARTÍSTICO" },
+      { href: "/portfolio/familia", label: "FAMILIAR" },
+      { href: "/portfolio/naturaleza", label: "NATURALEZA" },
       { href: "/portfolio/experimental", label: "EXPERIMENTAL" },
-      { href: "/portfolio/familia", label: "FAMILIA" },
-    ],
-  },
-  {
-    href: "/series",
-    label: "SERIES",
-    subItems: [
-      { href: "/series/unica", label: "Unica" },
-      { href: "/series/ser-gorda", label: "Ser Gorda" },
-      { href: "/series/venus-as-a-boy", label: "Venus as a Boy" },
-      { href: "/series/desde-la-distancia", label: "Desde la dist." },
     ],
   },
   { href: "/blog", label: "BLOG" },
@@ -240,27 +234,26 @@ export function Header() {
   const portfolioCategories = content?.portfolio.categories?.length
     ? content.portfolio.categories
     : defaultSiteContent.portfolio.categories;
-  const seriesProjects = content?.series.projects?.length
-    ? content.series.projects
-    : defaultSiteContent.series.projects;
+  const orderedPortfolioCategories = [...portfolioCategories].sort((a, b) => {
+    const ai = galleryCategoryOrder.indexOf(a.slug);
+    const bi = galleryCategoryOrder.indexOf(b.slug);
+    const va = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+    const vb = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+    return va - vb;
+  });
 
   const navItems: NavItem[] = baseNavItems.map((item) => {
-    if (item.href === "/portfolio") {
-      return {
-        ...item,
-        subItems: portfolioCategories.map((c) => ({
+    if (item.href === "/galeria") {
+      const gallerySubItems = [
+        { href: "/series", label: "SERIES" },
+        ...orderedPortfolioCategories.map((c) => ({
           href: `/portfolio/${c.slug}`,
           label: c.label.toUpperCase(),
         })),
-      };
-    }
-    if (item.href === "/series") {
+      ];
       return {
         ...item,
-        subItems: seriesProjects.map((s) => ({
-          href: `/series/${s.slug}`,
-          label: s.label,
-        })),
+        subItems: gallerySubItems,
       };
     }
     return item;

@@ -15,6 +15,8 @@ export interface PortfolioCategory {
   slug: string;
   label: string;
   description: string;
+  /** Imagen de portada visible en Galería. */
+  coverImageUrl: string;
 }
 
 export interface SeriesProject {
@@ -23,6 +25,8 @@ export interface SeriesProject {
   label: string;
   statement: string;
   description: string;
+  /** Imagen de portada visible en Series/Galería. */
+  coverImageUrl: string;
 }
 
 /** Bloque de texto de introducción en un idioma (etiqueta solo para el panel; en el sitio se muestran en orden). */
@@ -118,7 +122,12 @@ export interface SiteContent {
 }
 
 const HOME_HERO_DEFAULT =
-  "https://placehold.co/900x1200/f7f5f0/8c8c8c?text=Ana+Harff";
+  "https://placehold.co/900x1200/f7f5f0/8c8c8c/png?text=Ana+Harff";
+
+export function defaultCoverImageUrl(label: string): string {
+  const text = encodeURIComponent((label || "Galería").trim() || "Galería");
+  return `https://placehold.co/1200x800/f2efe7/4a4034/png?text=${text}`;
+}
 
 export const defaultSiteContent: SiteContent = {
   home: {
@@ -159,7 +168,7 @@ export const defaultSiteContent: SiteContent = {
     ],
     destacadosKicker: "Destacados",
     destacadosTitulo: "Trabajos recientes",
-    destacadosLinkTexto: "Ver tienda completa",
+    destacadosLinkTexto: "Ver galeria completa",
     cierreKicker: "Contacto",
     cierreTexto: "Sesiones, colaboraciones o consultas por obra.",
   },
@@ -195,6 +204,7 @@ export const defaultSiteContent: SiteContent = {
         label: "Desnudos (nude)",
         description:
           "Galería de desnudo artístico y editorial en fotografía analógica. Ana Harff, Buenos Aires.",
+        coverImageUrl: defaultCoverImageUrl("Desnudo"),
       },
       {
         id: "cat-retratos",
@@ -202,6 +212,7 @@ export const defaultSiteContent: SiteContent = {
         label: "Retratos (portrait)",
         description:
           "Retratos en fotografía analógica: mirada, identidad y presencia. Ana Harff, Buenos Aires.",
+        coverImageUrl: defaultCoverImageUrl("Retratos"),
       },
       {
         id: "cat-artistico",
@@ -209,6 +220,7 @@ export const defaultSiteContent: SiteContent = {
         label: "Artístico (art & shows)",
         description:
           "Obra artística, muestras y proyectos editoriales en analógico. Ana Harff, Buenos Aires.",
+        coverImageUrl: defaultCoverImageUrl("Artístico"),
       },
       {
         id: "cat-experimental",
@@ -216,6 +228,7 @@ export const defaultSiteContent: SiteContent = {
         label: "Experimental",
         description:
           "Procesos experimentales y lecturas libres del cuerpo y el espacio en analógico. Ana Harff.",
+        coverImageUrl: defaultCoverImageUrl("Experimental"),
       },
       {
         id: "cat-familia",
@@ -223,6 +236,15 @@ export const defaultSiteContent: SiteContent = {
         label: "Familia",
         description:
           "Books de embarazo, pareja y familia en fotografía analógica. Ana Harff, Buenos Aires.",
+        coverImageUrl: defaultCoverImageUrl("Familiar"),
+      },
+      {
+        id: "cat-naturaleza",
+        slug: "naturaleza",
+        label: "Naturaleza",
+        description:
+          "Imágenes de naturaleza y paisaje en fotografía analógica. Ana Harff, Buenos Aires.",
+        coverImageUrl: defaultCoverImageUrl("Naturaleza"),
       },
     ],
   },
@@ -235,6 +257,7 @@ export const defaultSiteContent: SiteContent = {
         statement: "Un relato íntimo sobre identidad, presencia y gesto en fotografía analógica.",
         description:
           'Serie fotográfica "Unica" — narrativa en analógico. Ana Harff, Buenos Aires.',
+        coverImageUrl: defaultCoverImageUrl("Unica"),
       },
       {
         id: "series-ser-gorda",
@@ -243,6 +266,7 @@ export const defaultSiteContent: SiteContent = {
         statement: "Una mirada sobre cuerpo, representación y autonomía fuera de los estereotipos.",
         description:
           'Proyecto "Ser Gorda" — cuerpo, identidad y fotografía analógica. Ana Harff, Buenos Aires.',
+        coverImageUrl: defaultCoverImageUrl("Ser Gorda"),
       },
       {
         id: "series-venus-as-a-boy",
@@ -251,6 +275,7 @@ export const defaultSiteContent: SiteContent = {
         statement: "Cruces entre ternura, ambigüedad y deseo desde una estética sensible.",
         description:
           'Serie "Venus as a Boy" — fotografía analógica y exploración visual. Ana Harff, Buenos Aires.',
+        coverImageUrl: defaultCoverImageUrl("Venus as a Boy"),
       },
       {
         id: "series-desde-la-distancia",
@@ -259,6 +284,7 @@ export const defaultSiteContent: SiteContent = {
         statement: "Imágenes sobre memoria, ausencia y vínculo cuando el cuerpo no está cerca.",
         description:
           'Serie "Desde la Distancia" — distancia, memoria y analógico. Ana Harff, Buenos Aires.',
+        coverImageUrl: defaultCoverImageUrl("Desde la Distancia"),
       },
     ],
   },
@@ -273,7 +299,7 @@ export const defaultSiteContent: SiteContent = {
         titulo: "Serie Unica - #1",
         descripcion: "Fotografía analógica 35mm",
         precio: 15000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=1",
+        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=1",
         destacarEnInicio: true,
         destacadoOrden: 1,
       },
@@ -282,7 +308,7 @@ export const defaultSiteContent: SiteContent = {
         titulo: "Serie Unica - #2",
         descripcion: "Fotografía analógica 35mm",
         precio: 15000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=2",
+        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=2",
         destacarEnInicio: true,
         destacadoOrden: 2,
       },
@@ -291,7 +317,7 @@ export const defaultSiteContent: SiteContent = {
         titulo: "Retrato - #1",
         descripcion: "Impresión fine art",
         precio: 25000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=3",
+        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=3",
         destacarEnInicio: true,
         destacadoOrden: 3,
       },
@@ -300,21 +326,21 @@ export const defaultSiteContent: SiteContent = {
         titulo: "Retrato - #2",
         descripcion: "Impresión fine art",
         precio: 25000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=4",
+        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=4",
       },
       {
         id: "5",
         titulo: "Experimental - #1",
         descripcion: "Edición limitada",
         precio: 18000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=5",
+        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=5",
       },
       {
         id: "6",
         titulo: "Experimental - #2",
         descripcion: "Edición limitada",
         precio: 18000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a?text=6",
+        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=6",
       },
     ],
   },
@@ -413,6 +439,15 @@ export function normalizeHome(partial: unknown): HomeContent {
     }
   }
 
+  const destacadosLinkTextoRaw =
+    typeof p.destacadosLinkTexto === "string" ? p.destacadosLinkTexto : "";
+  const destacadosLinkTexto =
+    destacadosLinkTextoRaw.trim().toLowerCase() === "ver tienda completa"
+      ? "Ver galería completa"
+      : typeof p.destacadosLinkTexto === "string"
+        ? p.destacadosLinkTexto
+        : def.destacadosLinkTexto;
+
   return {
     titulo,
     heroImagenUrl,
@@ -427,9 +462,7 @@ export function normalizeHome(partial: unknown): HomeContent {
     destacadosTitulo:
       typeof p.destacadosTitulo === "string" ? p.destacadosTitulo : def.destacadosTitulo,
     destacadosLinkTexto:
-      typeof p.destacadosLinkTexto === "string"
-        ? p.destacadosLinkTexto
-        : def.destacadosLinkTexto,
+      destacadosLinkTexto,
     cierreKicker:
       typeof p.cierreKicker === "string" ? p.cierreKicker : def.cierreKicker,
     cierreTexto:
@@ -566,6 +599,10 @@ export function normalizePortfolioCategories(partial: unknown): PortfolioCategor
       slug,
       label,
       description: typeof r.description === "string" ? r.description : "",
+      coverImageUrl:
+        typeof r.coverImageUrl === "string" && r.coverImageUrl.trim()
+          ? r.coverImageUrl.trim()
+          : defaultCoverImageUrl(label),
     };
   });
 
@@ -595,6 +632,10 @@ export function normalizeSeriesProjects(partial: unknown): SeriesProject[] {
       label,
       statement: typeof r.statement === "string" ? r.statement : "",
       description: typeof r.description === "string" ? r.description : "",
+      coverImageUrl:
+        typeof r.coverImageUrl === "string" && r.coverImageUrl.trim()
+          ? r.coverImageUrl.trim()
+          : defaultCoverImageUrl(label),
     };
   });
 

@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { defaultSiteContent } from "@/lib/site-content";
+import { defaultCoverImageUrl, defaultSiteContent } from "@/lib/site-content";
 
 export default function SeriesPage() {
   const { content } = useSiteContent();
@@ -47,12 +48,14 @@ export default function SeriesPage() {
                 className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-charcoal/15 bg-cream shadow-sm transition-all duration-500 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-2xl before:bg-transparent before:transition-colors hover:border-charcoal/22 hover:shadow-md hover:before:bg-accent/90"
               >
                 <div className="relative aspect-[4/5] overflow-hidden bg-charcoal/[0.04] sm:aspect-[16/11] lg:aspect-[4/5]">
-                  <div className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.06] to-transparent" />
-                  <div className="absolute inset-0 flex items-center justify-center p-6">
-                    <span className="text-center font-display text-2xl font-light text-charcoal/35 transition-colors group-hover:text-charcoal/55 md:text-3xl">
-                      {s.label}
-                    </span>
-                  </div>
+                  <Image
+                    src={s.coverImageUrl?.trim() || defaultCoverImageUrl(s.label)}
+                    alt={`Portada de la serie ${s.label}`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/25 via-charcoal/0 to-charcoal/5" />
                 </div>
                 <div className="flex flex-1 flex-col border-t border-charcoal/5 p-6 md:p-7">
                   <h2 className="font-display text-xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-2xl">

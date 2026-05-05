@@ -12,10 +12,10 @@ export function CategoryContent({ label }: CategoryContentProps) {
     <div className="pt-6 md:pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link
-          href="/portfolio"
+          href="/galeria"
           className="text-sm tracking-widest text-stone hover:text-accent mb-8 inline-block"
         >
-          ← Portfolio
+          ← Galería
         </Link>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}

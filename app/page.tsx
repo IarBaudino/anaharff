@@ -12,7 +12,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { defaultSiteContent, type StoreItem } from "@/lib/site-content";
 
 const PLACEHOLDER =
-  "https://placehold.co/900x1200/f7f5f0/8c8c8c?text=Ana+Harff";
+  "https://placehold.co/900x1200/f7f5f0/8c8c8c/png?text=Ana+Harff";
 
 function featuredItems(items: StoreItem[], limit: number): StoreItem[] {
   const chosen = items
@@ -51,8 +51,8 @@ export default function HomePage() {
   const tienda = content?.tienda ?? defaultSiteContent.tienda;
   const heroUrl = heroSrc(home.heroImagenUrl, tienda.items[0]?.imagenUrl);
 
-  const destacadoLinks = ["/tienda", "/portfolio", "/series"] as const;
-  const destacadoEtiquetas = ["Edición limitada", "Portfolio", "Series"] as const;
+  const destacadoLinks = ["/galeria", "/galeria", "/series"] as const;
+  const destacadoEtiquetas = ["Galería", "Galería", "Series"] as const;
 
   const destacados = featuredItems(tienda.items, tienda.destacadosCantidad ?? 3).map((item, i) => ({
     id: item.id,
@@ -61,8 +61,6 @@ export default function HomePage() {
     href: destacadoLinks[i] ?? "/tienda",
     etiqueta: destacadoEtiquetas[i] ?? "Ver más",
   }));
-  const useEditorialLayout = destacados.length <= 3;
-
   return (
     <div>
       {/* Primer pantallazo: solo imagen de impacto (sin scroll dentro del bloque) */}
@@ -128,8 +126,8 @@ export default function HomePage() {
               ))}
               <div className="rule-fade my-10" aria-hidden />
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <Link href="/portfolio" className={siteButtonOutline}>
-                  Ver portfolio
+                <Link href="/galeria" className={siteButtonOutline}>
+                  Ver galería
                 </Link>
                 <Link href="/tienda" className={siteButtonSolid}>
                   Tienda
@@ -159,7 +157,7 @@ export default function HomePage() {
               </h2>
             </div>
             <Link
-              href="/tienda"
+              href="/galeria"
               className="text-sm text-stone underline decoration-charcoal/20 underline-offset-4 transition-colors hover:text-charcoal hover:decoration-charcoal/40"
             >
               {home.destacadosLinkTexto}
@@ -167,11 +165,7 @@ export default function HomePage() {
           </motion.div>
 
           <div
-            className={
-              useEditorialLayout
-                ? "grid grid-cols-1 gap-4 md:grid-cols-12 md:grid-rows-2 md:gap-5 lg:gap-6"
-                : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-5 lg:gap-6"
-            }
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
             {destacados.map((d, i) => (
               <motion.div
@@ -180,42 +174,23 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-20px" }}
                 transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className={
-                  useEditorialLayout && i === 0
-                    ? "md:col-span-7 md:row-span-2"
-                    : useEditorialLayout && i === 1
-                      ? "md:col-span-5 md:col-start-8 md:row-start-1"
-                      : useEditorialLayout && i === 2
-                        ? "md:col-span-5 md:col-start-8 md:row-start-2"
-                        : ""
-                }
               >
                 <Link
                   href={d.href}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-charcoal/15 bg-cream shadow-sm transition-all duration-500 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-2xl before:bg-accent/0 before:transition-colors hover:border-charcoal/25 hover:shadow-md hover:before:bg-accent/90"
+                  className="group block"
                 >
-                  <div
-                    className={
-                      useEditorialLayout && i === 0
-                        ? "relative min-h-[320px] flex-1 md:min-h-0"
-                        : "relative aspect-[4/5] md:aspect-[16/11]"
-                    }
-                  >
+                  <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05]">
                     <Image
                       src={d.url}
                       alt={d.titulo}
                       fill
-                      sizes={
-                        i === 0
-                          ? "(max-width: 768px) 100vw, 58vw"
-                          : "(max-width: 768px) 100vw, 42vw"
-                      }
-                      className="object-contain p-2 transition-opacity duration-300 group-hover:opacity-95"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     />
-                    <div className="pointer-events-none absolute inset-0 bg-charcoal/0 transition-colors duration-500 group-hover:bg-charcoal/[0.04]" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-charcoal/0 to-charcoal/5" />
                   </div>
-                  <div className="border-t border-charcoal/5 px-5 py-4 md:px-6 md:py-5">
-                    <p className="font-display text-lg font-light text-charcoal md:text-xl">
+                  <div className="border-b border-charcoal/12 pb-4 pt-3">
+                    <p className="font-display text-lg font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-xl">
                       {d.titulo}
                     </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.18em] text-stone">

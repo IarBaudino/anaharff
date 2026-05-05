@@ -5,12 +5,14 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import {
+  defaultCoverImageUrl,
   newManagedItemId,
   slugifyLabel,
   type PortfolioCategory,
   type SeriesProject,
   type SiteContent,
 } from "@/lib/site-content";
+import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 
 const VALIDATION_SUMMARY =
   "Revisá los avisos en rojo antes de guardar: nombre vacío, enlace vacío o enlace repetido.";
@@ -48,6 +50,7 @@ export function AdminCollections() {
           label: c.label.trim(),
           slug: slugifyLabel(c.slug),
           description: c.description.trim(),
+          coverImageUrl: c.coverImageUrl.trim(),
         })),
       },
       series: {
@@ -57,6 +60,7 @@ export function AdminCollections() {
           slug: slugifyLabel(p.slug),
           statement: p.statement.trim(),
           description: p.description.trim(),
+          coverImageUrl: p.coverImageUrl.trim(),
         })),
       },
     };
@@ -180,6 +184,26 @@ export function AdminCollections() {
                 }}
                 placeholder="Descripción corta para SEO"
               />
+              <div>
+                <p className="mb-1 text-xs uppercase tracking-widest text-stone">Portada de la categoría</p>
+                <CloudinaryUploadField
+                  previewUrl={cat.coverImageUrl}
+                  onUploaded={(url) => {
+                    clearAllFieldErrors();
+                    updateCategory(idx, { coverImageUrl: url }, content, setContent);
+                  }}
+                  disabled={saving}
+                />
+                <input
+                  className={cn(inputClass(), "mt-2")}
+                  value={cat.coverImageUrl}
+                  onChange={(e) => {
+                    clearAllFieldErrors();
+                    updateCategory(idx, { coverImageUrl: e.target.value }, content, setContent);
+                  }}
+                  placeholder="URL de portada (opcional si subís con el botón)"
+                />
+              </div>
             </div>
             );
           })}
@@ -297,6 +321,26 @@ export function AdminCollections() {
                 }}
                 placeholder="Descripción corta para SEO"
               />
+              <div>
+                <p className="mb-1 text-xs uppercase tracking-widest text-stone">Portada de la serie</p>
+                <CloudinaryUploadField
+                  previewUrl={project.coverImageUrl}
+                  onUploaded={(url) => {
+                    clearAllFieldErrors();
+                    updateProject(idx, { coverImageUrl: url }, content, setContent);
+                  }}
+                  disabled={saving}
+                />
+                <input
+                  className={cn(inputClass(), "mt-2")}
+                  value={project.coverImageUrl}
+                  onChange={(e) => {
+                    clearAllFieldErrors();
+                    updateProject(idx, { coverImageUrl: e.target.value }, content, setContent);
+                  }}
+                  placeholder="URL de portada (opcional si subís con el botón)"
+                />
+              </div>
             </div>
             );
           })}
@@ -452,6 +496,7 @@ function addCategory(
     slug: `categoria-${next.length + 1}`,
     label: `Nueva categoría ${next.length + 1}`,
     description: "",
+    coverImageUrl: defaultCoverImageUrl(`Categoría ${next.length + 1}`),
   });
   setContent({ ...content, portfolio: { ...content.portfolio, categories: next } });
 }
@@ -468,6 +513,7 @@ function addProject(
     label: `Nueva serie ${next.length + 1}`,
     statement: "",
     description: "",
+    coverImageUrl: defaultCoverImageUrl(`Serie ${next.length + 1}`),
   });
   setContent({ ...content, series: { ...content.series, projects: next } });
 }
