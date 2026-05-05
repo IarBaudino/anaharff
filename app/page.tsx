@@ -74,10 +74,10 @@ export default function HomePage() {
           fill
           priority
           sizes="100vw"
-          className="object-contain object-center"
+          className="object-cover object-center"
+          style={{ objectPosition: `${home.heroFocoX}% ${home.heroFocoY}%` }}
         />
         <div className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-charcoal/55 lg:bottom-8">
-          <span className="text-[0.65rem] font-medium uppercase tracking-[0.28em]">Deslizá</span>
           <span className="block h-6 w-px bg-gradient-to-b from-charcoal/35 to-transparent" aria-hidden />
         </div>
       </section>
@@ -93,7 +93,7 @@ export default function HomePage() {
         <HomeHeroTitle titulo={home.titulo} />
 
         {/* Doble línea decorativa */}
-        <div className="border-b border-charcoal/[0.06] bg-cream">
+        <div className="bg-cream">
           <div className="mx-auto max-w-[1600px] px-4 pb-2 pt-1 sm:px-6 lg:px-10">
             <SectionDivider variant="double" className="opacity-90" />
           </div>
@@ -139,10 +139,7 @@ export default function HomePage() {
 
       {/* Destacados — rejilla asimétrica */}
       <section className="border-b border-charcoal/[0.12] bg-cream">
-        <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-10">
-          <SectionDivider variant="ornament" className="py-2" />
-        </div>
-        <div className="mx-auto max-w-[1600px] px-4 pb-16 sm:px-6 lg:px-10 lg:pb-24 lg:pt-2">
+        <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pb-24 lg:pt-8">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -206,9 +203,6 @@ export default function HomePage() {
 
       {/* Cierre */}
       <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
-        <div className="mx-auto mb-12 max-w-3xl md:mb-16">
-          <SectionDivider variant="wide" />
-        </div>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

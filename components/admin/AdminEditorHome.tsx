@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import {
@@ -22,6 +22,7 @@ export function AdminEditorHome() {
   const { content, setContent, save, saving, loading, error, isFirebaseConfigured } =
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
+  const heroPreviewRef = useRef<HTMLDivElement | null>(null);
 
   async function onSave() {
     if (isPlaceholderHeroUrl(content.home.heroImagenUrl)) {
@@ -82,6 +83,19 @@ export function AdminEditorHome() {
     });
   }
 
+  function updateHeroFocusFromPointer(clientX: number, clientY: number) {
+    const el = heroPreviewRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    const clamp = (v: number) => Math.max(0, Math.min(100, v));
+    setContent({
+      ...content,
+      home: { ...content.home, heroFocoX: clamp(x), heroFocoY: clamp(y) },
+    });
+  }
+
   if (loading) {
     return <p className="text-stone">Cargando contenido...</p>;
   }
@@ -100,8 +114,8 @@ export function AdminEditorHome() {
         <PanelTitle>Página principal</PanelTitle>
         <HelpText>
           Todo lo de esta pestaña se ve en el <strong>inicio del sitio</strong>: portada a
-          pantalla completa, testimonios, título y textos. Las fotos del inicio se muestran{" "}
-          <strong>enteras, sin recortar</strong>.
+          pantalla completa, testimonios, título y textos. La portada usa recorte tipo{" "}
+          <strong>cover</strong> y podés mover el foco.
         </HelpText>
       </div>
 
@@ -187,8 +201,9 @@ export function AdminEditorHome() {
         <SectionHeading>Foto principal del inicio</SectionHeading>
         <HelpText>
           <strong>Obligatoria:</strong> es la imagen de la portada a pantalla completa. Se muestra{" "}
-          <strong>completa, sin recortes</strong> (composición íntegra). Formato vertical recomendado.
-          Subila con el botón. No se puede guardar dejando solo la imagen de muestra.
+          con recorte automático para cubrir todo el bloque. Podés ajustar el foco horizontal y
+          vertical justo debajo. Subila con el botón. No se puede guardar dejando solo la imagen de
+          muestra.
         </HelpText>
         <CloudinaryUploadField
           previewUrl={content.home.heroImagenUrl}
@@ -200,6 +215,41 @@ export function AdminEditorHome() {
           }
           disabled={saving}
         />
+        <div className="space-y-2">
+          <FieldLabel>Ajuste de recorte (arrastrá en la imagen)</FieldLabel>
+          <HelpText>
+            Este preview usa el mismo recorte del home (cover). Hacé clic o arrastrá para mover el
+            foco real.
+          </HelpText>
+          <div
+            ref={heroPreviewRef}
+            className="relative w-full cursor-move overflow-hidden rounded-lg border border-charcoal/15 bg-charcoal/[0.04] h-[calc(100dvh-3.5rem)] max-h-[820px] min-h-[320px] lg:h-[100dvh]"
+            style={{ width: "min(100%, calc(100vw - 14rem - 3rem))" }}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              updateHeroFocusFromPointer(e.clientX, e.clientY);
+            }}
+            onPointerMove={(e) => {
+              if (e.buttons !== 1) return;
+              updateHeroFocusFromPointer(e.clientX, e.clientY);
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={content.home.heroImagenUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              style={{ objectPosition: `${content.home.heroFocoX}% ${content.home.heroFocoY}%` }}
+            />
+            <div
+              className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cream bg-charcoal/35 shadow"
+              style={{ left: `${content.home.heroFocoX}%`, top: `${content.home.heroFocoY}%` }}
+            />
+          </div>
+          <p className="text-xs text-stone">
+            Foco actual: X {Math.round(content.home.heroFocoX)}% · Y {Math.round(content.home.heroFocoY)}%
+          </p>
+        </div>
       </section>
 
       <section className="space-y-4">
@@ -398,7 +448,7 @@ export function AdminEditorHome() {
           />
         </div>
         <div>
-          <FieldLabel htmlFor="dest-link">Texto del enlace a la tienda</FieldLabel>
+          <FieldLabel htmlFor="dest-link">Texto del enlace a galería</FieldLabel>
           <input
             id="dest-link"
             className={inputClass()}

@@ -53,6 +53,10 @@ export interface HomeContent {
    * URL HTTPS asignada al subir desde el panel.
    */
   heroImagenUrl: string;
+  /** Punto de enfoque horizontal de la portada (0 a 100). */
+  heroFocoX: number;
+  /** Punto de enfoque vertical de la portada (0 a 100). */
+  heroFocoY: number;
   /** Línea pequeña de contexto encima de la foto del hero. */
   heroKicker: string;
   /** Etiqueta pequeña de la sección de testimonios (debajo de la portada). */
@@ -133,6 +137,8 @@ export const defaultSiteContent: SiteContent = {
   home: {
     titulo: "ANA HARFF",
     heroImagenUrl: HOME_HERO_DEFAULT,
+    heroFocoX: 50,
+    heroFocoY: 50,
     heroKicker: "Fotografía analógica · Buenos Aires",
     testimoniosKicker: "Testimonios",
     testimoniosTitulo: "Lo que dicen quienes pasaron por el estudio",
@@ -368,11 +374,16 @@ export function newTestimonioId(): string {
 
 export function normalizeHome(partial: unknown): HomeContent {
   const p = (partial ?? {}) as LegacyHome;
+  const def = defaultSiteContent.home;
 
   const titulo = typeof p.titulo === "string" ? p.titulo : "ANA HARFF";
 
   let heroImagenUrl = typeof p.heroImagenUrl === "string" ? p.heroImagenUrl.trim() : "";
   if (!heroImagenUrl) heroImagenUrl = HOME_HERO_DEFAULT;
+  const rawFocoX = (p as unknown as Record<string, unknown>).heroFocoX;
+  const rawFocoY = (p as unknown as Record<string, unknown>).heroFocoY;
+  const heroFocoX = normalizeFocusPoint(rawFocoX, def.heroFocoX, "x");
+  const heroFocoY = normalizeFocusPoint(rawFocoY, def.heroFocoY, "y");
 
   let introduccionIdiomas: IntroduccionIdioma[];
   if (Array.isArray(p.introduccionIdiomas) && p.introduccionIdiomas.length > 0) {
@@ -398,8 +409,6 @@ export function normalizeHome(partial: unknown): HomeContent {
       { id: "en", etiqueta: "Inglés", texto: en },
     ];
   }
-
-  const def = defaultSiteContent.home;
 
   const testimoniosKicker =
     typeof p.testimoniosKicker === "string" && p.testimoniosKicker.trim()
@@ -451,6 +460,8 @@ export function normalizeHome(partial: unknown): HomeContent {
   return {
     titulo,
     heroImagenUrl,
+    heroFocoX,
+    heroFocoY,
     heroKicker:
       typeof p.heroKicker === "string" ? p.heroKicker : def.heroKicker,
     testimoniosKicker,
@@ -468,6 +479,39 @@ export function normalizeHome(partial: unknown): HomeContent {
     cierreTexto:
       typeof p.cierreTexto === "string" ? p.cierreTexto : def.cierreTexto,
   };
+}
+
+function clampFocus(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
+function normalizeFocusPoint(
+  raw: unknown,
+  fallback: number,
+  axis: "x" | "y"
+): number {
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return clampFocus(raw);
+  }
+  if (typeof raw !== "string") return fallback;
+
+  const s = raw.trim().toLowerCase();
+  if (s.endsWith("%")) {
+    const n = Number(s.slice(0, -1));
+    if (Number.isFinite(n)) return clampFocus(n);
+    return fallback;
+  }
+
+  if (axis === "x") {
+    if (s === "left") return 0;
+    if (s === "center") return 50;
+    if (s === "right") return 100;
+  } else {
+    if (s === "top") return 0;
+    if (s === "center") return 50;
+    if (s === "bottom") return 100;
+  }
+  return fallback;
 }
 
 type LegacySobreMi = Partial<SobreMiContent> & {
