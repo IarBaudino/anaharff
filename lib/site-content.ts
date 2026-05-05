@@ -57,6 +57,10 @@ export interface HomeContent {
   heroFocoX: number;
   /** Punto de enfoque vertical de la portada (0 a 100). */
   heroFocoY: number;
+  /** Punto de enfoque horizontal para mobile (0 a 100). */
+  heroFocoXMobile: number;
+  /** Punto de enfoque vertical para mobile (0 a 100). */
+  heroFocoYMobile: number;
   /** Línea pequeña de contexto encima de la foto del hero. */
   heroKicker: string;
   /** Etiqueta pequeña de la sección de testimonios (debajo de la portada). */
@@ -139,6 +143,8 @@ export const defaultSiteContent: SiteContent = {
     heroImagenUrl: HOME_HERO_DEFAULT,
     heroFocoX: 50,
     heroFocoY: 50,
+    heroFocoXMobile: 50,
+    heroFocoYMobile: 50,
     heroKicker: "Fotografía analógica · Buenos Aires",
     testimoniosKicker: "Testimonios",
     testimoniosTitulo: "Lo que dicen quienes pasaron por el estudio",
@@ -382,8 +388,12 @@ export function normalizeHome(partial: unknown): HomeContent {
   if (!heroImagenUrl) heroImagenUrl = HOME_HERO_DEFAULT;
   const rawFocoX = (p as unknown as Record<string, unknown>).heroFocoX;
   const rawFocoY = (p as unknown as Record<string, unknown>).heroFocoY;
+  const rawFocoXMobile = (p as unknown as Record<string, unknown>).heroFocoXMobile;
+  const rawFocoYMobile = (p as unknown as Record<string, unknown>).heroFocoYMobile;
   const heroFocoX = normalizeFocusPoint(rawFocoX, def.heroFocoX, "x");
   const heroFocoY = normalizeFocusPoint(rawFocoY, def.heroFocoY, "y");
+  const heroFocoXMobile = normalizeFocusPoint(rawFocoXMobile, heroFocoX, "x");
+  const heroFocoYMobile = normalizeFocusPoint(rawFocoYMobile, heroFocoY, "y");
 
   let introduccionIdiomas: IntroduccionIdioma[];
   if (Array.isArray(p.introduccionIdiomas) && p.introduccionIdiomas.length > 0) {
@@ -462,6 +472,8 @@ export function normalizeHome(partial: unknown): HomeContent {
     heroImagenUrl,
     heroFocoX,
     heroFocoY,
+    heroFocoXMobile,
+    heroFocoYMobile,
     heroKicker:
       typeof p.heroKicker === "string" ? p.heroKicker : def.heroKicker,
     testimoniosKicker,

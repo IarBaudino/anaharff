@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import type { CSSProperties } from "react";
 import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
 import { HomeTestimoniosSection } from "@/components/home/HomeTestimoniosSection";
 import { SectionDivider } from "@/components/SectionDivider";
@@ -66,7 +67,7 @@ export default function HomePage() {
       {/* Primer pantallazo: solo imagen de impacto (sin scroll dentro del bloque) */}
       <section
         aria-label="Imagen principal"
-        className="relative w-full bg-[var(--color-cream)] min-h-[calc(100dvh-3.5rem)] lg:min-h-dvh"
+        className="relative -mt-14 h-[66.67vw] min-h-[220px] max-h-[72dvh] w-full bg-[var(--color-cream)] lg:mt-0 lg:h-dvh lg:min-h-dvh lg:max-h-none"
       >
         <Image
           src={heroUrl}
@@ -74,8 +75,13 @@ export default function HomePage() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center"
-          style={{ objectPosition: `${home.heroFocoX}% ${home.heroFocoY}%` }}
+          className="object-contain [object-position:var(--hero-mobile-pos)] lg:object-cover lg:[object-position:var(--hero-desktop-pos)]"
+          style={
+            {
+              "--hero-mobile-pos": `${home.heroFocoXMobile}% top`,
+              "--hero-desktop-pos": `${home.heroFocoX}% ${home.heroFocoY}%`,
+            } as CSSProperties
+          }
         />
         <div className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-charcoal/55 lg:bottom-8">
           <span className="block h-6 w-px bg-gradient-to-b from-charcoal/35 to-transparent" aria-hidden />

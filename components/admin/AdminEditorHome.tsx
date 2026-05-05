@@ -23,6 +23,7 @@ export function AdminEditorHome() {
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
   const heroPreviewRef = useRef<HTMLDivElement | null>(null);
+  const heroPreviewMobileRef = useRef<HTMLDivElement | null>(null);
 
   async function onSave() {
     if (isPlaceholderHeroUrl(content.home.heroImagenUrl)) {
@@ -93,6 +94,19 @@ export function AdminEditorHome() {
     setContent({
       ...content,
       home: { ...content.home, heroFocoX: clamp(x), heroFocoY: clamp(y) },
+    });
+  }
+
+  function updateHeroFocusMobileFromPointer(clientX: number, clientY: number) {
+    const el = heroPreviewMobileRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    const clamp = (v: number) => Math.max(0, Math.min(100, v));
+    setContent({
+      ...content,
+      home: { ...content.home, heroFocoXMobile: clamp(x), heroFocoYMobile: clamp(y) },
     });
   }
 
@@ -218,8 +232,8 @@ export function AdminEditorHome() {
         <div className="space-y-2">
           <FieldLabel>Ajuste de recorte (arrastrá en la imagen)</FieldLabel>
           <HelpText>
-            Este preview usa el mismo recorte del home (cover). Hacé clic o arrastrá para mover el
-            foco real.
+            Vista desktop y móvil con el mismo recorte real del home (cover). Arrastrá en la desktop
+            para mover el foco.
           </HelpText>
           <div
             ref={heroPreviewRef}
@@ -246,8 +260,44 @@ export function AdminEditorHome() {
               style={{ left: `${content.home.heroFocoX}%`, top: `${content.home.heroFocoY}%` }}
             />
           </div>
+          <div className="pt-3">
+            <p className="mb-2 text-xs uppercase tracking-widest text-stone">Vista móvil</p>
+            <div
+              ref={heroPreviewMobileRef}
+              className="w-full cursor-move overflow-hidden rounded-lg border border-charcoal/15 bg-charcoal/[0.04]"
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                updateHeroFocusMobileFromPointer(e.clientX, e.clientY);
+              }}
+              onPointerMove={(e) => {
+                if (e.buttons !== 1) return;
+                updateHeroFocusMobileFromPointer(e.clientX, e.clientY);
+              }}
+            >
+              <div className="relative h-[62dvh] max-h-[620px] min-h-[260px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={content.home.heroImagenUrl}
+                  alt=""
+                  className="h-full w-full object-contain"
+                  style={{
+                    objectPosition: `${content.home.heroFocoXMobile}% top`,
+                  }}
+                />
+                <div
+                  className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cream bg-charcoal/35 shadow"
+                  style={{
+                    left: `${content.home.heroFocoXMobile}%`,
+                    top: "8px",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
           <p className="text-xs text-stone">
-            Foco actual: X {Math.round(content.home.heroFocoX)}% · Y {Math.round(content.home.heroFocoY)}%
+            Foco desktop: X {Math.round(content.home.heroFocoX)}% · Y {Math.round(content.home.heroFocoY)}% ·
+            Foco móvil: X {Math.round(content.home.heroFocoXMobile)}% · Y{" "}
+            {Math.round(content.home.heroFocoYMobile)}%
           </p>
         </div>
       </section>
