@@ -228,6 +228,7 @@ export function AdminEditorHome() {
             })
           }
           disabled={saving}
+          autoDeletePrevious
         />
         <div className="space-y-2">
           <FieldLabel>Ajuste de recorte (arrastrá en la imagen)</FieldLabel>

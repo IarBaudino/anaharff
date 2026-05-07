@@ -1,57 +1,217 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useId, useRef, useState, type ChangeEvent } from "react";
 import { Upload } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
+import { deleteCloudinaryByUrl } from "@/lib/cloudinary-client";
 
 type Props = {
   // eslint-disable-next-line no-unused-vars
   onUploaded: (secureUrl: string) => void;
+  /** Si es true, bloquea elegir archivo (p. ej. guardado en curso). El input no se deshabilita para no romper el selector en todos los navegadores. */
   disabled?: boolean;
   /** Imagen ya elegida o guardada, para mostrar vista previa debajo del botón */
   previewUrl?: string | null;
+  /** Si es true, al subir una nueva imagen intenta borrar la anterior en Cloudinary. */
+  autoDeletePrevious?: boolean;
+  /** Permite elegir varios archivos a la vez; llama a `onUploaded` por cada uno subido. */
+  multiple?: boolean;
+  /**
+   * `compact`: miniatura + acciones cortas (p. ej. galería por categoría).
+   * No muestra la URL ni textos largos de ayuda.
+   */
+  variant?: "default" | "compact";
 };
 
-export function CloudinaryUploadField({ onUploaded, disabled, previewUrl }: Props) {
-  const { user } = useAuth();
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+const MAX_UPLOAD_MB_LABEL = "4 MB";
+const MAX_IMAGE_DIMENSION = 1800;
+
+async function readImageSize(file: File): Promise<{ width: number; height: number }> {
+  const src = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("No se pudo leer la imagen"));
+      el.src = src;
+    });
+    return { width: img.naturalWidth, height: img.naturalHeight };
+  } finally {
+    URL.revokeObjectURL(src);
+  }
+}
+
+async function compressImageToLimit(file: File, maxBytes: number): Promise<File | null> {
+  // GIF/AVIF no se recomprimen en canvas de forma segura acá.
+  if (file.type === "image/gif" || file.type === "image/avif") return null;
+  if (!file.type.startsWith("image/")) return null;
+
+  const src = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("No se pudo procesar la imagen"));
+      el.src = src;
+    });
+
+    const longest = Math.max(img.naturalWidth, img.naturalHeight);
+    const scale = longest > MAX_IMAGE_DIMENSION ? MAX_IMAGE_DIMENSION / longest : 1;
+    const width = Math.max(1, Math.round(img.naturalWidth * scale));
+    const height = Math.max(1, Math.round(img.naturalHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const qualities = [0.82, 0.7, 0.58, 0.46];
+    for (const q of qualities) {
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", q)
+      );
+      if (!blob) continue;
+      if (blob.size <= maxBytes) {
+        const baseName = file.name.replace(/\.[^.]+$/, "");
+        return new File([blob], `${baseName}.jpg`, {
+          type: "image/jpeg",
+          lastModified: Date.now(),
+        });
+      }
+    }
+    return null;
+  } finally {
+    URL.revokeObjectURL(src);
+  }
+}
+
+export function CloudinaryUploadField({
+  onUploaded,
+  disabled = false,
+  previewUrl,
+  autoDeletePrevious = false,
+  multiple = false,
+  variant = "default",
+}: Props) {
+  const { user, ready } = useAuth();
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const isCompact = variant === "compact";
+  const preview = previewUrl?.trim() ?? "";
+
+  async function uploadOneFile(file: File, idToken: string): Promise<string | null> {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch("/api/cloudinary/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}` },
+      body: fd,
+    });
+    let data: { error?: string; secureUrl?: string } = {};
+    try {
+      data = (await res.json()) as { error?: string; secureUrl?: string };
+    } catch {
+      setErr("La respuesta del servidor no es válida. Probá de nuevo.");
+      return null;
+    }
+    if (!res.ok) {
+      setErr(data.error || "Error al subir");
+      return null;
+    }
+    const url = String(data.secureUrl || "").trim();
+    if (!url) {
+      setErr("El servidor no devolvió la URL de la imagen. Revisá la configuración de Cloudinary.");
+      return null;
+    }
+    return url;
+  }
+
+  function openFilePicker() {
+    setErr(null);
+    if (disabled) {
+      setErr("Esperá a que termine de guardar y volvé a intentar.");
+      return;
+    }
+    if (loading) return;
+    if (!isFirebaseConfigured || !auth) {
+      setErr("Falta configuración para subir archivos. Contactá a quien administra el sitio.");
+      return;
+    }
+    if (!ready) {
+      setErr("Esperá un momento a que cargue la sesión y tocá de nuevo «Subir imagen».");
+      return;
+    }
+    if (!user) {
+      setErr("Tenés que iniciar sesión como administradora para subir imágenes.");
+      return;
+    }
+    inputRef.current?.click();
+  }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+    const input = e.target;
+    const picked = Array.from(input.files ?? []);
+    input.value = "";
+    if (!picked.length) return;
 
-    if (!isFirebaseConfigured || !auth || !user) {
-      setErr("Tenés que estar logueada/o como admin.");
+    if (disabled || loading) {
+      setErr("No se pudo subir: esperá a que termine de guardar o a la subida anterior.");
+      return;
+    }
+
+    const list = multiple ? picked : [picked[0]];
+    if (!isFirebaseConfigured || !auth) {
+      setErr("Falta configuración para subir archivos.");
+      return;
+    }
+    if (!ready || !user) {
+      setErr("Sesión no disponible. Recargá la página e iniciá sesión de nuevo.");
       return;
     }
 
     setErr(null);
     setLoading(true);
     try {
-      const idToken = await auth?.currentUser?.getIdToken();
+      const idToken = await auth.currentUser?.getIdToken();
       if (!idToken) {
         setErr("Sesión inválida. Volvé a entrar al panel.");
         return;
       }
 
-      const fd = new FormData();
-      fd.append("file", file);
+      const prevUrl = previewUrl?.trim() ?? "";
+      let first = true;
 
-      const res = await fetch("/api/cloudinary/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${idToken}` },
-        body: fd,
-      });
+      for (const rawFile of list) {
+        let fileToUpload = rawFile;
+        if (rawFile.size > MAX_UPLOAD_BYTES) {
+          const compressed = await compressImageToLimit(rawFile, MAX_UPLOAD_BYTES);
+          if (!compressed) {
+            const dims = await readImageSize(rawFile).catch(() => null);
+            const details = dims ? ` (${dims.width}x${dims.height})` : "";
+            setErr(
+              `La imagen «${rawFile.name}» pesa más de ${MAX_UPLOAD_MB_LABEL}${details}. No se pudo comprimir automáticamente; exportala más liviana.`
+            );
+            return;
+          }
+          fileToUpload = compressed;
+        }
 
-      const data = await res.json();
-      if (!res.ok) {
-        setErr(data.error || "Error al subir");
-        return;
+        const nextUrl = await uploadOneFile(fileToUpload, idToken);
+        if (!nextUrl) return;
+
+        if (!multiple && autoDeletePrevious && first && prevUrl && prevUrl !== nextUrl) {
+          await deleteCloudinaryByUrl(prevUrl);
+        }
+        first = false;
+        onUploaded(nextUrl);
       }
-      onUploaded(data.secureUrl as string);
     } catch {
       setErr("Error de red al subir");
     } finally {
@@ -59,37 +219,107 @@ export function CloudinaryUploadField({ onUploaded, disabled, previewUrl }: Prop
     }
   }
 
-  const preview = previewUrl?.trim() ?? "";
+  async function onRemoveImage() {
+    const prevUrl = previewUrl?.trim() ?? "";
+    if (!prevUrl) return;
+    setErr(null);
+    setLoading(true);
+    try {
+      await deleteCloudinaryByUrl(prevUrl);
+      onUploaded("");
+    } catch {
+      setErr("No se pudo quitar la imagen.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-1">
-      <label className="inline-flex items-center gap-2 cursor-pointer w-fit">
-        <span className="inline-flex items-center gap-2 rounded border border-charcoal/20 px-3 py-2 text-xs tracking-widest uppercase hover:border-charcoal/35 transition-colors">
-          <Upload size={14} />
-          {loading ? "Subiendo…" : "Subir imagen"}
-        </span>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-          className="sr-only"
-          disabled={disabled || loading || !user}
-          onChange={onFile}
-        />
-      </label>
-      {err && <p className="text-xs text-red-700">{err}</p>}
-      <p className="text-xs text-stone">JPG, PNG, WebP, GIF o AVIF · máximo 12 MB</p>
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+        className="sr-only"
+        tabIndex={-1}
+        multiple={multiple}
+        onChange={onFile}
+      />
+      <button
+        type="button"
+        onClick={openFilePicker}
+        aria-busy={loading}
+        aria-controls={inputId}
+        className={cn(
+          "inline-flex items-center gap-2 rounded border border-charcoal/20 px-3 py-2 text-xs uppercase tracking-widest transition-colors hover:border-charcoal/35",
+          (loading || disabled) && "opacity-60"
+        )}
+      >
+        <Upload size={14} className="shrink-0" />
+        {loading
+          ? "Subiendo…"
+          : multiple
+            ? isCompact
+              ? "Sumar fotos"
+              : "Subir varias"
+            : isCompact
+              ? "Reemplazar"
+              : "Subir imagen"}
+      </button>
+      {err ? (
+        <p className="text-xs text-red-700" role="alert">
+          {err}
+        </p>
+      ) : null}
+      {!ready && isFirebaseConfigured && auth ? (
+        <p className="text-xs text-stone">Comprobando sesión…</p>
+      ) : null}
+      {ready && !user && isFirebaseConfigured && auth ? (
+        <p className="text-xs text-amber-900">Iniciá sesión para subir archivos.</p>
+      ) : null}
+      {!isCompact ? (
+        <p className="text-xs text-stone">
+          JPG, PNG, WebP, GIF o AVIF · máximo {MAX_UPLOAD_MB_LABEL}
+          {multiple ? " · podés elegir varias a la vez" : ""}
+        </p>
+      ) : null}
       {preview ? (
-        <div className="mt-3 space-y-1.5">
-          <p className="text-xs font-medium tracking-wide text-charcoal/80">Vista previa</p>
-          <div className="inline-block max-w-full overflow-hidden rounded-lg border border-charcoal/15 bg-cream/60 p-2">
+        <div className={isCompact ? "mt-2 space-y-2" : "mt-3 space-y-1.5"}>
+          {!isCompact ? (
+            <p className="text-xs font-medium tracking-wide text-charcoal/80">Vista previa</p>
+          ) : null}
+          <div
+            className={
+              isCompact
+                ? "max-w-full overflow-hidden rounded-md border border-charcoal/12 bg-charcoal/[0.03]"
+                : "inline-block max-w-full overflow-hidden rounded-lg border border-charcoal/15 bg-cream/60 p-2"
+            }
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt=""
-              className="max-h-64 w-auto max-w-full object-contain"
+              className={
+                isCompact
+                  ? "mx-auto block max-h-28 w-full max-w-[200px] object-cover"
+                  : "max-h-64 w-auto max-w-full object-contain"
+              }
             />
           </div>
-          <p className="text-xs text-stone">Podés subir otra imagen para reemplazarla.</p>
+          {!isCompact ? (
+            <p className="text-xs text-stone">Podés subir otra imagen para reemplazarla.</p>
+          ) : (
+            <p className="text-xs text-stone">Otra foto reemplaza esta en la galería.</p>
+          )}
+          <button
+            type="button"
+            onClick={onRemoveImage}
+            disabled={loading || !user}
+            className="inline-flex items-center rounded border border-charcoal/20 px-2.5 py-1.5 text-xs tracking-wide text-charcoal/90 transition-colors hover:bg-charcoal/5 disabled:opacity-50"
+          >
+            {isCompact ? "Quitar de la galería" : "Quitar imagen"}
+          </button>
         </div>
       ) : null}
     </div>

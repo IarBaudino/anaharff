@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SeriesContent } from "@/components/series/SeriesContent";
+import { SeriesProjectClient } from "@/components/series/SeriesProjectClient";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
 import { getServerSiteContent } from "@/lib/site-content-server";
 
@@ -42,5 +42,5 @@ export default async function SeriesDetailPage({
   const content = await getServerSiteContent();
   const project = content.series.projects.find((s) => s.slug === slug);
   if (!project) notFound();
-  return <SeriesContent label={project.label} statement={project.statement} />;
+  return <SeriesProjectClient project={project} />;
 }

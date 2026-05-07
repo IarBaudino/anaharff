@@ -5,7 +5,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { defaultCoverImageUrl, defaultSiteContent } from "@/lib/site-content";
+import {
+  defaultSiteContent,
+  resolveCategoryCover,
+  resolveSeriesCover,
+} from "@/lib/site-content";
 
 type GalleryAlbum = {
   id: string;
@@ -17,11 +21,35 @@ type GalleryAlbum = {
 
 const galleryCategoryOrder = ["desnudos", "retratos", "artistico", "familia", "naturaleza", "experimental"];
 
+function AlbumCover({ label, coverUrl }: { label: string; coverUrl: string }) {
+  if (!coverUrl) {
+    return (
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.07] via-charcoal/[0.03] to-transparent"
+        aria-hidden
+      />
+    );
+  }
+  return (
+    <Image
+      src={coverUrl}
+      alt={`Portada de ${label}`}
+      fill
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+    />
+  );
+}
+
 export default function GaleriaPage() {
   const { content } = useSiteContent();
   const categories = content?.portfolio.categories?.length
     ? content.portfolio.categories
     : defaultSiteContent.portfolio.categories;
+  const series = content?.series.projects?.length
+    ? content.series.projects
+    : defaultSiteContent.series.projects;
+
   const orderedCategories = [...categories].sort((a, b) => {
     const ai = galleryCategoryOrder.indexOf(a.slug);
     const bi = galleryCategoryOrder.indexOf(b.slug);
@@ -30,20 +58,22 @@ export default function GaleriaPage() {
     return va - vb;
   });
 
+  const firstSeriesCover = series.map(resolveSeriesCover).find(Boolean) ?? "";
+
   const albums: GalleryAlbum[] = [
     {
       id: "galeria-series",
       label: "Series",
       href: "/series",
       note: "Subgalería de proyectos",
-      coverUrl: defaultCoverImageUrl("Series"),
+      coverUrl: firstSeriesCover,
     },
     ...orderedCategories.map((cat) => ({
       id: cat.id,
       label: cat.label,
       href: `/portfolio/${cat.slug}`,
       note: "Ver galería",
-      coverUrl: cat.coverImageUrl?.trim() || defaultCoverImageUrl(cat.label),
+      coverUrl: resolveCategoryCover(cat),
     })),
   ];
 
@@ -67,18 +97,9 @@ export default function GaleriaPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 + i * 0.05, duration: 0.45 }}
             >
-              <Link
-                href={album.href}
-                className="group block"
-              >
+              <Link href={album.href} className="group block">
                 <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05]">
-                  <Image
-                    src={album.coverUrl}
-                    alt={`Portada de ${album.label}`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                  />
+                  <AlbumCover label={album.label} coverUrl={album.coverUrl} />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-transparent to-transparent opacity-55 transition-opacity duration-300 group-hover:opacity-65" />
                 </div>
                 <div className="border-b border-charcoal/12 pb-4 pt-3">

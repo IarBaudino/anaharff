@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CategoryContent } from "@/components/portfolio/CategoryContent";
+import { PortfolioCategoryClient } from "@/components/portfolio/PortfolioCategoryClient";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
 import { getServerSiteContent } from "@/lib/site-content-server";
 
@@ -42,5 +42,5 @@ export default async function PortfolioCategoryPage({
   const content = await getServerSiteContent();
   const cat = content.portfolio.categories.find((c) => c.slug === category);
   if (!cat) notFound();
-  return <CategoryContent label={cat.label} />;
+  return <PortfolioCategoryClient category={cat} />;
 }

@@ -1,13 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { normalizeFeaturedOrder, type SiteContent } from "@/lib/site-content";
+import { deleteCloudinaryByUrl } from "@/lib/cloudinary-client";
+import {
+  newManagedItemId,
+  normalizeFeaturedOrder,
+  type SiteContent,
+  type StoreItem,
+} from "@/lib/site-content";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 
 function inputClass() {
-  return "w-full px-4 py-3 border border-charcoal/20 bg-cream focus:border-charcoal focus:outline-none";
+  return "w-full border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
 }
 
 export function AdminProducts() {
@@ -48,10 +54,10 @@ export function AdminProducts() {
       )}
 
       <section className="space-y-4">
-        <h2 className="font-display text-2xl">Productos y fotos ({itemCount})</h2>
+        <h2 className="font-display text-2xl">Productos ({itemCount})</h2>
         <p className="text-sm text-stone">
-          Acá cargás y editás los productos de la tienda. Podés subir la foto de cada producto
-          desde su tarjeta.
+          Un producto = una foto, título, descripción y precio. Para vender otra imagen, añadí otro
+          producto.
         </p>
         <input
           className={inputClass()}
@@ -62,7 +68,6 @@ export function AdminProducts() {
               tienda: { ...content.tienda, titulo: e.target.value },
             })
           }
-          placeholder="Título de sección tienda"
         />
         <textarea
           className={inputClass()}
@@ -74,12 +79,11 @@ export function AdminProducts() {
               tienda: { ...content.tienda, descripcion: e.target.value },
             })
           }
-          placeholder="Descripción general de la tienda"
         />
         <div className="rounded-lg border border-charcoal/10 bg-cream/60 p-4">
           <p className="text-sm font-medium text-charcoal">Trabajos recientes (inicio)</p>
           <p className="mt-1 text-xs text-stone">
-            Podés destacar productos puntuales, ordenarlos y definir cuántas cards mostrar.
+            Marcá productos para destacarlos en la página de inicio y ordenalos.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <label htmlFor="destacados-cantidad" className="text-sm text-charcoal/90">
@@ -103,16 +107,25 @@ export function AdminProducts() {
               <option value={4}>4</option>
               <option value={6}>6</option>
             </select>
-            <span className="text-xs text-stone">
-              Marcados actualmente: {featuredCount} (si faltan, se completan automáticamente).
-            </span>
+            <span className="text-xs text-stone">Destacados: {featuredCount}</span>
           </div>
         </div>
       </section>
 
       <div className="space-y-5">
         {content.tienda.items.map((item, idx) => (
-          <div key={item.id} className="border border-charcoal/10 p-4 space-y-3 rounded-lg">
+          <div key={item.id} className="space-y-3 rounded-lg border border-charcoal/10 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs uppercase tracking-widest text-stone">Producto {idx + 1}</span>
+              <button
+                type="button"
+                onClick={() => removeProduct(content, setContent, idx)}
+                className="inline-flex items-center gap-1 rounded border border-red-200 px-2 py-1 text-xs text-red-800 hover:bg-red-50"
+              >
+                <Trash2 className="size-3.5" />
+                Eliminar
+              </button>
+            </div>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-charcoal/10 bg-cream/70 p-3">
               <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-charcoal">
                 <input
@@ -154,12 +167,11 @@ export function AdminProducts() {
                 <span className="text-xs text-stone">No destacado</span>
               )}
             </div>
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid gap-3 md:grid-cols-2">
               <input
                 className={inputClass()}
                 value={item.titulo}
                 onChange={(e) => updateItem(content, setContent, idx, { titulo: e.target.value })}
-                placeholder="Título"
               />
               <input
                 className={inputClass()}
@@ -170,7 +182,6 @@ export function AdminProducts() {
                     precio: Number(e.target.value) || 0,
                   })
                 }
-                placeholder="Precio"
               />
             </div>
             <textarea
@@ -180,32 +191,37 @@ export function AdminProducts() {
               onChange={(e) =>
                 updateItem(content, setContent, idx, { descripcion: e.target.value })
               }
-              placeholder="Descripción"
             />
-            <input
-              className={inputClass()}
-              value={item.imagenUrl}
-              onChange={(e) =>
-                updateItem(content, setContent, idx, { imagenUrl: e.target.value })
-              }
-              placeholder="URL de la imagen (opcional si ya subiste con el botón)"
-            />
-            <CloudinaryUploadField
-              previewUrl={item.imagenUrl}
-              onUploaded={(secureUrl) =>
-                updateItem(content, setContent, idx, { imagenUrl: secureUrl })
-              }
-            />
+            <div className="rounded-lg border border-charcoal/10 bg-cream/70 p-3">
+              <p className="text-xs uppercase tracking-widest text-stone">Foto del producto</p>
+              <CloudinaryUploadField
+                previewUrl={item.imagenUrl}
+                onUploaded={(secureUrl) =>
+                  updateItem(content, setContent, idx, { imagenUrl: secureUrl })
+                }
+                autoDeletePrevious
+                disabled={saving}
+              />
+            </div>
           </div>
         ))}
       </div>
+
+      <button
+        type="button"
+        onClick={() => addProduct(content, setContent)}
+        className="inline-flex items-center gap-2 rounded border border-charcoal/25 px-4 py-2 text-sm hover:bg-charcoal/5"
+      >
+        <Plus className="size-4" />
+        Añadir producto
+      </button>
 
       <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="px-8 py-3 bg-charcoal text-cream text-sm tracking-widest uppercase hover:bg-ink transition-colors disabled:opacity-50"
+          className="bg-charcoal px-8 py-3 text-sm uppercase tracking-widest text-cream transition-colors hover:bg-ink disabled:opacity-50"
         >
           {saving ? "Guardando..." : "Guardar productos"}
         </button>
@@ -218,10 +234,9 @@ export function AdminProducts() {
 
 function updateItem(
   content: SiteContent,
-  // eslint-disable-next-line no-unused-vars
-  setContent: (next: SiteContent) => void,
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
   idx: number,
-  patch: Partial<SiteContent["tienda"]["items"][number]>
+  patch: Partial<StoreItem>
 ) {
   const nextItems = [...content.tienda.items];
   nextItems[idx] = { ...nextItems[idx], ...patch };
@@ -231,10 +246,44 @@ function updateItem(
   });
 }
 
+function addProduct(
+  content: SiteContent,
+  setContent: ReturnType<typeof useSiteContent>["setContent"]
+) {
+  const nextItems = [
+    ...content.tienda.items,
+    {
+      id: newManagedItemId("prod"),
+      titulo: "Nuevo producto",
+      descripcion: "",
+      precio: 0,
+      imagenUrl: "",
+    },
+  ];
+  setContent({
+    ...content,
+    tienda: { ...content.tienda, items: nextItems },
+  });
+}
+
+function removeProduct(
+  content: SiteContent,
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  idx: number
+) {
+  const row = content.tienda.items[idx];
+  const url = row.imagenUrl?.trim();
+  if (url) void deleteCloudinaryByUrl(url).catch(() => undefined);
+  const nextItems = content.tienda.items.filter((_, i) => i !== idx);
+  setContent({
+    ...content,
+    tienda: { ...content.tienda, items: normalizeFeaturedOrder(nextItems) },
+  });
+}
+
 function toggleFeatured(
   content: SiteContent,
-  // eslint-disable-next-line no-unused-vars
-  setContent: (next: SiteContent) => void,
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
   idx: number,
   nextValue: boolean
 ) {
@@ -253,8 +302,7 @@ function toggleFeatured(
 
 function moveFeatured(
   content: SiteContent,
-  // eslint-disable-next-line no-unused-vars
-  setContent: (next: SiteContent) => void,
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
   itemId: string,
   direction: -1 | 1
 ) {

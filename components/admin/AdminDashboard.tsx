@@ -15,8 +15,8 @@ const tabs = [
   { id: "pagina", label: "Página principal", icon: Home },
   { id: "acerca", label: "Acerca de mí", icon: User },
   { id: "blog", label: "Blog", icon: BookOpen },
-  { id: "colecciones", label: "Portfolio y series", icon: FolderTree },
-  { id: "productos", label: "Productos y fotos", icon: ImagePlus },
+  { id: "colecciones", label: "Portfolio", icon: FolderTree },
+  { id: "productos", label: "Productos", icon: ImagePlus },
   { id: "pedidos", label: "Pedidos", icon: ShoppingBag },
   { id: "clientes", label: "Clientes", icon: Users },
 ] as const;

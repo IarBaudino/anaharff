@@ -67,7 +67,12 @@ export default function CarritoPage() {
                           sizes="80px"
                           className="object-contain p-1"
                         />
-                      ) : null}
+                      ) : (
+                        <div
+                          className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.08] to-transparent"
+                          aria-hidden
+                        />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-xl font-light text-charcoal">{item.title}</p>

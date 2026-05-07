@@ -2,14 +2,15 @@
 
 import { Check, ShoppingCart } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ImagenTienda } from "./TiendaGrid";
 import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
+import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
 
-export function AddToCartButton({ imagen }: { imagen: ImagenTienda }) {
+export function AddToCartButton({ item }: { item: StoreItem }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pics = productGalleryUrls(item);
 
   useEffect(() => {
     return () => {
@@ -19,16 +20,16 @@ export function AddToCartButton({ imagen }: { imagen: ImagenTienda }) {
 
   const handleClick = useCallback(() => {
     addItem({
-      id: imagen.id,
-      title: imagen.titulo,
-      unit_price: imagen.precio,
-      description: imagen.descripcion || "Fotografía analógica - Ana Harff",
-      picture_url: imagen.imagenUrl,
+      id: item.id,
+      title: item.titulo,
+      unit_price: item.precio,
+      description: item.descripcion || "Fotografía analógica - Ana Harff",
+      picture_url: pics[0],
     });
     setAdded(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setAdded(false), 2000);
-  }, [addItem, imagen]);
+  }, [addItem, item, pics]);
 
   return (
     <button
@@ -48,7 +49,7 @@ export function AddToCartButton({ imagen }: { imagen: ImagenTienda }) {
         </>
       ) : (
         <>
-          Agregar
+          Agregar al carrito
           <ShoppingCart className="ms-1.5 h-4 w-4" />
         </>
       )}

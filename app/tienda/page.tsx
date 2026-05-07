@@ -42,7 +42,14 @@ export default function TiendaPage() {
 
         <SectionDivider variant="wide" className="mb-12 md:mb-14" />
 
-        <TiendaGrid items={tienda.items} />
+        {tienda.items.length === 0 ? (
+          <div
+            className="mx-auto max-w-lg rounded-2xl border border-charcoal/10 bg-charcoal/[0.02] py-20"
+            aria-hidden
+          />
+        ) : (
+          <TiendaGrid items={tienda.items} />
+        )}
       </div>
     </div>
   );

@@ -1,17 +1,22 @@
 "use client";
 
 import Image from "next/image";
-import { ImagenTienda } from "./TiendaGrid";
+import { useState } from "react";
+import { Eye } from "lucide-react";
 import { CheckoutButton } from "./CheckoutButton";
 import { AddToCartButton } from "./AddToCartButton";
+import { ProductPreviewModal } from "./ProductPreviewModal";
 import { Card, CardContent } from "@/components/ui/Card";
+import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
 
 interface ImageCardProps {
-  imagen: ImagenTienda;
+  item: StoreItem;
 }
 
-export function ImageCard({ imagen }: ImageCardProps) {
-  const tieneImagen = imagen.imagenUrl && imagen.imagenUrl.length > 0;
+export function ImageCard({ item }: ImageCardProps) {
+  const urls = productGalleryUrls(item);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const main = urls[0];
 
   return (
     <Card
@@ -20,36 +25,53 @@ export function ImageCard({ imagen }: ImageCardProps) {
     >
       <div className="overflow-hidden rounded-t-xl">
         <div className="relative aspect-[3/4] overflow-hidden bg-charcoal/[0.04]">
-          {tieneImagen ? (
+          {main ? (
             <Image
-              src={imagen.imagenUrl!}
+              src={main}
               fill
-              alt={imagen.titulo}
+              alt={item.titulo}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-contain p-2 transition-opacity duration-300 group-hover:opacity-95"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-stone/40 text-xs tracking-widest uppercase">Imagen</span>
-            </div>
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.07] via-charcoal/[0.03] to-transparent"
+              aria-hidden
+            />
           )}
         </div>
       </div>
       <CardContent>
         <h2 className="mb-1.5 font-display text-xl font-semibold tracking-tight text-charcoal">
-          {imagen.titulo}
+          {item.titulo}
         </h2>
-        {imagen.descripcion && (
-          <p className="mb-4 text-sm text-stone">{imagen.descripcion}</p>
-        )}
+        {item.descripcion ? (
+          <p className="mb-4 text-sm text-stone">{item.descripcion}</p>
+        ) : null}
         <p className="mb-4 text-sm font-medium text-charcoal">
-          ${imagen.precio.toLocaleString("es-AR")} ARS
+          ${item.precio.toLocaleString("es-AR")} ARS
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <AddToCartButton imagen={imagen} />
-          <CheckoutButton imagen={imagen} />
+          <button
+            type="button"
+            disabled={urls.length === 0}
+            onClick={() => setPreviewOpen(true)}
+            className="inline-flex items-center rounded-full border border-charcoal/20 bg-cream px-4 py-2.5 text-sm font-medium text-charcoal shadow-sm transition-colors hover:border-charcoal/40 hover:bg-charcoal/[0.06] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            Vista previa
+            <Eye className="ms-1.5 h-4 w-4" strokeWidth={2} />
+          </button>
+          <AddToCartButton item={item} />
+          <CheckoutButton item={item} />
         </div>
       </CardContent>
+
+      <ProductPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        titulo={item.titulo}
+        urls={urls}
+      />
     </Card>
   );
 }

@@ -1,27 +1,37 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 interface SeriesContentProps {
   label: string;
   statement?: string;
+  backHref?: string;
+  imageUrls: string[];
 }
 
-export function SeriesContent({ label, statement }: SeriesContentProps) {
+export function SeriesContent({
+  label,
+  statement,
+  backHref = "/series",
+  imageUrls,
+}: SeriesContentProps) {
+  const urls = imageUrls.filter(Boolean);
+
   return (
-    <div className="pt-6 md:pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="pb-20 pt-6 md:pt-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link
-          href="/series"
-          className="text-sm tracking-widest text-stone hover:text-accent mb-8 inline-block"
+          href={backHref}
+          className="mb-8 inline-block text-sm tracking-widest text-stone hover:text-accent"
         >
-          ← Series
+          ← {backHref === "/series" ? "Series" : "Volver"}
         </Link>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-display text-4xl md:text-5xl font-light"
+          className="font-display text-4xl font-light tracking-tight md:text-5xl"
         >
           {label}
         </motion.h1>
@@ -30,26 +40,37 @@ export function SeriesContent({ label, statement }: SeriesContentProps) {
             {statement}
           </p>
         ) : (
-          <div className="mb-16" />
+          <div className="mb-12" />
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className="max-w-sm overflow-hidden rounded-lg border border-charcoal/10 bg-cream p-0 shadow-sm transition-all duration-300 hover:border-charcoal/20 hover:shadow-md"
-            >
-              <div className="overflow-hidden rounded-t-lg">
-                <div className="relative aspect-[3/4] bg-charcoal/[0.04]">
-                  <div className="absolute inset-0 bg-charcoal/5" />
+        {urls.length === 0 ? (
+          <div
+            className="mx-auto max-w-xl rounded-lg border border-charcoal/10 bg-charcoal/[0.02] py-20"
+            aria-hidden
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
+            {urls.map((src, i) => (
+              <motion.div
+                key={`${src}-${i}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: Math.min(i * 0.04, 0.4) }}
+                className="max-w-sm overflow-hidden rounded-lg border border-charcoal/10 bg-cream shadow-sm transition-shadow hover:border-charcoal/20 hover:shadow-md sm:max-w-none"
+              >
+                <div className="relative aspect-[3/4] bg-charcoal/[0.03]">
+                  <Image
+                    src={src}
+                    alt=""
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                  />
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

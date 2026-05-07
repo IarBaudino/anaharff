@@ -42,7 +42,9 @@ function mergeFromFirestore(partial: Partial<SiteContent>): SiteContent {
       ...defaultSiteContent.tienda,
       ...partial.tienda,
       destacadosCantidad,
-      items: normalizedItems.length ? normalizedItems : defaultSiteContent.tienda.items,
+      items: Array.isArray(partial.tienda?.items)
+        ? normalizedItems
+        : defaultSiteContent.tienda.items,
     },
   };
 }

@@ -41,7 +41,9 @@ export async function getServerSiteContent(): Promise<SiteContent> {
         ...defaultSiteContent.tienda,
         ...partial.tienda,
         destacadosCantidad,
-        items: normalizedItems.length ? normalizedItems : defaultSiteContent.tienda.items,
+        items: Array.isArray(partial.tienda?.items)
+          ? normalizedItems
+          : defaultSiteContent.tienda.items,
       },
     };
   } catch {

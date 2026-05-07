@@ -192,6 +192,7 @@ export function AdminEditorBlog() {
                 previewUrl={entrada.imagenUrl}
                 onUploaded={(url) => patchEntrada(entrada.id, { imagenUrl: url })}
                 disabled={saving}
+                autoDeletePrevious
               />
             </div>
             <textarea

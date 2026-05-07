@@ -3,11 +3,21 @@ export interface StoreItem {
   titulo: string;
   descripcion: string;
   precio: number;
+  /** Una imagen por producto (tarjeta, carrito, checkout). */
   imagenUrl: string;
   /** Si está activo, puede aparecer en "Trabajos recientes" del inicio. */
   destacarEnInicio?: boolean;
   /** Orden manual entre destacados (1 = primero). */
   destacadoOrden?: number;
+}
+
+export interface PortfolioSubcategory {
+  id: string;
+  slug: string;
+  label: string;
+  description: string;
+  coverImageUrl: string;
+  galleryImages: string[];
 }
 
 export interface PortfolioCategory {
@@ -17,6 +27,20 @@ export interface PortfolioCategory {
   description: string;
   /** Imagen de portada visible en Galería. */
   coverImageUrl: string;
+  /** Imágenes disponibles para la categoría (la portada se elige de acá). */
+  galleryImages: string[];
+  /** Subsecciones con su propia galería (URL: /portfolio/{categoría}/{sub}). */
+  subcategories: PortfolioSubcategory[];
+}
+
+export interface SeriesSubcategory {
+  id: string;
+  slug: string;
+  label: string;
+  statement: string;
+  description: string;
+  coverImageUrl: string;
+  galleryImages: string[];
 }
 
 export interface SeriesProject {
@@ -27,6 +51,10 @@ export interface SeriesProject {
   description: string;
   /** Imagen de portada visible en Series/Galería. */
   coverImageUrl: string;
+  /** Imágenes disponibles para la serie (la portada se elige de acá). */
+  galleryImages: string[];
+  /** Partes de la serie con galería propia (URL: /series/{serie}/{sub}). */
+  subcategories: SeriesSubcategory[];
 }
 
 /** Bloque de texto de introducción en un idioma (etiqueta solo para el panel; en el sitio se muestran en orden). */
@@ -129,12 +157,72 @@ export interface SiteContent {
   };
 }
 
-const HOME_HERO_DEFAULT =
-  "https://placehold.co/900x1200/f7f5f0/8c8c8c/png?text=Ana+Harff";
+/** Sin imagen por defecto: la clienta sube la portada desde el panel. */
+const HOME_HERO_DEFAULT = "";
 
-export function defaultCoverImageUrl(label: string): string {
-  const text = encodeURIComponent((label || "Galería").trim() || "Galería");
-  return `https://placehold.co/1200x800/f2efe7/4a4034/png?text=${text}`;
+/** Quita URLs de muestra (placehold) para que no se vean en el sitio ni en el admin. */
+export function sanitizePublicImageUrl(url: unknown): string {
+  if (typeof url !== "string") return "";
+  const t = url.trim();
+  if (!t) return "";
+  if (t.toLowerCase().includes("placehold.co")) return "";
+  return t;
+}
+
+export function resolvePortfolioSubcategoryCover(
+  sub: Pick<PortfolioSubcategory, "coverImageUrl" | "galleryImages">
+): string {
+  const c = sanitizePublicImageUrl(sub.coverImageUrl);
+  if (c) return c;
+  for (const u of sub.galleryImages ?? []) {
+    const x = sanitizePublicImageUrl(u);
+    if (x) return x;
+  }
+  return "";
+}
+
+export function resolveSeriesSubcategoryCover(
+  sub: Pick<SeriesSubcategory, "coverImageUrl" | "galleryImages">
+): string {
+  const c = sanitizePublicImageUrl(sub.coverImageUrl);
+  if (c) return c;
+  for (const u of sub.galleryImages ?? []) {
+    const x = sanitizePublicImageUrl(u);
+    if (x) return x;
+  }
+  return "";
+}
+
+export function resolveCategoryCover(
+  cat: Pick<PortfolioCategory, "coverImageUrl" | "galleryImages" | "subcategories">
+): string {
+  const c = sanitizePublicImageUrl(cat.coverImageUrl);
+  if (c) return c;
+  for (const u of cat.galleryImages ?? []) {
+    const x = sanitizePublicImageUrl(u);
+    if (x) return x;
+  }
+  for (const sub of cat.subcategories ?? []) {
+    const s = resolvePortfolioSubcategoryCover(sub);
+    if (s) return s;
+  }
+  return "";
+}
+
+export function resolveSeriesCover(
+  project: Pick<SeriesProject, "coverImageUrl" | "galleryImages" | "subcategories">
+): string {
+  const c = sanitizePublicImageUrl(project.coverImageUrl);
+  if (c) return c;
+  for (const u of project.galleryImages ?? []) {
+    const x = sanitizePublicImageUrl(u);
+    if (x) return x;
+  }
+  for (const sub of project.subcategories ?? []) {
+    const s = resolveSeriesSubcategoryCover(sub);
+    if (s) return s;
+  }
+  return "";
 }
 
 export const defaultSiteContent: SiteContent = {
@@ -216,7 +304,9 @@ export const defaultSiteContent: SiteContent = {
         label: "Desnudos (nude)",
         description:
           "Galería de desnudo artístico y editorial en fotografía analógica. Ana Harff, Buenos Aires.",
-        coverImageUrl: defaultCoverImageUrl("Desnudo"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "cat-retratos",
@@ -224,7 +314,9 @@ export const defaultSiteContent: SiteContent = {
         label: "Retratos (portrait)",
         description:
           "Retratos en fotografía analógica: mirada, identidad y presencia. Ana Harff, Buenos Aires.",
-        coverImageUrl: defaultCoverImageUrl("Retratos"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "cat-artistico",
@@ -232,7 +324,9 @@ export const defaultSiteContent: SiteContent = {
         label: "Artístico (art & shows)",
         description:
           "Obra artística, muestras y proyectos editoriales en analógico. Ana Harff, Buenos Aires.",
-        coverImageUrl: defaultCoverImageUrl("Artístico"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "cat-experimental",
@@ -240,7 +334,9 @@ export const defaultSiteContent: SiteContent = {
         label: "Experimental",
         description:
           "Procesos experimentales y lecturas libres del cuerpo y el espacio en analógico. Ana Harff.",
-        coverImageUrl: defaultCoverImageUrl("Experimental"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "cat-familia",
@@ -248,7 +344,9 @@ export const defaultSiteContent: SiteContent = {
         label: "Familia",
         description:
           "Books de embarazo, pareja y familia en fotografía analógica. Ana Harff, Buenos Aires.",
-        coverImageUrl: defaultCoverImageUrl("Familiar"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "cat-naturaleza",
@@ -256,7 +354,9 @@ export const defaultSiteContent: SiteContent = {
         label: "Naturaleza",
         description:
           "Imágenes de naturaleza y paisaje en fotografía analógica. Ana Harff, Buenos Aires.",
-        coverImageUrl: defaultCoverImageUrl("Naturaleza"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
     ],
   },
@@ -269,7 +369,9 @@ export const defaultSiteContent: SiteContent = {
         statement: "Un relato íntimo sobre identidad, presencia y gesto en fotografía analógica.",
         description:
           'Serie fotográfica "Unica" — narrativa en analógico. Ana Harff, Buenos Aires.',
-        coverImageUrl: defaultCoverImageUrl("Unica"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "series-ser-gorda",
@@ -278,7 +380,9 @@ export const defaultSiteContent: SiteContent = {
         statement: "Una mirada sobre cuerpo, representación y autonomía fuera de los estereotipos.",
         description:
           'Proyecto "Ser Gorda" — cuerpo, identidad y fotografía analógica. Ana Harff, Buenos Aires.',
-        coverImageUrl: defaultCoverImageUrl("Ser Gorda"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "series-venus-as-a-boy",
@@ -287,7 +391,9 @@ export const defaultSiteContent: SiteContent = {
         statement: "Cruces entre ternura, ambigüedad y deseo desde una estética sensible.",
         description:
           'Serie "Venus as a Boy" — fotografía analógica y exploración visual. Ana Harff, Buenos Aires.',
-        coverImageUrl: defaultCoverImageUrl("Venus as a Boy"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
       {
         id: "series-desde-la-distancia",
@@ -296,7 +402,9 @@ export const defaultSiteContent: SiteContent = {
         statement: "Imágenes sobre memoria, ausencia y vínculo cuando el cuerpo no está cerca.",
         description:
           'Serie "Desde la Distancia" — distancia, memoria y analógico. Ana Harff, Buenos Aires.',
-        coverImageUrl: defaultCoverImageUrl("Desde la Distancia"),
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
       },
     ],
   },
@@ -305,56 +413,7 @@ export const defaultSiteContent: SiteContent = {
     descripcion:
       "Imágenes en edición limitada. Fotografía analógica impresa o en formato digital de alta resolución.",
     destacadosCantidad: 3,
-    items: [
-      {
-        id: "1",
-        titulo: "Serie Unica - #1",
-        descripcion: "Fotografía analógica 35mm",
-        precio: 15000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=1",
-        destacarEnInicio: true,
-        destacadoOrden: 1,
-      },
-      {
-        id: "2",
-        titulo: "Serie Unica - #2",
-        descripcion: "Fotografía analógica 35mm",
-        precio: 15000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=2",
-        destacarEnInicio: true,
-        destacadoOrden: 2,
-      },
-      {
-        id: "3",
-        titulo: "Retrato - #1",
-        descripcion: "Impresión fine art",
-        precio: 25000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=3",
-        destacarEnInicio: true,
-        destacadoOrden: 3,
-      },
-      {
-        id: "4",
-        titulo: "Retrato - #2",
-        descripcion: "Impresión fine art",
-        precio: 25000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=4",
-      },
-      {
-        id: "5",
-        titulo: "Experimental - #1",
-        descripcion: "Edición limitada",
-        precio: 18000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=5",
-      },
-      {
-        id: "6",
-        titulo: "Experimental - #2",
-        descripcion: "Edición limitada",
-        precio: 18000,
-        imagenUrl: "https://placehold.co/600x800/f7f5f0/1a1a1a/png?text=6",
-      },
-    ],
+    items: [],
   },
 };
 
@@ -385,6 +444,7 @@ export function normalizeHome(partial: unknown): HomeContent {
   const titulo = typeof p.titulo === "string" ? p.titulo : "ANA HARFF";
 
   let heroImagenUrl = typeof p.heroImagenUrl === "string" ? p.heroImagenUrl.trim() : "";
+  heroImagenUrl = sanitizePublicImageUrl(heroImagenUrl);
   if (!heroImagenUrl) heroImagenUrl = HOME_HERO_DEFAULT;
   const rawFocoX = (p as unknown as Record<string, unknown>).heroFocoX;
   const rawFocoY = (p as unknown as Record<string, unknown>).heroFocoY;
@@ -613,8 +673,7 @@ export function normalizeBlog(partial: unknown): BlogContent {
       titulo: typeof row.titulo === "string" ? row.titulo : `Entrada ${i + 1}`,
       fecha: typeof row.fecha === "string" ? row.fecha : "",
       cuerpo: typeof row.cuerpo === "string" ? row.cuerpo : "",
-      imagenUrl:
-        typeof row.imagenUrl === "string" ? row.imagenUrl.trim() : "",
+      imagenUrl: sanitizePublicImageUrl(typeof row.imagenUrl === "string" ? row.imagenUrl : ""),
     }));
   }
 
@@ -643,6 +702,105 @@ export function newManagedItemId(prefix = "item"): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function normalizeImageArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out = value
+    .map((v) => sanitizePublicImageUrl(typeof v === "string" ? v : ""))
+    .filter(Boolean);
+  return Array.from(new Set(out));
+}
+
+/** URL(s) del producto para vista previa / carrito (una sola imagen por producto). */
+export function productGalleryUrls(item: Pick<StoreItem, "imagenUrl">): string[] {
+  const u = sanitizePublicImageUrl(item.imagenUrl);
+  return u ? [u] : [];
+}
+
+function normalizeOnePortfolioSubcategory(row: unknown, i: number): PortfolioSubcategory {
+  const r = (row ?? {}) as Partial<PortfolioSubcategory>;
+  const label = typeof r.label === "string" && r.label.trim() ? r.label.trim() : `Sección ${i + 1}`;
+  const slugRaw = typeof r.slug === "string" ? r.slug : "";
+  const slug = slugifyLabel(slugRaw) || slugifyLabel(label) || `seccion-${i + 1}`;
+  const galleryImages = normalizeImageArray((r as { galleryImages?: unknown }).galleryImages);
+  let coverImageUrl = sanitizePublicImageUrl(typeof r.coverImageUrl === "string" ? r.coverImageUrl : "");
+  if (!coverImageUrl && galleryImages.length > 0) coverImageUrl = galleryImages[0];
+  const ensuredGallery = (() => {
+    if (!coverImageUrl && galleryImages.length === 0) return [];
+    if (!coverImageUrl) return [...galleryImages];
+    return Array.from(
+      new Set(galleryImages.includes(coverImageUrl) ? galleryImages : [coverImageUrl, ...galleryImages])
+    );
+  })();
+
+  return {
+    id: typeof r.id === "string" && r.id ? r.id : newManagedItemId("port-sub"),
+    slug,
+    label,
+    description: typeof r.description === "string" ? r.description : "",
+    coverImageUrl,
+    galleryImages: ensuredGallery,
+  };
+}
+
+function normalizePortfolioSubcategories(raw: unknown): PortfolioSubcategory[] {
+  const rows = Array.isArray(raw) ? raw : [];
+  const out = rows.map((row, j) => normalizeOnePortfolioSubcategory(row, j));
+  const used = new Set<string>();
+  return out.map((row) => {
+    let candidate = row.slug;
+    let n = 2;
+    while (used.has(candidate)) {
+      candidate = `${row.slug}-${n}`;
+      n += 1;
+    }
+    used.add(candidate);
+    return { ...row, slug: candidate };
+  });
+}
+
+function normalizeOneSeriesSubcategory(row: unknown, i: number): SeriesSubcategory {
+  const r = (row ?? {}) as Partial<SeriesSubcategory>;
+  const label = typeof r.label === "string" && r.label.trim() ? r.label.trim() : `Parte ${i + 1}`;
+  const slugRaw = typeof r.slug === "string" ? r.slug : "";
+  const slug = slugifyLabel(slugRaw) || slugifyLabel(label) || `parte-${i + 1}`;
+  const galleryImages = normalizeImageArray((r as { galleryImages?: unknown }).galleryImages);
+  let coverImageUrl = sanitizePublicImageUrl(typeof r.coverImageUrl === "string" ? r.coverImageUrl : "");
+  if (!coverImageUrl && galleryImages.length > 0) coverImageUrl = galleryImages[0];
+  const ensuredGallery = (() => {
+    if (!coverImageUrl && galleryImages.length === 0) return [];
+    if (!coverImageUrl) return [...galleryImages];
+    return Array.from(
+      new Set(galleryImages.includes(coverImageUrl) ? galleryImages : [coverImageUrl, ...galleryImages])
+    );
+  })();
+
+  return {
+    id: typeof r.id === "string" && r.id ? r.id : newManagedItemId("series-sub"),
+    slug,
+    label,
+    statement: typeof r.statement === "string" ? r.statement : "",
+    description: typeof r.description === "string" ? r.description : "",
+    coverImageUrl,
+    galleryImages: ensuredGallery,
+  };
+}
+
+function normalizeSeriesSubcategories(raw: unknown): SeriesSubcategory[] {
+  const rows = Array.isArray(raw) ? raw : [];
+  const out = rows.map((row, j) => normalizeOneSeriesSubcategory(row, j));
+  const used = new Set<string>();
+  return out.map((row) => {
+    let candidate = row.slug;
+    let n = 2;
+    while (used.has(candidate)) {
+      candidate = `${row.slug}-${n}`;
+      n += 1;
+    }
+    used.add(candidate);
+    return { ...row, slug: candidate };
+  });
+}
+
 export function normalizePortfolioCategories(partial: unknown): PortfolioCategory[] {
   const rows = Array.isArray(partial) ? partial : defaultSiteContent.portfolio.categories;
   const out: PortfolioCategory[] = rows.map((row, i) => {
@@ -650,15 +808,28 @@ export function normalizePortfolioCategories(partial: unknown): PortfolioCategor
     const label = typeof r.label === "string" && r.label.trim() ? r.label.trim() : `Categoría ${i + 1}`;
     const slugRaw = typeof r.slug === "string" ? r.slug : "";
     const slug = slugifyLabel(slugRaw) || slugifyLabel(label) || `categoria-${i + 1}`;
+    const galleryImages = normalizeImageArray((r as { galleryImages?: unknown }).galleryImages);
+    let coverImageUrl = sanitizePublicImageUrl(typeof r.coverImageUrl === "string" ? r.coverImageUrl : "");
+    if (!coverImageUrl && galleryImages.length > 0) coverImageUrl = galleryImages[0];
+
+    const ensuredGallery = (() => {
+      if (!coverImageUrl && galleryImages.length === 0) return [];
+      if (!coverImageUrl) return [...galleryImages];
+      return Array.from(
+        new Set(galleryImages.includes(coverImageUrl) ? galleryImages : [coverImageUrl, ...galleryImages])
+      );
+    })();
+
+    const subcategories = normalizePortfolioSubcategories((r as { subcategories?: unknown }).subcategories);
+
     return {
       id: typeof r.id === "string" && r.id ? r.id : newManagedItemId("cat"),
       slug,
       label,
       description: typeof r.description === "string" ? r.description : "",
-      coverImageUrl:
-        typeof r.coverImageUrl === "string" && r.coverImageUrl.trim()
-          ? r.coverImageUrl.trim()
-          : defaultCoverImageUrl(label),
+      coverImageUrl,
+      galleryImages: ensuredGallery,
+      subcategories,
     };
   });
 
@@ -682,16 +853,29 @@ export function normalizeSeriesProjects(partial: unknown): SeriesProject[] {
     const label = typeof r.label === "string" && r.label.trim() ? r.label.trim() : `Serie ${i + 1}`;
     const slugRaw = typeof r.slug === "string" ? r.slug : "";
     const slug = slugifyLabel(slugRaw) || slugifyLabel(label) || `serie-${i + 1}`;
+    const galleryImages = normalizeImageArray((r as { galleryImages?: unknown }).galleryImages);
+    let coverImageUrl = sanitizePublicImageUrl(typeof r.coverImageUrl === "string" ? r.coverImageUrl : "");
+    if (!coverImageUrl && galleryImages.length > 0) coverImageUrl = galleryImages[0];
+
+    const ensuredGallery = (() => {
+      if (!coverImageUrl && galleryImages.length === 0) return [];
+      if (!coverImageUrl) return [...galleryImages];
+      return Array.from(
+        new Set(galleryImages.includes(coverImageUrl) ? galleryImages : [coverImageUrl, ...galleryImages])
+      );
+    })();
+
+    const subcategories = normalizeSeriesSubcategories((r as { subcategories?: unknown }).subcategories);
+
     return {
       id: typeof r.id === "string" && r.id ? r.id : newManagedItemId("series"),
       slug,
       label,
       statement: typeof r.statement === "string" ? r.statement : "",
       description: typeof r.description === "string" ? r.description : "",
-      coverImageUrl:
-        typeof r.coverImageUrl === "string" && r.coverImageUrl.trim()
-          ? r.coverImageUrl.trim()
-          : defaultCoverImageUrl(label),
+      coverImageUrl,
+      galleryImages: ensuredGallery,
+      subcategories,
     };
   });
 
@@ -713,13 +897,16 @@ export function normalizeStoreItems(items: unknown): StoreItem[] {
   const source = Array.isArray(items) ? items : fallback;
 
   return source.map((row, i) => {
-    const it = (row ?? {}) as Partial<StoreItem>;
+    const it = (row ?? {}) as Partial<StoreItem> & { galeriaImagenes?: unknown };
+    let imagenUrl = sanitizePublicImageUrl(typeof it.imagenUrl === "string" ? it.imagenUrl : "");
+    const legacyExtras = normalizeImageArray(it.galeriaImagenes);
+    if (!imagenUrl && legacyExtras.length > 0) imagenUrl = legacyExtras[0];
     return {
       id: typeof it.id === "string" && it.id ? it.id : `item-${i + 1}`,
       titulo: typeof it.titulo === "string" ? it.titulo : `Obra ${i + 1}`,
       descripcion: typeof it.descripcion === "string" ? it.descripcion : "",
       precio: typeof it.precio === "number" ? it.precio : 0,
-      imagenUrl: typeof it.imagenUrl === "string" ? it.imagenUrl : "",
+      imagenUrl,
       destacarEnInicio: Boolean(it.destacarEnInicio),
       destacadoOrden:
         typeof it.destacadoOrden === "number" && Number.isFinite(it.destacadoOrden)

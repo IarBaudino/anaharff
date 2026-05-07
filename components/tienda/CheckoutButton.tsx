@@ -1,13 +1,13 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { ImagenTienda } from "./TiendaGrid";
 import { useAuth } from "@/components/AuthProvider";
 import type { CheckoutLineItem } from "@/lib/commerce-types";
 import { MP_CHECKOUT_MARKER_KEY } from "@/lib/mp-checkout-marker";
+import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
 
 interface CheckoutButtonProps {
-  imagen?: ImagenTienda;
+  item?: StoreItem;
   items?: CheckoutLineItem[];
   /** "cart": al aprobar el pago se vacía el carrito. "direct": solo se descuentan las líneas pagadas. */
   checkoutScope?: "cart" | "direct";
@@ -20,7 +20,7 @@ interface CheckoutButtonProps {
 const TIENDA_HABILITADA = process.env.NEXT_PUBLIC_TIENDA_ENABLED !== "false";
 
 export function CheckoutButton({
-  imagen,
+  item,
   items,
   checkoutScope = "direct",
   label = "Comprar",
@@ -32,10 +32,12 @@ export function CheckoutButton({
   if (!TIENDA_HABILITADA) {
     return (
       <button
+        type="button"
         disabled
-        className="inline-flex cursor-not-allowed items-center rounded-full border border-charcoal/20 bg-cream px-5 py-2.5 text-sm font-medium leading-5 text-stone shadow-sm"
+        title="La tienda no está activa en este momento."
+        className="inline-flex cursor-not-allowed items-center rounded-full border border-charcoal/20 bg-cream px-5 py-2.5 text-sm font-medium leading-5 text-charcoal/45 shadow-sm"
       >
-        Próximamente
+        {label}
         <ChevronRight className="ms-1.5 h-4 w-4" />
       </button>
     );
@@ -44,22 +46,26 @@ export function CheckoutButton({
   const checkoutItems: CheckoutLineItem[] =
     items && items.length
       ? items
-      : imagen
-        ? [
-            {
-              id: imagen.id,
-              title: imagen.titulo,
-              quantity: 1,
-              unit_price: imagen.precio,
-              currency_id: "ARS",
-              description: imagen.descripcion || "Fotografía analógica - Ana Harff",
-              picture_url: imagen.imagenUrl,
-            },
-          ]
+      : item
+        ? (() => {
+            const pics = productGalleryUrls(item);
+            return [
+              {
+                id: item.id,
+                title: item.titulo,
+                quantity: 1,
+                unit_price: item.precio,
+                currency_id: "ARS",
+                description: item.descripcion || "Fotografía analógica - Ana Harff",
+                picture_url: pics[0],
+              },
+            ];
+          })()
         : [];
 
   return (
     <button
+      type="button"
       disabled={disabled || checkoutItems.length === 0}
       onClick={async () => {
         if (checkoutItems.length === 0) return;
