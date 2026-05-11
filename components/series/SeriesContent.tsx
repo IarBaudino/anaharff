@@ -58,13 +58,13 @@ export function SeriesContent({
                 transition={{ delay: Math.min(i * 0.04, 0.4) }}
                 className="max-w-sm overflow-hidden rounded-lg border border-charcoal/10 bg-cream shadow-sm transition-shadow hover:border-charcoal/20 hover:shadow-md sm:max-w-none"
               >
-                <div className="relative aspect-[3/4] bg-charcoal/[0.03]">
+                <div className="relative aspect-[4/5] bg-charcoal/[0.03] p-2 md:p-3">
                   <Image
                     src={src}
                     alt=""
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover"
+                    className="object-contain"
                   />
                 </div>
               </motion.div>

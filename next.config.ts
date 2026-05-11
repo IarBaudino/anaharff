@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // En Vercel debe quedarse en ".next" para que el builder encuentre routes-manifest.json.
-  // Localmente usamos ".next-cache" para evitar bloqueos esporádicos de permisos en Windows.
-  distDir: process.env.VERCEL ? ".next" : ".next-cache",
+  // En Windows evita bloqueos EPERM entre build/dev usando carpetas distintas.
+  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },

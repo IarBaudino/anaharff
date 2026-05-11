@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import {
@@ -51,8 +51,15 @@ export function AdminCollections() {
   }
 
   function markPendingPublish() {
-    setMessage("Imagen cargada en el panel. Falta «Guardar cambios» para publicarla en la galería.");
+    setMessage(
+      "Imagen en el panel: tocá «Guardar categoría» / «Guardar serie» abajo del bloque, o «Guardar cambios» al final, para publicarla."
+    );
   }
+
+  const [portfolioCatOpen, setPortfolioCatOpen] = useState<Record<string, boolean>>({});
+  const [portfolioSubOpen, setPortfolioSubOpen] = useState<Record<string, boolean>>({});
+  const [seriesProjOpen, setSeriesProjOpen] = useState<Record<string, boolean>>({});
+  const [seriesSubOpen, setSeriesSubOpen] = useState<Record<string, boolean>>({});
 
   function buildNormalizedContent(): SiteContent {
     return {
@@ -203,66 +210,99 @@ export function AdminCollections() {
           Estas categorías aparecen en la página Portfolio y en el submenú superior.
         </p>
         <p className="text-xs text-stone">
-          Importante: subir imágenes no las publica automáticamente. Después de cargar, hacé clic en
-          <strong> Guardar cambios</strong>.
+          Cada categoría y subcategoría es un bloque desplegable: tocá la fila para ver nombre,
+          enlace, fotos y subsecciones. Subir imágenes no las publica solas: usá{" "}
+          <strong>Guardar categoría</strong> al pie del bloque abierto o <strong>Guardar cambios</strong>{" "}
+          abajo de todo.
         </p>
 
         <div className="space-y-4">
           {content.portfolio.categories.map((cat, idx) => {
             const err = fieldErrors.portfolio[cat.id];
+            const hasCatErr = Boolean(err?.label || err?.slug);
+            const catExpanded =
+              portfolioCatOpen[cat.id] !== undefined ? portfolioCatOpen[cat.id] : hasCatErr;
             return (
-            <div key={cat.id} className="space-y-3 rounded-lg border border-charcoal/10 bg-cream/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs uppercase tracking-widest text-stone">
-                  Categoría {idx + 1}
-                </span>
-                <div className="flex items-center gap-2">
+              <div
+                key={cat.id}
+                className="overflow-hidden rounded-lg border border-charcoal/10 bg-cream/60"
+              >
+                <div className="flex w-full items-stretch gap-0">
                   <button
                     type="button"
-                    onClick={() => onSaveCategory(cat.id)}
-                    disabled={saving}
-                    className="rounded border border-charcoal/25 px-2.5 py-1 text-xs text-charcoal transition-colors hover:bg-charcoal/5 disabled:opacity-50"
+                    className="flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left transition-colors hover:bg-charcoal/[0.04]"
+                    aria-expanded={catExpanded}
+                    onClick={() =>
+                      setPortfolioCatOpen((o) => {
+                        const cur = o[cat.id] !== undefined ? o[cat.id] : hasCatErr;
+                        return { ...o, [cat.id]: !cur };
+                      })
+                    }
                   >
-                    Guardar categoría
+                    <ChevronDown
+                      className={cn(
+                        "size-4 shrink-0 text-charcoal/70 transition-transform duration-200",
+                        catExpanded && "rotate-180"
+                      )}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                      {cat.label.trim() || "Categoría sin título"}
+                    </span>
+                    <span className="shrink-0 text-[11px] uppercase tracking-wide text-stone">
+                      {cat.galleryImages.length} fotos
+                      {(cat.subcategories?.length ?? 0) > 0
+                        ? ` · ${cat.subcategories?.length} sub`
+                        : ""}
+                    </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAllFieldErrors();
-                      moveCategory(-1, idx, content, setContent);
-                    }}
-                    disabled={idx === 0}
-                    className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
-                    aria-label="Subir categoría"
+                  <div
+                    className="flex shrink-0 items-center gap-1 border-l border-charcoal/10 px-2 py-2"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <ArrowUp className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAllFieldErrors();
-                      moveCategory(1, idx, content, setContent);
-                    }}
-                    disabled={idx === content.portfolio.categories.length - 1}
-                    className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
-                    aria-label="Bajar categoría"
-                  >
-                    <ArrowDown className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAllFieldErrors();
-                      removeCategory(idx, content, setContent);
-                    }}
-                    className="rounded border border-charcoal/20 p-1.5 text-red-700"
-                    aria-label="Eliminar categoría"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllFieldErrors();
+                        moveCategory(-1, idx, content, setContent);
+                      }}
+                      disabled={idx === 0}
+                      className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
+                      aria-label="Subir categoría"
+                    >
+                      <ArrowUp className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllFieldErrors();
+                        moveCategory(1, idx, content, setContent);
+                      }}
+                      disabled={idx === content.portfolio.categories.length - 1}
+                      className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
+                      aria-label="Bajar categoría"
+                    >
+                      <ArrowDown className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllFieldErrors();
+                        removeCategory(idx, content, setContent);
+                      }}
+                      className="rounded border border-charcoal/20 p-1.5 text-red-700"
+                      aria-label="Eliminar categoría"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
+                {catExpanded ? (
+                  <div className="space-y-3 border-t border-charcoal/10 p-4">
+                    <p className="text-[11px] uppercase tracking-widest text-stone">
+                      Categoría {idx + 1}
+                    </p>
               <div>
                 <input
                   className={cn(inputClass(), err?.label && "border-red-500")}
@@ -308,7 +348,7 @@ export function AdminCollections() {
                   multiple
                   onUploaded={(url) => {
                     clearAllFieldErrors();
-                    appendCategoryImage(idx, url, content, setContent);
+                    appendCategoryImage(idx, url, setContent);
                     markPendingPublish();
                   }}
                   disabled={saving}
@@ -362,16 +402,44 @@ export function AdminCollections() {
                 {(cat.subcategories ?? []).map((sub, si) => {
                   const sk = subErrKey(cat.id, sub.id);
                   const sErr = fieldErrors.portfolioSub[sk];
+                  const hasSubErr = Boolean(sErr?.label || sErr?.slug);
+                  const subExpanded =
+                    portfolioSubOpen[sk] !== undefined ? portfolioSubOpen[sk] : hasSubErr;
                   return (
                     <div
                       key={sub.id}
-                      className="space-y-2 rounded-lg border border-charcoal/12 bg-cream/80 p-3"
+                      className="overflow-hidden rounded-lg border border-charcoal/12 bg-cream/80"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[11px] uppercase tracking-wide text-stone">
-                          Subcategoría {si + 1}
-                        </span>
-                        <div className="flex gap-1">
+                      <div className="flex w-full items-stretch gap-0">
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2.5 text-left text-sm transition-colors hover:bg-charcoal/[0.04]"
+                          aria-expanded={subExpanded}
+                          onClick={() =>
+                            setPortfolioSubOpen((o) => {
+                              const cur = o[sk] !== undefined ? o[sk] : hasSubErr;
+                              return { ...o, [sk]: !cur };
+                            })
+                          }
+                        >
+                          <ChevronDown
+                            className={cn(
+                              "size-3.5 shrink-0 text-charcoal/70 transition-transform duration-200",
+                              subExpanded && "rotate-180"
+                            )}
+                            aria-hidden
+                          />
+                          <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                            {sub.label.trim() || "Subcategoría sin título"}
+                          </span>
+                          <span className="shrink-0 text-[10px] uppercase tracking-wide text-stone">
+                            {sub.galleryImages.length} fotos
+                          </span>
+                        </button>
+                        <div
+                          className="flex shrink-0 items-center gap-0.5 border-l border-charcoal/10 px-1.5 py-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             type="button"
                             className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
@@ -400,6 +468,11 @@ export function AdminCollections() {
                           </button>
                         </div>
                       </div>
+                      {subExpanded ? (
+                        <div className="space-y-2 border-t border-charcoal/10 p-3">
+                          <p className="text-[11px] uppercase tracking-wide text-stone">
+                            Subcategoría {si + 1} · edición
+                          </p>
                       <input
                         className={cn(inputClass(), sErr?.label && "border-red-500")}
                         value={sub.label}
@@ -443,7 +516,7 @@ export function AdminCollections() {
                         <CloudinaryUploadField
                           multiple
                           onUploaded={(url) =>
-                            appendPortfolioSubImage(idx, si, url, content, setContent)
+                            appendPortfolioSubImage(idx, si, url, setContent)
                           }
                           disabled={saving}
                         />
@@ -492,6 +565,8 @@ export function AdminCollections() {
                           </div>
                         ) : null}
                       </div>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -504,7 +579,17 @@ export function AdminCollections() {
                   Añadir subcategoría
                 </button>
               </div>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => onSaveCategory(cat.id)}
+                      disabled={saving}
+                      className="mt-3 w-full rounded border border-charcoal/25 py-2.5 text-sm text-charcoal transition-colors hover:bg-charcoal/5 disabled:opacity-50"
+                    >
+                      {saving ? "Guardando…" : "Guardar categoría"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             );
           })}
         </div>
@@ -527,64 +612,99 @@ export function AdminCollections() {
         <p className="text-sm text-stone">
           Estos proyectos aparecen en la pestaña Series y en su submenú.
         </p>
+        <p className="text-xs text-stone">
+          Igual que en portfolio: cada serie se pliega y muestra solo el título; al expandir editás
+          todo. Guardá con <strong>Guardar serie</strong> al final del bloque o con{" "}
+          <strong>Guardar cambios</strong>.
+        </p>
 
         <div className="space-y-4">
           {content.series.projects.map((project, idx) => {
             const err = fieldErrors.series[project.id];
+            const hasProjErr = Boolean(err?.label || err?.slug);
+            const projExpanded =
+              seriesProjOpen[project.id] !== undefined ? seriesProjOpen[project.id] : hasProjErr;
             return (
-            <div
-              key={project.id}
-              className="space-y-3 rounded-lg border border-charcoal/10 bg-cream/60 p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs uppercase tracking-widest text-stone">Serie {idx + 1}</span>
-                <div className="flex items-center gap-2">
+              <div
+                key={project.id}
+                className="overflow-hidden rounded-lg border border-charcoal/10 bg-cream/60"
+              >
+                <div className="flex w-full items-stretch gap-0">
                   <button
                     type="button"
-                    onClick={() => onSaveSeries(project.id)}
-                    disabled={saving}
-                    className="rounded border border-charcoal/25 px-2.5 py-1 text-xs text-charcoal transition-colors hover:bg-charcoal/5 disabled:opacity-50"
+                    className="flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left transition-colors hover:bg-charcoal/[0.04]"
+                    aria-expanded={projExpanded}
+                    onClick={() =>
+                      setSeriesProjOpen((o) => {
+                        const cur = o[project.id] !== undefined ? o[project.id] : hasProjErr;
+                        return { ...o, [project.id]: !cur };
+                      })
+                    }
                   >
-                    Guardar serie
+                    <ChevronDown
+                      className={cn(
+                        "size-4 shrink-0 text-charcoal/70 transition-transform duration-200",
+                        projExpanded && "rotate-180"
+                      )}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                      {project.label.trim() || "Serie sin título"}
+                    </span>
+                    <span className="shrink-0 text-[11px] uppercase tracking-wide text-stone">
+                      {project.galleryImages.length} fotos
+                      {(project.subcategories?.length ?? 0) > 0
+                        ? ` · ${project.subcategories?.length} sub`
+                        : ""}
+                    </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAllFieldErrors();
-                      moveProject(-1, idx, content, setContent);
-                    }}
-                    disabled={idx === 0}
-                    className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
-                    aria-label="Subir serie"
+                  <div
+                    className="flex shrink-0 items-center gap-1 border-l border-charcoal/10 px-2 py-2"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <ArrowUp className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAllFieldErrors();
-                      moveProject(1, idx, content, setContent);
-                    }}
-                    disabled={idx === content.series.projects.length - 1}
-                    className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
-                    aria-label="Bajar serie"
-                  >
-                    <ArrowDown className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearAllFieldErrors();
-                      removeProject(idx, content, setContent);
-                    }}
-                    className="rounded border border-charcoal/20 p-1.5 text-red-700"
-                    aria-label="Eliminar serie"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllFieldErrors();
+                        moveProject(-1, idx, content, setContent);
+                      }}
+                      disabled={idx === 0}
+                      className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
+                      aria-label="Subir serie"
+                    >
+                      <ArrowUp className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllFieldErrors();
+                        moveProject(1, idx, content, setContent);
+                      }}
+                      disabled={idx === content.series.projects.length - 1}
+                      className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
+                      aria-label="Bajar serie"
+                    >
+                      <ArrowDown className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllFieldErrors();
+                        removeProject(idx, content, setContent);
+                      }}
+                      className="rounded border border-charcoal/20 p-1.5 text-red-700"
+                      aria-label="Eliminar serie"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
+                {projExpanded ? (
+                  <div className="space-y-3 border-t border-charcoal/10 p-4">
+                    <p className="text-[11px] uppercase tracking-widest text-stone">
+                      Serie {idx + 1}
+                    </p>
               <div>
                 <input
                   className={cn(inputClass(), err?.label && "border-red-500")}
@@ -640,7 +760,7 @@ export function AdminCollections() {
                   multiple
                   onUploaded={(url) => {
                     clearAllFieldErrors();
-                    appendSeriesImage(idx, url, content, setContent);
+                    appendSeriesImage(idx, url, setContent);
                     markPendingPublish();
                   }}
                   disabled={saving}
@@ -694,16 +814,44 @@ export function AdminCollections() {
                 {(project.subcategories ?? []).map((sub, si) => {
                   const sk = subErrKey(project.id, sub.id);
                   const sErr = fieldErrors.seriesSub[sk];
+                  const hasSubErr = Boolean(sErr?.label || sErr?.slug);
+                  const subExpanded =
+                    seriesSubOpen[sk] !== undefined ? seriesSubOpen[sk] : hasSubErr;
                   return (
                     <div
                       key={sub.id}
-                      className="space-y-2 rounded-lg border border-charcoal/12 bg-cream/80 p-3"
+                      className="overflow-hidden rounded-lg border border-charcoal/12 bg-cream/80"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[11px] uppercase tracking-wide text-stone">
-                          Subserie {si + 1}
-                        </span>
-                        <div className="flex gap-1">
+                      <div className="flex w-full items-stretch gap-0">
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-2 px-2 py-2.5 text-left text-sm transition-colors hover:bg-charcoal/[0.04]"
+                          aria-expanded={subExpanded}
+                          onClick={() =>
+                            setSeriesSubOpen((o) => {
+                              const cur = o[sk] !== undefined ? o[sk] : hasSubErr;
+                              return { ...o, [sk]: !cur };
+                            })
+                          }
+                        >
+                          <ChevronDown
+                            className={cn(
+                              "size-3.5 shrink-0 text-charcoal/70 transition-transform duration-200",
+                              subExpanded && "rotate-180"
+                            )}
+                            aria-hidden
+                          />
+                          <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                            {sub.label.trim() || "Parte sin título"}
+                          </span>
+                          <span className="shrink-0 text-[10px] uppercase tracking-wide text-stone">
+                            {sub.galleryImages.length} fotos
+                          </span>
+                        </button>
+                        <div
+                          className="flex shrink-0 items-center gap-0.5 border-l border-charcoal/10 px-1.5 py-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             type="button"
                             className="rounded border border-charcoal/20 p-1.5 disabled:opacity-40"
@@ -732,6 +880,11 @@ export function AdminCollections() {
                           </button>
                         </div>
                       </div>
+                      {subExpanded ? (
+                        <div className="space-y-2 border-t border-charcoal/10 p-3">
+                          <p className="text-[11px] uppercase tracking-wide text-stone">
+                            Subserie {si + 1} · edición
+                          </p>
                       <input
                         className={cn(inputClass(), sErr?.label && "border-red-500")}
                         value={sub.label}
@@ -775,7 +928,7 @@ export function AdminCollections() {
                         <CloudinaryUploadField
                           multiple
                           onUploaded={(url) =>
-                            appendSeriesSubImage(idx, si, url, content, setContent)
+                            appendSeriesSubImage(idx, si, url, setContent)
                           }
                           disabled={saving}
                         />
@@ -824,6 +977,8 @@ export function AdminCollections() {
                           </div>
                         ) : null}
                       </div>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -836,7 +991,17 @@ export function AdminCollections() {
                   Añadir subcategoría
                 </button>
               </div>
-            </div>
+                    <button
+                      type="button"
+                      onClick={() => onSaveSeries(project.id)}
+                      disabled={saving}
+                      className="mt-3 w-full rounded border border-charcoal/25 py-2.5 text-sm text-charcoal transition-colors hover:bg-charcoal/5 disabled:opacity-50"
+                    >
+                      {saving ? "Guardando…" : "Guardar serie"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             );
           })}
         </div>
@@ -1034,7 +1199,6 @@ function updateCategory(
   idx: number,
   patch: Partial<PortfolioCategory>,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = [...content.portfolio.categories];
@@ -1046,7 +1210,6 @@ function updateProject(
   idx: number,
   patch: Partial<SeriesProject>,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = [...content.series.projects];
@@ -1057,22 +1220,24 @@ function updateProject(
 function appendCategoryImage(
   idx: number,
   url: string,
-  content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const clean = url.trim();
   if (!clean) return;
-  const row = content.portfolio.categories[idx];
-  const galleryImages = row.galleryImages.includes(clean)
-    ? row.galleryImages
-    : [...row.galleryImages, clean];
-  updateCategory(
-    idx,
-    { galleryImages, coverImageUrl: row.coverImageUrl || clean },
-    content,
-    setContent
-  );
+  setContent((prev) => {
+    const row = prev.portfolio.categories[idx];
+    if (!row) return prev;
+    const galleryImages = row.galleryImages.includes(clean)
+      ? row.galleryImages
+      : [...row.galleryImages, clean];
+    const next = [...prev.portfolio.categories];
+    next[idx] = {
+      ...row,
+      galleryImages,
+      coverImageUrl: row.coverImageUrl || clean,
+    };
+    return { ...prev, portfolio: { ...prev.portfolio, categories: next } };
+  });
 }
 
 function replaceCategoryImage(
@@ -1080,7 +1245,6 @@ function replaceCategoryImage(
   prevUrl: string,
   nextUrl: string,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const row = content.portfolio.categories[idx];
@@ -1101,22 +1265,24 @@ function replaceCategoryImage(
 function appendSeriesImage(
   idx: number,
   url: string,
-  content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const clean = url.trim();
   if (!clean) return;
-  const row = content.series.projects[idx];
-  const galleryImages = row.galleryImages.includes(clean)
-    ? row.galleryImages
-    : [...row.galleryImages, clean];
-  updateProject(
-    idx,
-    { galleryImages, coverImageUrl: row.coverImageUrl || clean },
-    content,
-    setContent
-  );
+  setContent((prev) => {
+    const row = prev.series.projects[idx];
+    if (!row) return prev;
+    const galleryImages = row.galleryImages.includes(clean)
+      ? row.galleryImages
+      : [...row.galleryImages, clean];
+    const next = [...prev.series.projects];
+    next[idx] = {
+      ...row,
+      galleryImages,
+      coverImageUrl: row.coverImageUrl || clean,
+    };
+    return { ...prev, series: { ...prev.series, projects: next } };
+  });
 }
 
 function replaceSeriesImage(
@@ -1124,7 +1290,6 @@ function replaceSeriesImage(
   prevUrl: string,
   nextUrl: string,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const row = content.series.projects[idx];
@@ -1212,22 +1377,28 @@ function appendPortfolioSubImage(
   catIdx: number,
   subIdx: number,
   url: string,
-  content: ReturnType<typeof useSiteContent>["content"],
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const clean = url.trim();
   if (!clean) return;
-  const sub = (content.portfolio.categories[catIdx].subcategories ?? [])[subIdx];
-  const galleryImages = sub.galleryImages.includes(clean)
-    ? sub.galleryImages
-    : [...sub.galleryImages, clean];
-  updatePortfolioSub(
-    catIdx,
-    subIdx,
-    { galleryImages, coverImageUrl: sub.coverImageUrl || clean },
-    content,
-    setContent
-  );
+  setContent((prev) => {
+    const cats = [...prev.portfolio.categories];
+    const cat = cats[catIdx];
+    if (!cat) return prev;
+    const subs = [...(cat.subcategories ?? [])];
+    const sub = subs[subIdx];
+    if (!sub) return prev;
+    const galleryImages = sub.galleryImages.includes(clean)
+      ? sub.galleryImages
+      : [...sub.galleryImages, clean];
+    subs[subIdx] = {
+      ...sub,
+      galleryImages,
+      coverImageUrl: sub.coverImageUrl || clean,
+    };
+    cats[catIdx] = { ...cat, subcategories: subs };
+    return { ...prev, portfolio: { ...prev.portfolio, categories: cats } };
+  });
 }
 
 function replacePortfolioSubImage(
@@ -1322,22 +1493,28 @@ function appendSeriesSubImage(
   projectIdx: number,
   subIdx: number,
   url: string,
-  content: ReturnType<typeof useSiteContent>["content"],
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const clean = url.trim();
   if (!clean) return;
-  const sub = (content.series.projects[projectIdx].subcategories ?? [])[subIdx];
-  const galleryImages = sub.galleryImages.includes(clean)
-    ? sub.galleryImages
-    : [...sub.galleryImages, clean];
-  updateSeriesSub(
-    projectIdx,
-    subIdx,
-    { galleryImages, coverImageUrl: sub.coverImageUrl || clean },
-    content,
-    setContent
-  );
+  setContent((prev) => {
+    const projects = [...prev.series.projects];
+    const p = projects[projectIdx];
+    if (!p) return prev;
+    const subs = [...(p.subcategories ?? [])];
+    const sub = subs[subIdx];
+    if (!sub) return prev;
+    const galleryImages = sub.galleryImages.includes(clean)
+      ? sub.galleryImages
+      : [...sub.galleryImages, clean];
+    subs[subIdx] = {
+      ...sub,
+      galleryImages,
+      coverImageUrl: sub.coverImageUrl || clean,
+    };
+    projects[projectIdx] = { ...p, subcategories: subs };
+    return { ...prev, series: { ...prev.series, projects } };
+  });
 }
 
 function replaceSeriesSubImage(
@@ -1363,7 +1540,6 @@ function replaceSeriesSubImage(
 
 function addCategory(
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = [...content.portfolio.categories];
@@ -1381,7 +1557,6 @@ function addCategory(
 
 function addProject(
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = [...content.series.projects];
@@ -1401,7 +1576,6 @@ function addProject(
 function removeCategory(
   idx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = content.portfolio.categories.filter((_, i) => i !== idx);
@@ -1411,7 +1585,6 @@ function removeCategory(
 function removeProject(
   idx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = content.series.projects.filter((_, i) => i !== idx);
@@ -1422,7 +1595,6 @@ function moveCategory(
   direction: -1 | 1,
   idx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = [...content.portfolio.categories];
@@ -1436,7 +1608,6 @@ function moveProject(
   direction: -1 | 1,
   idx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  // eslint-disable-next-line no-unused-vars
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
   const next = [...content.series.projects];
