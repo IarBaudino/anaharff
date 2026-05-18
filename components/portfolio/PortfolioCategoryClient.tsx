@@ -52,7 +52,7 @@ export function PortfolioCategoryClient({ category }: Props) {
                     href={`/portfolio/${category.slug}/${sub.slug}`}
                     className="group block"
                   >
-                    <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.04]">
+                    <div className="relative aspect-[16/11] overflow-hidden bg-transparent">
                       {cover ? (
                         <Image
                           src={cover}

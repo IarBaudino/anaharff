@@ -49,9 +49,9 @@ export function CategoryContent({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: Math.min(i * 0.04, 0.4) }}
-                className="overflow-hidden rounded-lg border border-charcoal/10 bg-cream shadow-sm transition-shadow hover:border-charcoal/20 hover:shadow-md"
+                className="overflow-hidden"
               >
-                <div className="relative aspect-[4/5] w-full bg-charcoal/[0.03] p-2 md:p-3">
+                <div className="relative aspect-[4/5] w-full bg-transparent">
                   <Image
                     src={src}
                     alt=""

@@ -52,7 +52,7 @@ export function SeriesProjectClient({ project }: Props) {
                     href={`/series/${project.slug}/${sub.slug}`}
                     className="group block"
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden rounded-lg border border-charcoal/10 bg-charcoal/[0.04] sm:aspect-[16/11]">
+                    <div className="relative aspect-[3/4] overflow-hidden bg-transparent sm:aspect-[16/11]">
                       {cover ? (
                         <Image
                           src={cover}

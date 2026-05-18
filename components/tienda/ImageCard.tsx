@@ -21,17 +21,17 @@ export function ImageCard({ item }: ImageCardProps) {
   return (
     <Card
       as="article"
-      className="relative max-w-[16.5rem] before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-[3px] before:rounded-l-xl before:bg-accent/0 before:transition-colors hover:before:bg-accent/90 sm:max-w-[17rem]"
+      className="relative max-w-[16.5rem] sm:max-w-[17rem]"
     >
-      <div className="overflow-hidden rounded-t-xl">
-        <div className="relative aspect-[3/4] overflow-hidden bg-charcoal/[0.04]">
+      <div className="overflow-hidden">
+        <div className="relative aspect-[3/4] overflow-hidden bg-transparent">
           {main ? (
             <Image
               src={main}
               fill
               alt={item.titulo}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-contain p-2 transition-opacity duration-300 group-hover:opacity-95"
+              className="object-contain transition-opacity duration-300 group-hover:opacity-95"
             />
           ) : (
             <div

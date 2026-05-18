@@ -56,9 +56,9 @@ export function SeriesContent({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: Math.min(i * 0.04, 0.4) }}
-                className="max-w-sm overflow-hidden rounded-lg border border-charcoal/10 bg-cream shadow-sm transition-shadow hover:border-charcoal/20 hover:shadow-md sm:max-w-none"
+                className="max-w-sm overflow-hidden sm:max-w-none"
               >
-                <div className="relative aspect-[4/5] bg-charcoal/[0.03] p-2 md:p-3">
+                <div className="relative aspect-[4/5] bg-transparent">
                   <Image
                     src={src}
                     alt=""

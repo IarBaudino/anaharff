@@ -20,7 +20,7 @@ interface CardProps {
 
 export function Card({ children, as: Component = "div", href, className }: CardProps) {
   const base =
-    "group mx-auto block w-full max-w-[17rem] overflow-hidden rounded-xl border border-charcoal/10 bg-cream p-0 shadow-sm transition-all duration-500 hover:border-charcoal/[0.18] hover:shadow-[0_12px_40px_-12px_rgba(26,26,26,0.12)] sm:max-w-[17.5rem]";
+    "group mx-auto block w-full max-w-[17rem] overflow-hidden border-0 bg-transparent p-0 shadow-none sm:max-w-[17.5rem]";
 
   if (href && Component === "a") {
     return (
@@ -41,7 +41,7 @@ export function CardImage({ src, alt, aspectRatio = "3/4" }: CardImageProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden bg-charcoal/5",
+        "relative overflow-hidden bg-transparent",
         aspectRatio === "3/4" && "aspect-[3/4]",
         aspectRatio === "4/5" && "aspect-[4/5]",
         aspectRatio === "1/1" && "aspect-square"
@@ -53,7 +53,7 @@ export function CardImage({ src, alt, aspectRatio = "3/4" }: CardImageProps) {
           alt={alt}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-contain p-2 transition-opacity duration-300 group-hover:opacity-95"
+          className="object-contain transition-opacity duration-300 group-hover:opacity-95"
         />
       ) : (
         <div className="absolute inset-0 bg-charcoal/[0.04] flex items-center justify-center">
