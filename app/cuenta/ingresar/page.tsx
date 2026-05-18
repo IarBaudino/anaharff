@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { motion } from "framer-motion";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
+import { ensureCustomerProfile } from "@/lib/customer-profile";
 import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
 import { PasswordField } from "@/components/ui/PasswordField";
@@ -31,7 +32,12 @@ export default function IngresarPage() {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      try {
+        await ensureCustomerProfile(cred.user);
+      } catch {
+        /* el panel intentará crear el perfil al cargar */
+      }
       router.replace("/cuenta");
       router.refresh();
     } catch {
@@ -75,6 +81,11 @@ export default function IngresarPage() {
             />
           </div>
           {error && <p className="text-sm text-red-700">{error}</p>}
+          <p className="text-right text-xs">
+            <Link href="/cuenta/recuperar" className="text-accent underline underline-offset-2">
+              Olvidé mi contraseña
+            </Link>
+          </p>
           <button
             type="submit"
             disabled={loading}

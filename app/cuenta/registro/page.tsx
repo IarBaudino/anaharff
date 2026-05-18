@@ -34,12 +34,13 @@ export default function RegistroPage() {
 
     setLoading(true);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const authEmail = cred.user.email ?? email.trim();
       await setDoc(doc(db, "customers", cred.user.uid), {
         uid: cred.user.uid,
-        email: cred.user.email,
-        nombre: nombre || "",
-        telefono: telefono || "",
+        email: authEmail,
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
         createdAt: serverTimestamp(),
         ordersCount: 0,
       });

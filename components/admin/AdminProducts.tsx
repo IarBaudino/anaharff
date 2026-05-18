@@ -17,8 +17,16 @@ function inputClass() {
 }
 
 export function AdminProducts() {
-  const { content, setContent, save, saving, loading, error, isFirebaseConfigured } =
-    useSiteContent();
+  const {
+    content,
+    setContent,
+    save,
+    saving,
+    loading,
+    error,
+    isFirebaseConfigured,
+    reload,
+  } = useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
   const itemCount = useMemo(() => content.tienda.items.length, [content.tienda.items.length]);
   const featuredCount = useMemo(
@@ -57,8 +65,18 @@ export function AdminProducts() {
         <h2 className="font-display text-2xl">Productos ({itemCount})</h2>
         <p className="text-sm text-stone">
           Un producto = una foto, título, descripción y precio. Para vender otra imagen, añadí otro
-          producto.
+          producto. Lo que ves en la tienda pública sale de acá (Firestore, documento{" "}
+          <code className="rounded bg-charcoal/5 px-1 text-[11px]">site/content</code>
+          ).
         </p>
+        {itemCount === 0 && !loading ? (
+          <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 text-sm text-amber-950">
+            No hay productos cargados en el panel. Si en la web pública igual ves fotos en la tienda,
+            puede ser un deploy viejo o datos guardados con otro formato: tocá{" "}
+            <strong>Recargar desde la base</strong> abajo. Si siguen sin aparecer, revisá en Firebase
+            la colección que el campo sea <code className="text-[11px]">tienda.items</code>.
+          </p>
+        ) : null}
         <input
           className={inputClass()}
           value={content.tienda.titulo}
@@ -202,6 +220,12 @@ export function AdminProducts() {
                 autoDeletePrevious
                 disabled={saving}
               />
+              {!item.imagenUrl?.trim() ? (
+                <p className="mt-2 text-xs text-amber-900">
+                  Sin foto válida: en la tienda se ve un recuadro vacío. Subí imagen o eliminá este
+                  producto.
+                </p>
+              ) : null}
             </div>
           </div>
         ))}
@@ -216,7 +240,7 @@ export function AdminProducts() {
         Añadir producto
       </button>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <button
           type="button"
           onClick={onSave}
@@ -224,6 +248,14 @@ export function AdminProducts() {
           className="bg-charcoal px-8 py-3 text-sm uppercase tracking-widest text-cream transition-colors hover:bg-ink disabled:opacity-50"
         >
           {saving ? "Guardando..." : "Guardar productos"}
+        </button>
+        <button
+          type="button"
+          onClick={() => void reload()}
+          disabled={saving || loading}
+          className="rounded-full border border-charcoal/25 px-4 py-2 text-xs uppercase tracking-widest text-charcoal transition-colors hover:bg-charcoal/5 disabled:opacity-50"
+        >
+          Recargar desde la base
         </button>
         {message && <p className="text-sm text-charcoal/80">{message}</p>}
         {error && <p className="text-sm text-red-700">{error}</p>}

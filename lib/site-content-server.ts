@@ -1,13 +1,7 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   defaultSiteContent,
-  normalizeBlog,
-  normalizeFeaturedOrder,
-  normalizeHome,
-  normalizePortfolioCategories,
-  normalizeSeriesProjects,
-  normalizeSobreMi,
-  normalizeStoreItems,
+  mergeSiteContentFromFirestore,
   type SiteContent,
 } from "@/lib/site-content";
 
@@ -22,30 +16,7 @@ export async function getServerSiteContent(): Promise<SiteContent> {
     const snap = await db.doc(CONTENT_DOC).get();
     if (!snap.exists) return defaultSiteContent;
 
-    const partial = snap.data() as Partial<SiteContent>;
-    const normalizedItems = normalizeFeaturedOrder(normalizeStoreItems(partial.tienda?.items));
-    const cantidadRaw = partial.tienda?.destacadosCantidad;
-    const destacadosCantidad = cantidadRaw === 4 || cantidadRaw === 6 ? cantidadRaw : 3;
-
-    return {
-      home: normalizeHome(partial.home),
-      sobreMi: normalizeSobreMi(partial.sobreMi),
-      blog: normalizeBlog(partial.blog),
-      portfolio: {
-        categories: normalizePortfolioCategories(partial.portfolio?.categories),
-      },
-      series: {
-        projects: normalizeSeriesProjects(partial.series?.projects),
-      },
-      tienda: {
-        ...defaultSiteContent.tienda,
-        ...partial.tienda,
-        destacadosCantidad,
-        items: Array.isArray(partial.tienda?.items)
-          ? normalizedItems
-          : defaultSiteContent.tienda.items,
-      },
-    };
+    return mergeSiteContentFromFirestore(snap.data() as Partial<SiteContent>);
   } catch {
     return defaultSiteContent;
   }

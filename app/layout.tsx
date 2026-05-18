@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { PageBody } from "@/components/PageBody";
 import { AuthProvider } from "@/components/AuthProvider";
+import { SiteContentProvider } from "@/hooks/useSiteContent";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { getSiteOrigin, siteConfig } from "@/lib/seo";
 
@@ -81,8 +82,10 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col font-sans">
         <SiteJsonLd />
         <AuthProvider>
-          <Header />
-          <PageBody>{children}</PageBody>
+          <SiteContentProvider>
+            <Header />
+            <PageBody>{children}</PageBody>
+          </SiteContentProvider>
         </AuthProvider>
       </body>
     </html>

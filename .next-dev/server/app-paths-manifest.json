@@ -1,0 +1,7 @@
+{
+  "/api/cloudinary/delete/route": "app/api/cloudinary/delete/route.js",
+  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/tienda/page": "app/tienda/page.js"
+}

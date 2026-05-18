@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronDown, Instagram, Mail, Menu, ShoppingCart, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { defaultSiteContent } from "@/lib/site-content";
@@ -206,12 +208,29 @@ function NavRail({
 
 function AuthRail({ onNavigate }: { onNavigate?: () => void }) {
   const { user, ready } = useAuth();
+  const router = useRouter();
   if (!ready) return <div className="h-14 shrink-0" aria-hidden />;
   if (user) {
     return (
-      <Link href="/cuenta" onClick={onNavigate} className={railLink}>
-        Mi cuenta
-      </Link>
+      <div className="flex flex-col gap-0.5">
+        <Link href="/cuenta" onClick={onNavigate} className={railLink}>
+          Mi cuenta
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (!auth) return;
+            void signOut(auth).then(() => {
+              onNavigate?.();
+              router.replace("/");
+              router.refresh();
+            });
+          }}
+          className={cn(railSubLink, "w-full pl-0.5 text-left uppercase tracking-[0.18em]")}
+        >
+          Cerrar sesión
+        </button>
+      </div>
     );
   }
   return (

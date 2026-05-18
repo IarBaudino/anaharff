@@ -11,6 +11,7 @@ import { useCartStore } from "@/stores/cart-store";
 export default function TiendaPage() {
   const { content } = useSiteContent();
   const tienda = content?.tienda ?? defaultSiteContent.tienda;
+  const visibleItems = tienda.items.filter((it) => it.imagenUrl?.trim());
   const cartCount = useCartStore((s) => s.items.reduce((sum, it) => sum + it.quantity, 0));
 
   return (
@@ -42,13 +43,13 @@ export default function TiendaPage() {
 
         <SectionDivider variant="wide" className="mb-12 md:mb-14" />
 
-        {tienda.items.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <div
             className="mx-auto max-w-lg rounded-2xl border border-charcoal/10 bg-charcoal/[0.02] py-20"
             aria-hidden
           />
         ) : (
-          <TiendaGrid items={tienda.items} />
+          <TiendaGrid items={visibleItems} />
         )}
       </div>
     </div>

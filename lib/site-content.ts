@@ -892,9 +892,67 @@ export function normalizeSeriesProjects(partial: unknown): SeriesProject[] {
   });
 }
 
+/** Convierte listas guardadas como array, mapa numérico u otros nombres legacy en un array. */
+function asStoreItemRows(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") {
+    const vals = Object.values(raw as Record<string, unknown>);
+    if (vals.length > 0 && vals.every((v) => v !== null && typeof v === "object")) {
+      return vals;
+    }
+  }
+  return [];
+}
+
+/** Lee productos desde `tienda` en Firestore (`items`, `productos`, etc.). */
+export function parseTiendaItemsFromFirestore(tienda: unknown): unknown[] {
+  if (!tienda || typeof tienda !== "object") return [];
+  const t = tienda as Record<string, unknown>;
+  for (const key of ["items", "productos", "obras", "products"]) {
+    const rows = asStoreItemRows(t[key]);
+    if (rows.length > 0) return rows;
+  }
+  return [];
+}
+
+export function mergeSiteContentFromFirestore(partial: Partial<SiteContent>): SiteContent {
+  return {
+    home: normalizeHome(partial.home),
+    sobreMi: normalizeSobreMi(partial.sobreMi),
+    blog: normalizeBlog(partial.blog),
+    portfolio: {
+      categories: normalizePortfolioCategories(partial.portfolio?.categories),
+    },
+    series: {
+      projects: normalizeSeriesProjects(partial.series?.projects),
+    },
+    tienda: mergeTiendaFromPartial(partial.tienda),
+  };
+}
+
+export function mergeTiendaFromPartial(
+  partialTienda: unknown
+): SiteContent["tienda"] {
+  const partial =
+    partialTienda && typeof partialTienda === "object"
+      ? (partialTienda as Partial<SiteContent["tienda"]>)
+      : {};
+  const cantidadRaw = partial.destacadosCantidad;
+  const destacadosCantidad = cantidadRaw === 4 || cantidadRaw === 6 ? cantidadRaw : 3;
+  const items = normalizeFeaturedOrder(
+    normalizeStoreItems(parseTiendaItemsFromFirestore(partial))
+  );
+
+  return {
+    ...defaultSiteContent.tienda,
+    ...partial,
+    destacadosCantidad,
+    items,
+  };
+}
+
 export function normalizeStoreItems(items: unknown): StoreItem[] {
-  const fallback = defaultSiteContent.tienda.items;
-  const source = Array.isArray(items) ? items : fallback;
+  const source = asStoreItemRows(items);
 
   return source.map((row, i) => {
     const it = (row ?? {}) as Partial<StoreItem> & { galeriaImagenes?: unknown };
