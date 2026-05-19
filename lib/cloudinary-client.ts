@@ -22,3 +22,11 @@ export async function deleteCloudinaryByUrl(url: string): Promise<{ ok: boolean;
   const data = (await res.json()) as { deleted?: boolean };
   return { ok: true, deleted: Boolean(data.deleted) };
 }
+
+/** Borra varias URLs en Cloudinary sin bloquear la UI (errores se ignoran). */
+export function deleteCloudinaryUrlsInBackground(urls: string[]): void {
+  const unique = [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
+  for (const url of unique) {
+    void deleteCloudinaryByUrl(url).catch(() => undefined);
+  }
+}

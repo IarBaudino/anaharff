@@ -15,6 +15,13 @@ import {
 } from "@/lib/site-content";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 import { HelpText } from "@/components/admin/admin-fields";
+import { deleteCloudinaryUrlsInBackground } from "@/lib/cloudinary-client";
+import {
+  imageUrlsFromPortfolioCategory,
+  imageUrlsFromPortfolioSubcategory,
+  imageUrlsFromSeriesProject,
+  imageUrlsFromSeriesSubcategory,
+} from "@/lib/collection-image-urls";
 
 const VALIDATION_SUMMARY =
   "Revisá los avisos en rojo antes de guardar: nombre vacío, enlace vacío o enlace repetido.";
@@ -1349,6 +1356,9 @@ function removePortfolioSub(
   content: ReturnType<typeof useSiteContent>["content"],
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
+  const sub = content.portfolio.categories[catIdx]?.subcategories?.[subIdx];
+  if (sub) deleteCloudinaryUrlsInBackground(imageUrlsFromPortfolioSubcategory(sub));
+
   const cats = [...content.portfolio.categories];
   const cat = cats[catIdx];
   const subs = (cat.subcategories ?? []).filter((_, i) => i !== subIdx);
@@ -1465,6 +1475,9 @@ function removeSeriesSub(
   content: ReturnType<typeof useSiteContent>["content"],
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
+  const sub = content.series.projects[projectIdx]?.subcategories?.[subIdx];
+  if (sub) deleteCloudinaryUrlsInBackground(imageUrlsFromSeriesSubcategory(sub));
+
   const projects = [...content.series.projects];
   const p = projects[projectIdx];
   const subs = (p.subcategories ?? []).filter((_, i) => i !== subIdx);
@@ -1578,6 +1591,9 @@ function removeCategory(
   content: ReturnType<typeof useSiteContent>["content"],
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
+  const cat = content.portfolio.categories[idx];
+  if (cat) deleteCloudinaryUrlsInBackground(imageUrlsFromPortfolioCategory(cat));
+
   const next = content.portfolio.categories.filter((_, i) => i !== idx);
   setContent({ ...content, portfolio: { ...content.portfolio, categories: next } });
 }
@@ -1587,6 +1603,9 @@ function removeProject(
   content: ReturnType<typeof useSiteContent>["content"],
   setContent: ReturnType<typeof useSiteContent>["setContent"]
 ) {
+  const project = content.series.projects[idx];
+  if (project) deleteCloudinaryUrlsInBackground(imageUrlsFromSeriesProject(project));
+
   const next = content.series.projects.filter((_, i) => i !== idx);
   setContent({ ...content, series: { ...content.series, projects: next } });
 }
