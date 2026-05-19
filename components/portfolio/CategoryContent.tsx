@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { PhotoMasonryGallery } from "@/components/ui/PhotoMasonryGallery";
 
 interface CategoryContentProps {
   label: string;
@@ -42,27 +42,7 @@ export function CategoryContent({
             aria-hidden
           />
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:gap-8 lg:grid-cols-3">
-            {urls.map((src, i) => (
-              <motion.div
-                key={`${src}-${i}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: Math.min(i * 0.04, 0.4) }}
-                className="overflow-hidden"
-              >
-                <div className="relative aspect-[4/5] w-full bg-transparent">
-                  <Image
-                    src={src}
-                    alt=""
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-contain"
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <PhotoMasonryGallery imageUrls={urls} />
         )}
       </div>
     </div>
