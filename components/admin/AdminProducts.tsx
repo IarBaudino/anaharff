@@ -3,7 +3,13 @@
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useSiteContent } from "@/hooks/useSiteContent";
-import { deleteCloudinaryByUrl } from "@/lib/cloudinary-client";
+import {
+  ADMIN_SAVE_SUCCESS,
+  AdminPanelNotice,
+  adminNoticeVariant,
+  useAdminPanelUi,
+} from "@/components/admin/admin-panel-ui";
+import { deleteCloudinaryUrls } from "@/lib/cloudinary-client";
 import {
   newManagedItemId,
   normalizeFeaturedOrder,
@@ -17,6 +23,7 @@ function inputClass() {
 }
 
 export function AdminProducts() {
+  const { confirmDelete } = useAdminPanelUi();
   const {
     content,
     setContent,
@@ -34,13 +41,43 @@ export function AdminProducts() {
     [content.tienda.items]
   );
 
+  async function handleRemoveProduct(idx: number) {
+    const row = content.tienda.items[idx];
+    if (!row) return;
+    const title = row.titulo?.trim() || "este producto";
+    if (
+      !(await confirmDelete({
+        detail: `Vas a eliminar el producto «${title}».`,
+        deletesCloudinaryImages: true,
+      }))
+    ) {
+      return;
+    }
+
+    const url = row.imagenUrl?.trim();
+    if (url) {
+      const { failed } = await deleteCloudinaryUrls([url]);
+      if (failed > 0) {
+        setMessage(
+          "Producto eliminado del panel, pero la imagen no se pudo borrar en Cloudinary."
+        );
+      }
+    }
+
+    const nextItems = content.tienda.items.filter((_, i) => i !== idx);
+    setContent({
+      ...content,
+      tienda: { ...content.tienda, items: normalizeFeaturedOrder(nextItems) },
+    });
+  }
+
   async function onSave() {
     const res = await save(content);
     if (res.ok) {
       setMessage(
         res.offline
-          ? "Guardado solo en este navegador; aún no está en el sitio en vivo."
-          : "Productos guardados. Deberían verse ya en la tienda."
+          ? "Cambios guardados (solo en este navegador)."
+          : ADMIN_SAVE_SUCCESS
       );
       return;
     }
@@ -51,8 +88,13 @@ export function AdminProducts() {
     return <p className="text-stone">Cargando productos...</p>;
   }
 
+  const noticeVariant = adminNoticeVariant(message);
+
   return (
     <div className="space-y-8">
+      {message && noticeVariant ? (
+        <AdminPanelNotice variant={noticeVariant}>{message}</AdminPanelNotice>
+      ) : null}
       {!isFirebaseConfigured && (
         <div className="border border-amber-500/30 bg-amber-100/50 p-4 text-sm text-amber-900">
           Podés editar aquí, pero los cambios <strong>no se publicarán</strong> en el sitio hasta que
@@ -137,7 +179,7 @@ export function AdminProducts() {
               <span className="text-xs uppercase tracking-widest text-stone">Producto {idx + 1}</span>
               <button
                 type="button"
-                onClick={() => removeProduct(content, setContent, idx)}
+                onClick={() => void handleRemoveProduct(idx)}
                 className="inline-flex items-center gap-1 rounded border border-red-200 px-2 py-1 text-xs text-red-800 hover:bg-red-50"
               >
                 <Trash2 className="size-3.5" />
@@ -257,7 +299,6 @@ export function AdminProducts() {
         >
           Recargar desde la base
         </button>
-        {message && <p className="text-sm text-charcoal/80">{message}</p>}
         {error && <p className="text-sm text-red-700">{error}</p>}
       </div>
     </div>
@@ -295,21 +336,6 @@ function addProduct(
   setContent({
     ...content,
     tienda: { ...content.tienda, items: nextItems },
-  });
-}
-
-function removeProduct(
-  content: SiteContent,
-  setContent: ReturnType<typeof useSiteContent>["setContent"],
-  idx: number
-) {
-  const row = content.tienda.items[idx];
-  const url = row.imagenUrl?.trim();
-  if (url) void deleteCloudinaryByUrl(url).catch(() => undefined);
-  const nextItems = content.tienda.items.filter((_, i) => i !== idx);
-  setContent({
-    ...content,
-    tienda: { ...content.tienda, items: normalizeFeaturedOrder(nextItems) },
   });
 }
 

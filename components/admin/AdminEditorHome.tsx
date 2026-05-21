@@ -9,6 +9,12 @@ import {
   newTestimonioId,
   type IntroduccionIdioma,
 } from "@/lib/site-content";
+import {
+  ADMIN_SAVE_SUCCESS,
+  AdminPanelNotice,
+  adminNoticeVariant,
+  useAdminPanelUi,
+} from "@/components/admin/admin-panel-ui";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 import {
   FieldLabel,
@@ -19,6 +25,7 @@ import {
 } from "@/components/admin/admin-fields";
 
 export function AdminEditorHome() {
+  const { confirmDelete } = useAdminPanelUi();
   const { content, setContent, save, saving, loading, error, isFirebaseConfigured } =
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
@@ -39,13 +46,11 @@ export function AdminEditorHome() {
     const res = await save(content);
     if (res.ok) {
       setMessage(
-        res.offline
-          ? "Guardado solo en este navegador; aún no está en el sitio en vivo."
-          : "Listo. Los cambios ya están publicados en el sitio."
+        res.offline ? "Cambios guardados (solo en este navegador)." : ADMIN_SAVE_SUCCESS
       );
       return;
     }
-    setMessage(null);
+    setMessage("No se pudo guardar.");
   }
 
   function updateIdioma(id: string, patch: Partial<IntroduccionIdioma>) {
@@ -73,8 +78,18 @@ export function AdminEditorHome() {
     });
   }
 
-  function removeIdioma(id: string) {
+  async function removeIdioma(id: string) {
     if (content.home.introduccionIdiomas.length <= 1) return;
+    const bloque = content.home.introduccionIdiomas.find((b) => b.id === id);
+    const name = bloque?.etiqueta?.trim() || "este bloque de idioma";
+    if (
+      !(await confirmDelete({
+        detail: `Vas a quitar el bloque «${name}».`,
+        deletesCloudinaryImages: false,
+      }))
+    ) {
+      return;
+    }
     setContent({
       ...content,
       home: {
@@ -114,8 +129,13 @@ export function AdminEditorHome() {
     return <p className="text-stone">Cargando contenido...</p>;
   }
 
+  const noticeVariant = adminNoticeVariant(message);
+
   return (
     <div className="space-y-10">
+      {message && noticeVariant ? (
+        <AdminPanelNotice variant={noticeVariant}>{message}</AdminPanelNotice>
+      ) : null}
       {!isFirebaseConfigured && (
         <div className="border border-amber-500/30 bg-amber-100/50 p-4 text-sm text-amber-900">
           Podés editar aquí, pero los cambios <strong>no se publicarán</strong> en el sitio hasta que
@@ -174,7 +194,7 @@ export function AdminEditorHome() {
                 <div className="mb-3 flex justify-end">
                   <button
                     type="button"
-                    onClick={() => removeIdioma(bloque.id)}
+                    onClick={() => void removeIdioma(bloque.id)}
                     className="inline-flex items-center gap-1 text-xs text-stone hover:text-red-700"
                   >
                     <Trash2 className="size-3.5" />
@@ -346,15 +366,26 @@ export function AdminEditorHome() {
               <div className="mb-3 flex justify-end">
                 <button
                   type="button"
-                  onClick={() =>
-                    setContent({
-                      ...content,
-                      home: {
-                        ...content.home,
-                        testimonios: content.home.testimonios.filter((x) => x.id !== t.id),
-                      },
-                    })
-                  }
+                  onClick={() => {
+                    void (async () => {
+                      const who = t.nombre?.trim() || "este testimonio";
+                      if (
+                        !(await confirmDelete({
+                          detail: `Vas a quitar el testimonio de «${who}».`,
+                          deletesCloudinaryImages: false,
+                        }))
+                      ) {
+                        return;
+                      }
+                      setContent({
+                        ...content,
+                        home: {
+                          ...content.home,
+                          testimonios: content.home.testimonios.filter((x) => x.id !== t.id),
+                        },
+                      });
+                    })();
+                  }}
                   className="inline-flex items-center gap-1 text-xs text-stone hover:text-red-700"
                 >
                   <Trash2 className="size-3.5" />
@@ -556,7 +587,6 @@ export function AdminEditorHome() {
         >
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
-        {message && <p className="text-sm text-charcoal/80">{message}</p>}
         {error && <p className="text-sm text-red-700">{error}</p>}
       </div>
     </div>

@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import {
+  ADMIN_SAVE_SUCCESS,
+  AdminPanelNotice,
+  adminNoticeVariant,
+  useAdminPanelUi,
+} from "@/components/admin/admin-panel-ui";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { newIntroduccionLangId, type BlogEntrada } from "@/lib/site-content";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
@@ -24,6 +30,7 @@ function emptyEntrada(): BlogEntrada {
 }
 
 export function AdminEditorBlog() {
+  const { confirmDelete } = useAdminPanelUi();
   const { content, setContent, save, saving, loading, error, isFirebaseConfigured } =
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
@@ -32,9 +39,7 @@ export function AdminEditorBlog() {
     const res = await save(content);
     if (res.ok) {
       setMessage(
-        res.offline
-          ? "Guardado solo en este navegador; aún no está en el sitio en vivo."
-          : "Listo. Los cambios ya están publicados en el sitio."
+        res.offline ? "Cambios guardados (solo en este navegador)." : ADMIN_SAVE_SUCCESS
       );
       return;
     }
@@ -63,7 +68,18 @@ export function AdminEditorBlog() {
     });
   }
 
-  function removeEntrada(id: string) {
+  async function removeEntrada(id: string) {
+    const entrada = blog.entradas.find((e) => e.id === id);
+    const title = entrada?.titulo?.trim() || "esta entrada";
+    const hasImage = Boolean(entrada?.imagenUrl?.trim());
+    if (
+      !(await confirmDelete({
+        detail: `Vas a eliminar la entrada «${title}» del blog.`,
+        deletesCloudinaryImages: hasImage,
+      }))
+    ) {
+      return;
+    }
     setContent({
       ...content,
       blog: {
@@ -77,8 +93,13 @@ export function AdminEditorBlog() {
     return <p className="text-stone">Cargando contenido...</p>;
   }
 
+  const noticeVariant = adminNoticeVariant(message);
+
   return (
     <div className="space-y-10">
+      {message && noticeVariant ? (
+        <AdminPanelNotice variant={noticeVariant}>{message}</AdminPanelNotice>
+      ) : null}
       {!isFirebaseConfigured && (
         <div className="border border-amber-500/30 bg-amber-100/50 p-4 text-sm text-amber-900">
           Podés editar aquí, pero los cambios <strong>no se publicarán</strong> en el sitio hasta que
@@ -164,7 +185,7 @@ export function AdminEditorBlog() {
               </span>
               <button
                 type="button"
-                onClick={() => removeEntrada(entrada.id)}
+                onClick={() => void removeEntrada(entrada.id)}
                 className="inline-flex items-center gap-1 text-xs text-stone hover:text-red-700"
               >
                 <Trash2 className="size-3.5" />
@@ -224,7 +245,6 @@ export function AdminEditorBlog() {
         >
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
-        {message && <p className="text-sm text-charcoal/80">{message}</p>}
         {error && <p className="text-sm text-red-700">{error}</p>}
       </div>
     </div>

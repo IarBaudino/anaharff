@@ -62,6 +62,13 @@ export async function uploadImageToCloudinary(params: {
   };
 }
 
+function isCloudinaryTransformationSegment(segment: string): boolean {
+  if (segment.includes(",")) return true;
+  if (/^v\d+$/.test(segment)) return false;
+  // p. ej. c_fill, w_800, f_auto, fl_progressive
+  return /^[a-z0-9]{1,6}_[^/]+$/i.test(segment) || /^[a-z0-9._-]+=[^/]+$/i.test(segment);
+}
+
 function extractPublicIdFromCloudinaryUrl(url: string): string | null {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim();
   if (!cloudName) return null;
@@ -75,24 +82,33 @@ function extractPublicIdFromCloudinaryUrl(url: string): string | null {
 
   if (!parsed.hostname.endsWith("res.cloudinary.com")) return null;
   const path = parsed.pathname;
-  if (!path.startsWith(`/${cloudName}/image/upload/`)) return null;
+  const marker = "/image/upload/";
+  const markerIdx = path.indexOf(marker);
+  if (markerIdx === -1 || !path.startsWith(`/${cloudName}`)) return null;
 
-  const uploadIdx = path.indexOf("/upload/");
-  if (uploadIdx === -1) return null;
-  const afterUpload = path.slice(uploadIdx + "/upload/".length);
-  const segments = afterUpload.split("/").filter(Boolean);
+  const segments = path.slice(markerIdx + marker.length).split("/").filter(Boolean);
   if (!segments.length) return null;
 
-  // Salta versión tipo v173455566 si está presente.
-  const start = /^v\d+$/.test(segments[0] ?? "") ? 1 : 0;
-  const idSegments = segments.slice(start);
-  if (!idSegments.length) return null;
+  let i = 0;
+  while (i < segments.length) {
+    const seg = segments[i]!;
+    if (/^v\d+$/.test(seg)) {
+      i++;
+      break;
+    }
+    if (isCloudinaryTransformationSegment(seg)) {
+      i++;
+      continue;
+    }
+    break;
+  }
 
-  const last = idSegments[idSegments.length - 1];
-  const withoutExt = last.replace(/\.[a-z0-9]+$/i, "");
-  idSegments[idSegments.length - 1] = withoutExt;
-
-  return idSegments.join("/");
+  if (i >= segments.length) return null;
+  const idSegments = segments.slice(i);
+  const last = idSegments[idSegments.length - 1] ?? "";
+  idSegments[idSegments.length - 1] = last.replace(/\.[a-z0-9]+$/i, "");
+  const publicId = idSegments.join("/");
+  return publicId || null;
 }
 
 export async function deleteCloudinaryImageByUrl(url: string): Promise<{ deleted: boolean }> {
@@ -105,5 +121,5 @@ export async function deleteCloudinaryImageByUrl(url: string): Promise<{ deleted
     invalidate: true,
   });
 
-  return { deleted: result.result === "ok" };
+  return { deleted: result.result === "ok" || result.result === "not found" };
 }

@@ -10,6 +10,7 @@ import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminCustomers } from "@/components/admin/AdminCustomers";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminCollections } from "@/components/admin/AdminCollections";
+import { AdminPanelUiProvider } from "@/components/admin/admin-panel-ui";
 
 const tabs = [
   { id: "pagina", label: "Página principal", icon: Home },
@@ -52,13 +53,15 @@ export function AdminDashboard() {
       </nav>
 
       <div className="min-w-0 flex-1">
-        {tab === "pagina" && <AdminEditorHome />}
-        {tab === "acerca" && <AdminEditorSobre />}
-        {tab === "blog" && <AdminEditorBlog />}
-        {tab === "colecciones" && <AdminCollections />}
-        {tab === "productos" && <AdminProducts />}
-        {tab === "pedidos" && <AdminOrders />}
-        {tab === "clientes" && <AdminCustomers />}
+        <AdminPanelUiProvider>
+          {tab === "pagina" && <AdminEditorHome />}
+          {tab === "acerca" && <AdminEditorSobre />}
+          {tab === "blog" && <AdminEditorBlog />}
+          {tab === "colecciones" && <AdminCollections />}
+          {tab === "productos" && <AdminProducts />}
+          {tab === "pedidos" && <AdminOrders />}
+          {tab === "clientes" && <AdminCustomers />}
+        </AdminPanelUiProvider>
       </div>
     </div>
   );

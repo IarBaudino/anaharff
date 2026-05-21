@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import {
+  ADMIN_SAVE_SUCCESS,
+  AdminPanelNotice,
+  adminNoticeVariant,
+  useAdminPanelUi,
+} from "@/components/admin/admin-panel-ui";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { newIntroduccionLangId, type SobreMiIdioma } from "@/lib/site-content";
 import {
@@ -13,6 +19,7 @@ import {
 } from "@/components/admin/admin-fields";
 
 export function AdminEditorSobre() {
+  const { confirmDelete } = useAdminPanelUi();
   const { content, setContent, save, saving, loading, error, isFirebaseConfigured } =
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
@@ -25,9 +32,7 @@ export function AdminEditorSobre() {
     const res = await save(content);
     if (res.ok) {
       setMessage(
-        res.offline
-          ? "Guardado solo en este navegador; aún no está en el sitio en vivo."
-          : "Listo. Los cambios ya están publicados en el sitio."
+        res.offline ? "Cambios guardados (solo en este navegador)." : ADMIN_SAVE_SUCCESS
       );
       return;
     }
@@ -66,8 +71,18 @@ export function AdminEditorSobre() {
     });
   }
 
-  function removeIdioma(id: string) {
+  async function removeIdioma(id: string) {
     if (sm.idiomas.length <= 1) return;
+    const bloque = sm.idiomas.find((b) => b.id === id);
+    const name = bloque?.etiqueta?.trim() || "este bloque de idioma";
+    if (
+      !(await confirmDelete({
+        detail: `Vas a quitar el bloque «${name}».`,
+        deletesCloudinaryImages: false,
+      }))
+    ) {
+      return;
+    }
     setContent({
       ...content,
       sobreMi: {
@@ -81,8 +96,13 @@ export function AdminEditorSobre() {
     return <p className="text-stone">Cargando contenido...</p>;
   }
 
+  const noticeVariant = adminNoticeVariant(message);
+
   return (
     <div className="space-y-10">
+      {message && noticeVariant ? (
+        <AdminPanelNotice variant={noticeVariant}>{message}</AdminPanelNotice>
+      ) : null}
       {!isFirebaseConfigured && (
         <div className="border border-amber-500/30 bg-amber-100/50 p-4 text-sm text-amber-900">
           Podés editar aquí, pero los cambios <strong>no se publicarán</strong> en el sitio hasta que
@@ -150,7 +170,7 @@ export function AdminEditorSobre() {
                 <div className="mb-3 flex justify-end">
                   <button
                     type="button"
-                    onClick={() => removeIdioma(bloque.id)}
+                    onClick={() => void removeIdioma(bloque.id)}
                     className="inline-flex items-center gap-1 text-xs text-stone hover:text-red-700"
                   >
                     <Trash2 className="size-3.5" />
@@ -219,7 +239,6 @@ export function AdminEditorSobre() {
         >
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
-        {message && <p className="text-sm text-charcoal/80">{message}</p>}
         {error && <p className="text-sm text-red-700">{error}</p>}
       </div>
     </div>

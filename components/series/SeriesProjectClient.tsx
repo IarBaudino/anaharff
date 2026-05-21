@@ -52,13 +52,13 @@ export function SeriesProjectClient({ project }: Props) {
                     href={`/series/${project.slug}/${sub.slug}`}
                     className="group block"
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden bg-transparent sm:aspect-[16/11]">
+                    <div className="relative aspect-square w-full overflow-hidden bg-charcoal/[0.03]">
                       {cover ? (
                         <Image
                           src={cover}
                           alt=""
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                         />
                       ) : (
@@ -69,8 +69,8 @@ export function SeriesProjectClient({ project }: Props) {
                       )}
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-transparent to-transparent opacity-55" />
                     </div>
-                    <div className="mt-3 border-b border-charcoal/12 pb-3">
-                      <h2 className="font-display text-lg font-light text-charcoal transition-colors group-hover:text-accent md:text-xl">
+                    <div className="border-b border-charcoal/12 pb-3 pt-2">
+                      <h2 className="font-display text-xl font-light text-charcoal transition-colors group-hover:text-accent md:text-2xl">
                         {sub.label}
                       </h2>
                     </div>

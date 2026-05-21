@@ -5,6 +5,7 @@ import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
+import { useAdminPanelUi } from "@/components/admin/admin-panel-ui";
 import { deleteCloudinaryByUrl } from "@/lib/cloudinary-client";
 
 type Props = {
@@ -98,6 +99,7 @@ export function CloudinaryUploadField({
   multiple = false,
   variant = "default",
 }: Props) {
+  const { confirmDelete } = useAdminPanelUi();
   const { user, ready } = useAuth();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -222,6 +224,16 @@ export function CloudinaryUploadField({
   async function onRemoveImage() {
     const prevUrl = previewUrl?.trim() ?? "";
     if (!prevUrl) return;
+    if (
+      !(await confirmDelete({
+        detail: isCompact
+          ? "Vas a quitar esta imagen de la galería."
+          : "Vas a quitar esta imagen.",
+        deletesCloudinaryImages: true,
+      }))
+    ) {
+      return;
+    }
     setErr(null);
     setLoading(true);
     try {

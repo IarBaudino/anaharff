@@ -23,10 +23,29 @@ export async function deleteCloudinaryByUrl(url: string): Promise<{ ok: boolean;
   return { ok: true, deleted: Boolean(data.deleted) };
 }
 
-/** Borra varias URLs en Cloudinary sin bloquear la UI (errores se ignoran). */
-export function deleteCloudinaryUrlsInBackground(urls: string[]): void {
+export type DeleteCloudinaryUrlsResult = {
+  total: number;
+  deleted: number;
+  failed: number;
+};
+
+/** Borra varias URLs en Cloudinary (espera a que terminen todas las peticiones). */
+export async function deleteCloudinaryUrls(
+  urls: string[]
+): Promise<DeleteCloudinaryUrlsResult> {
   const unique = [...new Set(urls.map((u) => u.trim()).filter(Boolean))];
+  let deleted = 0;
+  let failed = 0;
+
   for (const url of unique) {
-    void deleteCloudinaryByUrl(url).catch(() => undefined);
+    try {
+      const result = await deleteCloudinaryByUrl(url);
+      if (result.deleted) deleted++;
+      else failed++;
+    } catch {
+      failed++;
+    }
   }
+
+  return { total: unique.length, deleted, failed };
 }

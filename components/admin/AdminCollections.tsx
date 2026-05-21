@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSiteContent } from "@/hooks/useSiteContent";
@@ -15,7 +15,13 @@ import {
 } from "@/lib/site-content";
 import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
 import { HelpText } from "@/components/admin/admin-fields";
-import { deleteCloudinaryUrlsInBackground } from "@/lib/cloudinary-client";
+import {
+  ADMIN_SAVE_SUCCESS,
+  AdminPanelNotice,
+  adminNoticeVariant,
+  useAdminPanelUi,
+} from "@/components/admin/admin-panel-ui";
+import { deleteCloudinaryUrls } from "@/lib/cloudinary-client";
 import {
   imageUrlsFromPortfolioCategory,
   imageUrlsFromPortfolioSubcategory,
@@ -39,11 +45,28 @@ type FieldErrorsState = {
   seriesSub: Record<string, RowErrors>;
 };
 
+type SetPanelMessage = Dispatch<SetStateAction<string | null>>;
+
 function subErrKey(parentId: string, subId: string) {
   return `${parentId}::${subId}`;
 }
 
+function notifyCloudinaryDeleteResult(
+  setMessage: SetPanelMessage,
+  entityLabel: string,
+  total: number,
+  failed: number
+) {
+  if (total === 0) return;
+  if (failed > 0) {
+    setMessage(
+      `${entityLabel} eliminado del sitio. ${failed} de ${total} imagen(es) no se pudieron borrar en Cloudinary (¿sesión admin activa?).`
+    );
+  }
+}
+
 export function AdminCollections() {
+  const { confirmDelete } = useAdminPanelUi();
   const { content, setContent, save, saving, loading, error } = useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrorsState>({
@@ -132,7 +155,7 @@ export function AdminCollections() {
     clearAllFieldErrors();
     const res = await save(normalized);
     if (res.ok) {
-      setMessage(res.offline ? "Guardado local." : "Cambios guardados y publicados.");
+      setMessage(res.offline ? "Cambios guardados (solo en este navegador)." : ADMIN_SAVE_SUCCESS);
       return;
     }
     setMessage("No se pudo guardar.");
@@ -160,7 +183,7 @@ export function AdminCollections() {
     clearAllFieldErrors();
     const res = await save(normalized);
     if (res.ok) {
-      setMessage(res.offline ? "Categoría guardada localmente." : "Categoría guardada y publicada.");
+      setMessage(res.offline ? "Cambios guardados (solo en este navegador)." : ADMIN_SAVE_SUCCESS);
       return;
     }
     setMessage("No se pudo guardar esta categoría.");
@@ -188,7 +211,7 @@ export function AdminCollections() {
     clearAllFieldErrors();
     const res = await save(normalized);
     if (res.ok) {
-      setMessage(res.offline ? "Serie guardada localmente." : "Serie guardada y publicada.");
+      setMessage(res.offline ? "Cambios guardados (solo en este navegador)." : ADMIN_SAVE_SUCCESS);
       return;
     }
     setMessage("No se pudo guardar esta serie.");
@@ -196,8 +219,17 @@ export function AdminCollections() {
 
   if (loading) return <p className="text-stone">Cargando contenido...</p>;
 
+  const noticeVariant = adminNoticeVariant(message, [
+    VALIDATION_SUMMARY,
+    "No se pudo",
+    "revisá",
+  ]);
+
   return (
     <div className="space-y-10">
+      {message && noticeVariant ? (
+        <AdminPanelNotice variant={noticeVariant}>{message}</AdminPanelNotice>
+      ) : null}
       {(Object.keys(fieldErrors.portfolio).length > 0 ||
         Object.keys(fieldErrors.portfolioSub).length > 0 ||
         Object.keys(fieldErrors.series).length > 0 ||
@@ -295,7 +327,7 @@ export function AdminCollections() {
                       type="button"
                       onClick={() => {
                         clearAllFieldErrors();
-                        removeCategory(idx, content, setContent);
+                        void removeCategory(idx, content, setContent, setMessage, confirmDelete);
                       }}
                       className="rounded border border-charcoal/20 p-1.5 text-red-700"
                       aria-label="Eliminar categoría"
@@ -468,7 +500,17 @@ export function AdminCollections() {
                           <button
                             type="button"
                             className="rounded border border-charcoal/20 p-1.5 text-red-700"
-                            onClick={() => removePortfolioSub(idx, si, content, setContent)}
+                            onClick={() => {
+                              clearAllFieldErrors();
+                              void removePortfolioSub(
+                                idx,
+                                si,
+                                content,
+                                setContent,
+                                setMessage,
+                                confirmDelete
+                              );
+                            }}
                             aria-label="Eliminar subcategoría"
                           >
                             <Trash2 className="size-3.5" />
@@ -697,7 +739,7 @@ export function AdminCollections() {
                       type="button"
                       onClick={() => {
                         clearAllFieldErrors();
-                        removeProject(idx, content, setContent);
+                        void removeProject(idx, content, setContent, setMessage, confirmDelete);
                       }}
                       className="rounded border border-charcoal/20 p-1.5 text-red-700"
                       aria-label="Eliminar serie"
@@ -880,7 +922,17 @@ export function AdminCollections() {
                           <button
                             type="button"
                             className="rounded border border-charcoal/20 p-1.5 text-red-700"
-                            onClick={() => removeSeriesSub(idx, si, content, setContent)}
+                            onClick={() => {
+                              clearAllFieldErrors();
+                              void removeSeriesSub(
+                                idx,
+                                si,
+                                content,
+                                setContent,
+                                setMessage,
+                                confirmDelete
+                              );
+                            }}
                             aria-label="Eliminar subserie"
                           >
                             <Trash2 className="size-3.5" />
@@ -1035,18 +1087,6 @@ export function AdminCollections() {
         >
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
-        {message && (
-          <p
-            className={cn(
-              "text-sm",
-              message === VALIDATION_SUMMARY || message === "No se pudo guardar."
-                ? "text-red-800"
-                : "text-charcoal/80"
-            )}
-          >
-            {message}
-          </p>
-        )}
         {error && <p className="text-sm text-red-700">{error}</p>}
       </div>
     </div>
@@ -1350,20 +1390,36 @@ function addPortfolioSub(
   setContent({ ...content, portfolio: { ...content.portfolio, categories: cats } });
 }
 
-function removePortfolioSub(
+async function removePortfolioSub(
   catIdx: number,
   subIdx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  setContent: ReturnType<typeof useSiteContent>["setContent"]
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  setMessage: SetPanelMessage,
+  confirmDelete: ReturnType<typeof useAdminPanelUi>["confirmDelete"]
 ) {
   const sub = content.portfolio.categories[catIdx]?.subcategories?.[subIdx];
-  if (sub) deleteCloudinaryUrlsInBackground(imageUrlsFromPortfolioSubcategory(sub));
+  if (!sub) return;
+
+  const label = sub.label.trim() || "esta subcategoría";
+  if (
+    !(await confirmDelete({
+      detail: `Vas a eliminar la subcategoría «${label}» y todas sus fotos del sitio.`,
+      deletesCloudinaryImages: true,
+    }))
+  ) {
+    return;
+  }
+
+  const urls = imageUrlsFromPortfolioSubcategory(sub);
+  const { total, failed } = await deleteCloudinaryUrls(urls);
 
   const cats = [...content.portfolio.categories];
   const cat = cats[catIdx];
   const subs = (cat.subcategories ?? []).filter((_, i) => i !== subIdx);
   cats[catIdx] = { ...cat, subcategories: subs };
   setContent({ ...content, portfolio: { ...content.portfolio, categories: cats } });
+  notifyCloudinaryDeleteResult(setMessage, "Subcategoría", total, failed);
 }
 
 function movePortfolioSub(
@@ -1469,20 +1525,36 @@ function addSeriesSub(
   setContent({ ...content, series: { ...content.series, projects } });
 }
 
-function removeSeriesSub(
+async function removeSeriesSub(
   projectIdx: number,
   subIdx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  setContent: ReturnType<typeof useSiteContent>["setContent"]
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  setMessage: SetPanelMessage,
+  confirmDelete: ReturnType<typeof useAdminPanelUi>["confirmDelete"]
 ) {
   const sub = content.series.projects[projectIdx]?.subcategories?.[subIdx];
-  if (sub) deleteCloudinaryUrlsInBackground(imageUrlsFromSeriesSubcategory(sub));
+  if (!sub) return;
+
+  const label = sub.label.trim() || "esta subserie";
+  if (
+    !(await confirmDelete({
+      detail: `Vas a eliminar la subserie «${label}» y todas sus fotos del sitio.`,
+      deletesCloudinaryImages: true,
+    }))
+  ) {
+    return;
+  }
+
+  const urls = imageUrlsFromSeriesSubcategory(sub);
+  const { total, failed } = await deleteCloudinaryUrls(urls);
 
   const projects = [...content.series.projects];
   const p = projects[projectIdx];
   const subs = (p.subcategories ?? []).filter((_, i) => i !== subIdx);
   projects[projectIdx] = { ...p, subcategories: subs };
   setContent({ ...content, series: { ...content.series, projects } });
+  notifyCloudinaryDeleteResult(setMessage, "Subserie", total, failed);
 }
 
 function moveSeriesSub(
@@ -1586,28 +1658,60 @@ function addProject(
   setContent({ ...content, series: { ...content.series, projects: next } });
 }
 
-function removeCategory(
+async function removeCategory(
   idx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  setContent: ReturnType<typeof useSiteContent>["setContent"]
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  setMessage: SetPanelMessage,
+  confirmDelete: ReturnType<typeof useAdminPanelUi>["confirmDelete"]
 ) {
   const cat = content.portfolio.categories[idx];
-  if (cat) deleteCloudinaryUrlsInBackground(imageUrlsFromPortfolioCategory(cat));
+  if (!cat) return;
+
+  const label = cat.label.trim() || "esta categoría";
+  if (
+    !(await confirmDelete({
+      detail: `Vas a eliminar la categoría «${label}» con todas sus fotos y subcategorías.`,
+      deletesCloudinaryImages: true,
+    }))
+  ) {
+    return;
+  }
+
+  const urls = imageUrlsFromPortfolioCategory(cat);
+  const { total, failed } = await deleteCloudinaryUrls(urls);
 
   const next = content.portfolio.categories.filter((_, i) => i !== idx);
   setContent({ ...content, portfolio: { ...content.portfolio, categories: next } });
+  notifyCloudinaryDeleteResult(setMessage, "Categoría", total, failed);
 }
 
-function removeProject(
+async function removeProject(
   idx: number,
   content: ReturnType<typeof useSiteContent>["content"],
-  setContent: ReturnType<typeof useSiteContent>["setContent"]
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  setMessage: SetPanelMessage,
+  confirmDelete: ReturnType<typeof useAdminPanelUi>["confirmDelete"]
 ) {
   const project = content.series.projects[idx];
-  if (project) deleteCloudinaryUrlsInBackground(imageUrlsFromSeriesProject(project));
+  if (!project) return;
+
+  const label = project.label.trim() || "esta serie";
+  if (
+    !(await confirmDelete({
+      detail: `Vas a eliminar la serie «${label}» con todas sus fotos y subseries.`,
+      deletesCloudinaryImages: true,
+    }))
+  ) {
+    return;
+  }
+
+  const urls = imageUrlsFromSeriesProject(project);
+  const { total, failed } = await deleteCloudinaryUrls(urls);
 
   const next = content.series.projects.filter((_, i) => i !== idx);
   setContent({ ...content, series: { ...content.series, projects: next } });
+  notifyCloudinaryDeleteResult(setMessage, "Serie", total, failed);
 }
 
 function moveCategory(

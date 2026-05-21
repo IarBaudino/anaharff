@@ -21,8 +21,8 @@ function SeriesCardCover({ label, coverUrl }: { label: string; coverUrl: string 
       src={coverUrl}
       alt={`Portada de la serie ${label}`}
       fill
-      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
     />
   );
 }
@@ -34,62 +34,40 @@ export default function SeriesPage() {
     : defaultSiteContent.series.projects;
 
   return (
-    <div className="pt-6 md:pt-24 pb-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="pb-24 pt-6 md:pt-24">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-10 md:mb-14"
+          className="mb-10 pb-8 md:mb-12 md:pb-10"
         >
           <p className="section-kicker mb-3">Proyectos</p>
           <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl lg:text-6xl">
             Series
           </h1>
-          <SectionDivider variant="double" className="mt-8 max-w-xl" />
+          <SectionDivider variant="line" className="mt-10" />
+          <SectionDivider variant="double" className="mt-3 opacity-80" />
         </motion.header>
 
-        <div className="grid grid-cols-1 gap-5 border-t border-charcoal/10 pt-10 sm:grid-cols-2 sm:gap-6 lg:grid-cols-12 lg:gap-8 lg:pt-12">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {series.map((s, i) => (
             <motion.div
               key={s.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, duration: 0.45 }}
-              className={
-                i === 0
-                  ? "sm:col-span-2 lg:col-span-7"
-                  : i === 1
-                    ? "sm:col-span-2 lg:col-span-5"
-                    : "sm:col-span-2 lg:col-span-6"
-              }
+              transition={{ delay: 0.05 + i * 0.05, duration: 0.45 }}
             >
-              <Link
-                href={`/series/${s.slug}`}
-                className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-charcoal/15 bg-cream shadow-sm transition-all duration-500 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-2xl before:bg-transparent before:transition-colors hover:border-charcoal/22 hover:shadow-md hover:before:bg-accent/90"
-              >
-                <div className="relative aspect-[4/5] overflow-hidden bg-charcoal/[0.04] sm:aspect-[16/11] lg:aspect-[4/5]">
+              <Link href={`/series/${s.slug}`} className="group block">
+                <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05]">
                   <SeriesCardCover label={s.label} coverUrl={resolveSeriesCover(s)} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/25 via-charcoal/0 to-charcoal/5" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-transparent to-transparent opacity-55 transition-opacity duration-300 group-hover:opacity-65" />
                 </div>
-                <div className="flex flex-1 flex-col border-t border-charcoal/5 p-6 md:p-7">
-                  <h2 className="font-display text-xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-2xl">
+                <div className="border-b border-charcoal/12 pb-4 pt-3">
+                  <h2 className="font-display text-2xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent">
                     {s.label}
                   </h2>
-                  <p className="mt-3 max-w-xl text-sm leading-relaxed text-charcoal/75 md:text-base">
-                    {s.statement}
-                  </p>
-                  <span className="mt-3 inline-flex items-center text-xs uppercase tracking-[0.2em] text-stone transition-colors group-hover:text-charcoal">
+                  <span className="mt-1 inline-block text-xs uppercase tracking-[0.18em] text-stone transition-colors group-hover:text-charcoal">
                     Ver serie
-                    <svg
-                      className="ms-2 h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      aria-hidden
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m14 0-4 4m4-4-4-4" />
-                    </svg>
                   </span>
                 </div>
               </Link>
