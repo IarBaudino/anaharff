@@ -9,11 +9,13 @@
     "lint": "eslint .",
     "optimize:images": "node scripts/convert-to-avif.js",
     "optimize:image": "node scripts/optimize-image.js",
-    "grant-admin": "node --env-file=.env.local scripts/grant-admin-by-email.cjs"
+    "grant-admin": "node --env-file=.env.local scripts/grant-admin-by-email.cjs",
+    "migrate:images": "node --env-file=.env.local scripts/migrate-cloudinary-to-supabase.cjs",
+    "migrate:images:dry": "node --env-file=.env.local scripts/migrate-cloudinary-to-supabase.cjs --dry-run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
-    "cloudinary": "^2.7.0",
+    "@supabase/supabase-js": "^2.49.8",
     "clsx": "^2.1.1",
     "firebase": "^12.4.0",
     "firebase-admin": "^12.7.0",
@@ -21,7 +23,6 @@
     "lucide-react": "^0.543.0",
     "next": "^15.5.9",
     "next-auth": "^4.24.11",
-    "next-cloudinary": "^6.16.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",

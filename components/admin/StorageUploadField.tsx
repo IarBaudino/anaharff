@@ -6,23 +6,18 @@ import { cn } from "@/lib/utils";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { useAdminPanelUi } from "@/components/admin/admin-panel-ui";
-import { deleteCloudinaryByUrl } from "@/lib/cloudinary-client";
+import { deleteStoredImageByUrl } from "@/lib/storage-client";
 
 type Props = {
   // eslint-disable-next-line no-unused-vars
-  onUploaded: (secureUrl: string) => void;
-  /** Si es true, bloquea elegir archivo (p. ej. guardado en curso). El input no se deshabilita para no romper el selector en todos los navegadores. */
+  onUploaded: (publicUrl: string) => void;
   disabled?: boolean;
-  /** Imagen ya elegida o guardada, para mostrar vista previa debajo del botón */
   previewUrl?: string | null;
-  /** Si es true, al subir una nueva imagen intenta borrar la anterior en Cloudinary. */
+  /** Si es true, al subir una nueva imagen intenta borrar la anterior en Storage. */
   autoDeletePrevious?: boolean;
-  /** Permite elegir varios archivos a la vez; llama a `onUploaded` por cada uno subido. */
   multiple?: boolean;
-  /**
-   * `compact`: miniatura + acciones cortas (p. ej. galería por categoría).
-   * No muestra la URL ni textos largos de ayuda.
-   */
+  /** Subcarpeta lógica dentro de `anaharff/` (tienda, portfolio, series, home, blog). */
+  folder?: string;
   variant?: "default" | "compact";
 };
 
@@ -46,7 +41,6 @@ async function readImageSize(file: File): Promise<{ width: number; height: numbe
 }
 
 async function compressImageToLimit(file: File, maxBytes: number): Promise<File | null> {
-  // GIF/AVIF no se recomprimen en canvas de forma segura acá.
   if (file.type === "image/gif" || file.type === "image/avif") return null;
   if (!file.type.startsWith("image/")) return null;
 
@@ -91,12 +85,13 @@ async function compressImageToLimit(file: File, maxBytes: number): Promise<File 
   }
 }
 
-export function CloudinaryUploadField({
+export function StorageUploadField({
   onUploaded,
   disabled = false,
   previewUrl,
   autoDeletePrevious = false,
   multiple = false,
+  folder = "uploads",
   variant = "default",
 }: Props) {
   const { confirmDelete } = useAdminPanelUi();
@@ -111,14 +106,15 @@ export function CloudinaryUploadField({
   async function uploadOneFile(file: File, idToken: string): Promise<string | null> {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch("/api/cloudinary/upload", {
+    fd.append("folder", folder);
+    const res = await fetch("/api/storage/upload", {
       method: "POST",
       headers: { Authorization: `Bearer ${idToken}` },
       body: fd,
     });
-    let data: { error?: string; secureUrl?: string } = {};
+    let data: { error?: string; publicUrl?: string } = {};
     try {
-      data = (await res.json()) as { error?: string; secureUrl?: string };
+      data = (await res.json()) as { error?: string; publicUrl?: string };
     } catch {
       setErr("La respuesta del servidor no es válida. Probá de nuevo.");
       return null;
@@ -127,9 +123,9 @@ export function CloudinaryUploadField({
       setErr(data.error || "Error al subir");
       return null;
     }
-    const url = String(data.secureUrl || "").trim();
+    const url = String(data.publicUrl || "").trim();
     if (!url) {
-      setErr("El servidor no devolvió la URL de la imagen. Revisá la configuración de Cloudinary.");
+      setErr("El servidor no devolvió la URL de la imagen. Revisá Supabase Storage.");
       return null;
     }
     return url;
@@ -209,7 +205,7 @@ export function CloudinaryUploadField({
         if (!nextUrl) return;
 
         if (!multiple && autoDeletePrevious && first && prevUrl && prevUrl !== nextUrl) {
-          await deleteCloudinaryByUrl(prevUrl);
+          await deleteStoredImageByUrl(prevUrl);
         }
         first = false;
         onUploaded(nextUrl);
@@ -229,7 +225,7 @@ export function CloudinaryUploadField({
         detail: isCompact
           ? "Vas a quitar esta imagen de la galería."
           : "Vas a quitar esta imagen.",
-        deletesCloudinaryImages: true,
+        deletesStoredImages: true,
       }))
     ) {
       return;
@@ -237,7 +233,7 @@ export function CloudinaryUploadField({
     setErr(null);
     setLoading(true);
     try {
-      await deleteCloudinaryByUrl(prevUrl);
+      await deleteStoredImageByUrl(prevUrl);
       onUploaded("");
     } catch {
       setErr("No se pudo quitar la imagen.");
@@ -337,3 +333,6 @@ export function CloudinaryUploadField({
     </div>
   );
 }
+
+/** @deprecated Usar StorageUploadField */
+export const CloudinaryUploadField = StorageUploadField;

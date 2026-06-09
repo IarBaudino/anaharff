@@ -9,14 +9,14 @@ import {
   adminNoticeVariant,
   useAdminPanelUi,
 } from "@/components/admin/admin-panel-ui";
-import { deleteCloudinaryUrls } from "@/lib/cloudinary-client";
+import { deleteStoredUrls } from "@/lib/storage-client";
 import {
   newManagedItemId,
   normalizeFeaturedOrder,
   type SiteContent,
   type StoreItem,
 } from "@/lib/site-content";
-import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
+import { StorageUploadField } from "@/components/admin/StorageUploadField";
 
 function inputClass() {
   return "w-full border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
@@ -48,7 +48,7 @@ export function AdminProducts() {
     if (
       !(await confirmDelete({
         detail: `Vas a eliminar el producto «${title}».`,
-        deletesCloudinaryImages: true,
+        deletesStoredImages: true,
       }))
     ) {
       return;
@@ -56,10 +56,10 @@ export function AdminProducts() {
 
     const url = row.imagenUrl?.trim();
     if (url) {
-      const { failed } = await deleteCloudinaryUrls([url]);
+      const { failed } = await deleteStoredUrls([url]);
       if (failed > 0) {
         setMessage(
-          "Producto eliminado del panel, pero la imagen no se pudo borrar en Cloudinary."
+          "Producto eliminado del panel, pero la imagen no se pudo borrar del almacenamiento."
         );
       }
     }
@@ -254,7 +254,8 @@ export function AdminProducts() {
             />
             <div className="rounded-lg border border-charcoal/10 bg-cream/70 p-3">
               <p className="text-xs uppercase tracking-widest text-stone">Foto del producto</p>
-              <CloudinaryUploadField
+              <StorageUploadField
+                folder="tienda"
                 previewUrl={item.imagenUrl}
                 onUploaded={(secureUrl) =>
                   updateItem(content, setContent, idx, { imagenUrl: secureUrl })

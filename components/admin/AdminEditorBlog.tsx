@@ -10,7 +10,7 @@ import {
 } from "@/components/admin/admin-panel-ui";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { newIntroduccionLangId, type BlogEntrada } from "@/lib/site-content";
-import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
+import { StorageUploadField } from "@/components/admin/StorageUploadField";
 import {
   FieldLabel,
   HelpText,
@@ -75,7 +75,7 @@ export function AdminEditorBlog() {
     if (
       !(await confirmDelete({
         detail: `Vas a eliminar la entrada «${title}» del blog.`,
-        deletesCloudinaryImages: hasImage,
+        deletesStoredImages: hasImage,
       }))
     ) {
       return;
@@ -209,7 +209,8 @@ export function AdminEditorBlog() {
               <HelpText className="!mt-0.5">
                 Se muestra arriba del título en el sitio. Podés subirla desde acá o dejarla vacía.
               </HelpText>
-              <CloudinaryUploadField
+              <StorageUploadField
+                folder="blog"
                 previewUrl={entrada.imagenUrl}
                 onUploaded={(url) => patchEntrada(entrada.id, { imagenUrl: url })}
                 disabled={saving}

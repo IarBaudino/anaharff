@@ -13,7 +13,9 @@ export const ADMIN_SAVE_SUCCESS = "Cambios guardados";
 
 export type ConfirmOptions = {
   detail: string;
-  /** Si true, avisa que las imágenes se borran de Cloudinary. */
+  /** Si true, avisa que las imágenes se borran del almacenamiento. */
+  deletesStoredImages?: boolean;
+  /** @deprecated usar deletesStoredImages */
   deletesCloudinaryImages?: boolean;
 };
 
@@ -39,15 +41,17 @@ const AdminPanelUiContext = createContext<AdminPanelUiContextValue | null>(null)
 export function AdminPanelUiProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<{
     detail: string;
-    deletesCloudinaryImages: boolean;
+    deletesStoredImages: boolean;
     resolve: BooleanCallback;
   } | null>(null);
 
   const confirmDelete = useCallback<ConfirmDeleteFn>(
-    ({ detail, deletesCloudinaryImages = true }) =>
-      new Promise<boolean>((resolve) => {
-        setPending({ detail, deletesCloudinaryImages, resolve });
-      }),
+    ({ detail, deletesStoredImages, deletesCloudinaryImages }) => {
+      const warnDelete = deletesStoredImages ?? deletesCloudinaryImages ?? true;
+      return new Promise<boolean>((resolve) => {
+        setPending({ detail, deletesStoredImages: warnDelete, resolve });
+      });
+    },
     []
   );
 
@@ -81,10 +85,10 @@ export function AdminPanelUiProvider({ children }: { children: ReactNode }) {
             <p id="admin-confirm-desc" className="mt-3 text-sm leading-relaxed text-charcoal/90">
               {pending.detail}
             </p>
-            {pending.deletesCloudinaryImages ? (
+            {pending.deletesStoredImages ? (
               <p className="mt-3 rounded-lg border border-amber-200/90 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
-                Las imágenes asociadas también se eliminarán de Cloudinary. Esta acción no se puede
-                deshacer.
+                Las imágenes asociadas también se eliminarán del almacenamiento. Esta acción no se
+                puede deshacer.
               </p>
             ) : (
               <p className="mt-3 text-xs text-stone">Esta acción no se puede deshacer.</p>

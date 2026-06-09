@@ -15,7 +15,7 @@ import {
   adminNoticeVariant,
   useAdminPanelUi,
 } from "@/components/admin/admin-panel-ui";
-import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
+import { StorageUploadField } from "@/components/admin/StorageUploadField";
 import {
   FieldLabel,
   HelpText,
@@ -85,7 +85,7 @@ export function AdminEditorHome() {
     if (
       !(await confirmDelete({
         detail: `Vas a quitar el bloque «${name}».`,
-        deletesCloudinaryImages: false,
+        deletesStoredImages: false,
       }))
     ) {
       return;
@@ -239,7 +239,8 @@ export function AdminEditorHome() {
           vertical justo debajo. Subila con el botón. No se puede guardar dejando solo la imagen de
           muestra.
         </HelpText>
-        <CloudinaryUploadField
+        <StorageUploadField
+          folder="home"
           previewUrl={content.home.heroImagenUrl}
           onUploaded={(secureUrl) =>
             setContent({
@@ -372,7 +373,7 @@ export function AdminEditorHome() {
                       if (
                         !(await confirmDelete({
                           detail: `Vas a quitar el testimonio de «${who}».`,
-                          deletesCloudinaryImages: false,
+                          deletesStoredImages: false,
                         }))
                       ) {
                         return;

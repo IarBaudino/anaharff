@@ -78,7 +78,7 @@ export function AdminEditorSobre() {
     if (
       !(await confirmDelete({
         detail: `Vas a quitar el bloque «${name}».`,
-        deletesCloudinaryImages: false,
+        deletesStoredImages: false,
       }))
     ) {
       return;

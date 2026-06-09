@@ -8,7 +8,7 @@ interface CategoryContentProps {
   label: string;
   /** Enlace del texto «volver» (por defecto galería). */
   backHref?: string;
-  /** URLs públicas de imágenes (Cloudinary, etc.). */
+  /** URLs públicas de imágenes (Supabase Storage, etc.). */
   imageUrls: string[];
 }
 

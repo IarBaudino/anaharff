@@ -13,7 +13,7 @@ import {
   type SeriesSubcategory,
   type SiteContent,
 } from "@/lib/site-content";
-import { CloudinaryUploadField } from "@/components/admin/CloudinaryUploadField";
+import { StorageUploadField } from "@/components/admin/StorageUploadField";
 import { HelpText } from "@/components/admin/admin-fields";
 import {
   ADMIN_SAVE_SUCCESS,
@@ -21,7 +21,7 @@ import {
   adminNoticeVariant,
   useAdminPanelUi,
 } from "@/components/admin/admin-panel-ui";
-import { deleteCloudinaryUrls } from "@/lib/cloudinary-client";
+import { deleteStoredUrls } from "@/lib/storage-client";
 import {
   imageUrlsFromPortfolioCategory,
   imageUrlsFromPortfolioSubcategory,
@@ -51,7 +51,7 @@ function subErrKey(parentId: string, subId: string) {
   return `${parentId}::${subId}`;
 }
 
-function notifyCloudinaryDeleteResult(
+function notifyStorageDeleteResult(
   setMessage: SetPanelMessage,
   entityLabel: string,
   total: number,
@@ -60,7 +60,7 @@ function notifyCloudinaryDeleteResult(
   if (total === 0) return;
   if (failed > 0) {
     setMessage(
-      `${entityLabel} eliminado del sitio. ${failed} de ${total} imagen(es) no se pudieron borrar en Cloudinary (¿sesión admin activa?).`
+      `${entityLabel} eliminado del sitio. ${failed} de ${total} imagen(es) no se pudieron borrar del almacenamiento (¿sesión admin activa?).`
     );
   }
 }
@@ -383,7 +383,8 @@ export function AdminCollections() {
                   <strong>Subir imagen</strong> de abajo para sumar otra a la galería. No hace falta
                   copiar ningún enlace; al guardar quedan asociadas a esta categoría.
                 </HelpText>
-                <CloudinaryUploadField
+                <StorageUploadField
+                  folder="portfolio"
                   multiple
                   onUploaded={(url) => {
                     clearAllFieldErrors();
@@ -399,7 +400,8 @@ export function AdminCollections() {
                         <p className="text-[11px] uppercase tracking-wide text-stone">
                           {cat.coverImageUrl === imageUrl ? "Portada actual" : "Imagen"}
                         </p>
-                        <CloudinaryUploadField
+                        <StorageUploadField
+                          folder="portfolio"
                           variant="compact"
                           previewUrl={imageUrl}
                           onUploaded={(nextUrl) => {
@@ -562,7 +564,8 @@ export function AdminCollections() {
                         <p className="text-[11px] uppercase tracking-wide text-stone">
                           Imágenes de esta subcategoría
                         </p>
-                        <CloudinaryUploadField
+                        <StorageUploadField
+                          folder="portfolio"
                           multiple
                           onUploaded={(url) =>
                             appendPortfolioSubImage(idx, si, url, setContent)
@@ -576,7 +579,8 @@ export function AdminCollections() {
                                 key={imageUrl}
                                 className="space-y-2 rounded border border-charcoal/10 p-2"
                               >
-                                <CloudinaryUploadField
+                                <StorageUploadField
+                                  folder="portfolio"
                                   variant="compact"
                                   previewUrl={imageUrl}
                                   onUploaded={(nextUrl) =>
@@ -805,7 +809,8 @@ export function AdminCollections() {
                   <strong>Subir imagen</strong>. Cada miniatura es una foto de la serie; elegí cuál es
                   la portada con el botón correspondiente.
                 </HelpText>
-                <CloudinaryUploadField
+                <StorageUploadField
+                  folder="series"
                   multiple
                   onUploaded={(url) => {
                     clearAllFieldErrors();
@@ -821,7 +826,8 @@ export function AdminCollections() {
                         <p className="text-[11px] uppercase tracking-wide text-stone">
                           {project.coverImageUrl === imageUrl ? "Portada actual" : "Imagen"}
                         </p>
-                        <CloudinaryUploadField
+                        <StorageUploadField
+                          folder="series"
                           variant="compact"
                           previewUrl={imageUrl}
                           onUploaded={(nextUrl) => {
@@ -984,7 +990,8 @@ export function AdminCollections() {
                       />
                       <div className="space-y-2 rounded border border-charcoal/10 p-2">
                         <p className="text-[11px] uppercase tracking-wide text-stone">Imágenes</p>
-                        <CloudinaryUploadField
+                        <StorageUploadField
+                          folder="series"
                           multiple
                           onUploaded={(url) =>
                             appendSeriesSubImage(idx, si, url, setContent)
@@ -998,7 +1005,8 @@ export function AdminCollections() {
                                 key={imageUrl}
                                 className="space-y-2 rounded border border-charcoal/10 p-2"
                               >
-                                <CloudinaryUploadField
+                                <StorageUploadField
+                                  folder="series"
                                   variant="compact"
                                   previewUrl={imageUrl}
                                   onUploaded={(nextUrl) =>
@@ -1405,21 +1413,21 @@ async function removePortfolioSub(
   if (
     !(await confirmDelete({
       detail: `Vas a eliminar la subcategoría «${label}» y todas sus fotos del sitio.`,
-      deletesCloudinaryImages: true,
+      deletesStoredImages: true,
     }))
   ) {
     return;
   }
 
   const urls = imageUrlsFromPortfolioSubcategory(sub);
-  const { total, failed } = await deleteCloudinaryUrls(urls);
+  const { total, failed } = await deleteStoredUrls(urls);
 
   const cats = [...content.portfolio.categories];
   const cat = cats[catIdx];
   const subs = (cat.subcategories ?? []).filter((_, i) => i !== subIdx);
   cats[catIdx] = { ...cat, subcategories: subs };
   setContent({ ...content, portfolio: { ...content.portfolio, categories: cats } });
-  notifyCloudinaryDeleteResult(setMessage, "Subcategoría", total, failed);
+  notifyStorageDeleteResult(setMessage, "Subcategoría", total, failed);
 }
 
 function movePortfolioSub(
@@ -1540,21 +1548,21 @@ async function removeSeriesSub(
   if (
     !(await confirmDelete({
       detail: `Vas a eliminar la subserie «${label}» y todas sus fotos del sitio.`,
-      deletesCloudinaryImages: true,
+      deletesStoredImages: true,
     }))
   ) {
     return;
   }
 
   const urls = imageUrlsFromSeriesSubcategory(sub);
-  const { total, failed } = await deleteCloudinaryUrls(urls);
+  const { total, failed } = await deleteStoredUrls(urls);
 
   const projects = [...content.series.projects];
   const p = projects[projectIdx];
   const subs = (p.subcategories ?? []).filter((_, i) => i !== subIdx);
   projects[projectIdx] = { ...p, subcategories: subs };
   setContent({ ...content, series: { ...content.series, projects } });
-  notifyCloudinaryDeleteResult(setMessage, "Subserie", total, failed);
+  notifyStorageDeleteResult(setMessage, "Subserie", total, failed);
 }
 
 function moveSeriesSub(
@@ -1672,18 +1680,18 @@ async function removeCategory(
   if (
     !(await confirmDelete({
       detail: `Vas a eliminar la categoría «${label}» con todas sus fotos y subcategorías.`,
-      deletesCloudinaryImages: true,
+      deletesStoredImages: true,
     }))
   ) {
     return;
   }
 
   const urls = imageUrlsFromPortfolioCategory(cat);
-  const { total, failed } = await deleteCloudinaryUrls(urls);
+  const { total, failed } = await deleteStoredUrls(urls);
 
   const next = content.portfolio.categories.filter((_, i) => i !== idx);
   setContent({ ...content, portfolio: { ...content.portfolio, categories: next } });
-  notifyCloudinaryDeleteResult(setMessage, "Categoría", total, failed);
+  notifyStorageDeleteResult(setMessage, "Categoría", total, failed);
 }
 
 async function removeProject(
@@ -1700,18 +1708,18 @@ async function removeProject(
   if (
     !(await confirmDelete({
       detail: `Vas a eliminar la serie «${label}» con todas sus fotos y subseries.`,
-      deletesCloudinaryImages: true,
+      deletesStoredImages: true,
     }))
   ) {
     return;
   }
 
   const urls = imageUrlsFromSeriesProject(project);
-  const { total, failed } = await deleteCloudinaryUrls(urls);
+  const { total, failed } = await deleteStoredUrls(urls);
 
   const next = content.series.projects.filter((_, i) => i !== idx);
   setContent({ ...content, series: { ...content.series, projects: next } });
-  notifyCloudinaryDeleteResult(setMessage, "Serie", total, failed);
+  notifyStorageDeleteResult(setMessage, "Serie", total, failed);
 }
 
 function moveCategory(
