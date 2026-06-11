@@ -7,6 +7,9 @@ import {
   type SobreMiCurriculoEntrada,
   type SobreMiCurriculoSeccion,
 } from "@/lib/site-content";
+import { CurriculoBulkImport } from "@/components/admin/CurriculoBulkImport";
+import { CurriculoFullDocumentImport } from "@/components/admin/CurriculoFullDocumentImport";
+import { formatCurriculoFullLine } from "@/lib/curriculo-display";
 import { FieldLabel, HelpText, SectionHeading, inputClass } from "@/components/admin/admin-fields";
 
 function sobreMiChangeStub(_next: SobreMiContent): void {
@@ -106,11 +109,45 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
         {
           id: newManagedItemId("cv"),
           anio: "",
+          linea: "",
           nombre: "",
           descripcion: "",
           lugar: "",
+          enlace: "",
         },
       ],
+    });
+  }
+
+  function addEmptyEntradas(seccionId: string, count: number) {
+    const sec = cv.secciones.find((s) => s.id === seccionId);
+    if (!sec) return;
+    const blank = Array.from({ length: count }, () => ({
+      id: newManagedItemId("cv"),
+      anio: "",
+      linea: "",
+      nombre: "",
+      descripcion: "",
+      lugar: "",
+      enlace: "",
+    }));
+    patchSeccion(sobreMi, onChange, seccionId, {
+      entradas: [...sec.entradas, ...blank],
+    });
+  }
+
+  function importEntradas(seccionId: string, entradas: SobreMiCurriculoEntrada[]) {
+    const sec = cv.secciones.find((s) => s.id === seccionId);
+    if (!sec || !entradas.length) return;
+    patchSeccion(sobreMi, onChange, seccionId, {
+      entradas: [...sec.entradas, ...entradas],
+    });
+  }
+
+  function importFullDocument(secciones: SobreMiCurriculoSeccion[]) {
+    if (!secciones.length) return;
+    patchCurriculo(sobreMi, onChange, {
+      secciones: [...cv.secciones, ...secciones],
     });
   }
 
@@ -126,9 +163,11 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
     <section className="space-y-4">
       <SectionHeading>Currículo</SectionHeading>
       <HelpText>
-        Se muestra en <strong>/sobre-mi/curriculo</strong>. Creá bloques como «EXPOSICIONES» o
-        «PREMIOS» y cargá cada línea con año, nombre, descripción y lugar.
+        Se muestra en <strong>/sobre-mi/curriculo</strong>. Podés pegar el texto completo (títulos +
+        filas con año) o editar bloque por bloque. El nombre puede tener un enlace opcional.
       </HelpText>
+
+      <CurriculoFullDocumentImport onImport={importFullDocument} />
 
       <div>
         <FieldLabel htmlFor="cv-titulo">Título de la sección en el sitio</FieldLabel>
@@ -168,6 +207,8 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
               aria-label="Título del bloque"
             />
 
+            <CurriculoBulkImport onImport={(entradas) => importEntradas(sec.id, entradas)} />
+
             <div className="space-y-4">
               {sec.entradas.map((entry, entryIdx) => (
                 <div
@@ -205,7 +246,7 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
                       </button>
                     </div>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-3 md:grid-cols-[6rem_1fr]">
                     <div>
                       <FieldLabel htmlFor={`cv-anio-${entry.id}`}>Año</FieldLabel>
                       <input
@@ -219,57 +260,73 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
                       />
                     </div>
                     <div>
-                      <FieldLabel htmlFor={`cv-lugar-${entry.id}`}>Lugar</FieldLabel>
+                      <FieldLabel htmlFor={`cv-linea-${entry.id}`}>
+                        Texto en el sitio (después del año)
+                      </FieldLabel>
                       <input
-                        id={`cv-lugar-${entry.id}`}
+                        id={`cv-linea-${entry.id}`}
                         className={inputClass()}
-                        value={entry.lugar}
+                        value={entry.linea ?? ""}
                         onChange={(e) =>
-                          patchEntrada(sobreMi, onChange, sec.id, entry.id, { lugar: e.target.value })
+                          patchEntrada(sobreMi, onChange, sec.id, entry.id, { linea: e.target.value })
                         }
-                        placeholder="Buenos Aires, Argentina"
+                        placeholder="Cuerpo - Centro Cultural Laura Bonaparte (Buenos Aires - AR)"
                       />
                     </div>
                   </div>
-                  <div>
-                    <FieldLabel htmlFor={`cv-nombre-${entry.id}`}>Nombre del trabajo</FieldLabel>
-                    <input
-                      id={`cv-nombre-${entry.id}`}
-                      className={inputClass()}
-                      value={entry.nombre}
-                      onChange={(e) =>
-                        patchEntrada(sobreMi, onChange, sec.id, entry.id, { nombre: e.target.value })
-                      }
-                      placeholder="Título de la exposición o proyecto"
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel htmlFor={`cv-desc-${entry.id}`}>Descripción</FieldLabel>
-                    <textarea
-                      id={`cv-desc-${entry.id}`}
-                      className={inputClass()}
-                      rows={2}
-                      value={entry.descripcion}
-                      onChange={(e) =>
-                        patchEntrada(sobreMi, onChange, sec.id, entry.id, {
-                          descripcion: e.target.value,
-                        })
-                      }
-                      placeholder="Detalle opcional"
-                    />
+                  <p className="text-xs text-stone">
+                    Vista previa: {formatCurriculoFullLine(entry) || "—"}
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <FieldLabel htmlFor={`cv-nombre-${entry.id}`}>
+                        Texto del enlace (opcional)
+                      </FieldLabel>
+                      <input
+                        id={`cv-nombre-${entry.id}`}
+                        className={inputClass()}
+                        value={entry.nombre}
+                        onChange={(e) =>
+                          patchEntrada(sobreMi, onChange, sec.id, entry.id, { nombre: e.target.value })
+                        }
+                        placeholder="Solo si querés enlazar una parte del texto"
+                      />
+                    </div>
+                    <div>
+                      <FieldLabel htmlFor={`cv-link-${entry.id}`}>URL del enlace</FieldLabel>
+                      <input
+                        id={`cv-link-${entry.id}`}
+                        className={inputClass()}
+                        value={entry.enlace ?? ""}
+                        onChange={(e) =>
+                          patchEntrada(sobreMi, onChange, sec.id, entry.id, { enlace: e.target.value })
+                        }
+                        placeholder="https://… o /galeria"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => addEntrada(sec.id)}
-              className="inline-flex items-center gap-2 border border-charcoal/20 px-3 py-2 text-sm text-charcoal hover:border-charcoal/40"
-            >
-              <Plus className="size-4" />
-              Añadir entrada
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => addEntrada(sec.id)}
+                className="inline-flex items-center gap-2 border border-charcoal/20 px-3 py-2 text-sm text-charcoal hover:border-charcoal/40"
+              >
+                <Plus className="size-4" />
+                Añadir entrada
+              </button>
+              <button
+                type="button"
+                onClick={() => addEmptyEntradas(sec.id, 5)}
+                className="inline-flex items-center gap-2 border border-charcoal/20 px-3 py-2 text-sm text-charcoal hover:border-charcoal/40"
+              >
+                <Plus className="size-4" />
+                Añadir 5 vacías
+              </button>
+            </div>
           </div>
         ))}
       </div>

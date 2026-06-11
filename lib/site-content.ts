@@ -1,3 +1,5 @@
+import { ensureCurriculoLinea } from "@/lib/curriculo-display";
+
 export interface StoreItem {
   id: string;
   titulo: string;
@@ -131,9 +133,13 @@ export interface SobreMiIdioma {
 export interface SobreMiCurriculoEntrada {
   id: string;
   anio: string;
+  /** Texto después del año en el sitio (ej. «Cuerpo - Centro Cultural … (Buenos Aires - AR)»). */
+  linea?: string;
   nombre: string;
   descripcion: string;
   lugar: string;
+  /** Enlace opcional al hacer clic en el nombre (URL o ruta interna). */
+  enlace?: string;
 }
 
 /** Bloque del currículo con título libre (ej. «EXPOSICIONES»). */
@@ -751,13 +757,25 @@ function normalizeSobreMiCurriculoEntrada(row: unknown): SobreMiCurriculoEntrada
   const nombre = typeof r.nombre === "string" ? r.nombre.trim() : "";
   const descripcion = typeof r.descripcion === "string" ? r.descripcion.trim() : "";
   const lugar = typeof r.lugar === "string" ? r.lugar.trim() : "";
-  if (!anio && !nombre && !descripcion && !lugar) return null;
+  const lineaRaw = typeof r.linea === "string" ? r.linea.trim() : "";
+  const enlaceRaw = typeof r.enlace === "string" ? r.enlace.trim() : "";
+  if (!anio && !lineaRaw && !nombre && !descripcion && !lugar && !enlaceRaw) return null;
+
+  const linea = ensureCurriculoLinea({
+    linea: lineaRaw,
+    nombre,
+    descripcion,
+    lugar,
+  });
+
   return {
     id: typeof r.id === "string" && r.id.trim() ? r.id.trim() : newManagedItemId("cv"),
     anio,
     nombre,
     descripcion,
     lugar,
+    ...(linea ? { linea } : {}),
+    ...(enlaceRaw ? { enlace: enlaceRaw } : {}),
   };
 }
 
