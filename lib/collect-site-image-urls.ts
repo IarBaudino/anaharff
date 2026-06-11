@@ -22,6 +22,11 @@ export function collectAllSiteImageUrls(content: SiteContent): string[] {
   const hero = content.home.heroImagenUrl?.trim();
   if (hero) urls.push(hero);
 
+  for (const dest of content.home.destacados ?? []) {
+    const u = dest.imagenUrl?.trim();
+    if (u) urls.push(u);
+  }
+
   for (const item of content.tienda.items ?? []) {
     const u = item.imagenUrl?.trim();
     if (u) urls.push(u);

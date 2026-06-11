@@ -28,17 +28,17 @@ export function PortfolioCategoryClient({ category }: Props) {
             animate={{ opacity: 1, y: 0 }}
             className="mb-12"
           >
-            <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl">
+            <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl lg:text-6xl">
               {category.label}
             </h1>
             {category.description ? (
-              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-charcoal/75 md:text-base">
+              <p className="mt-4 max-w-2xl text-sm leading-relaxed text-charcoal/75 md:text-base lg:text-lg">
                 {category.description}
               </p>
             ) : null}
           </motion.header>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 lg:gap-10">
             {subs.map((sub, i) => {
               const cover = resolvePortfolioSubcategoryCover(sub);
               return (
@@ -58,7 +58,7 @@ export function PortfolioCategoryClient({ category }: Props) {
                           src={cover}
                           alt=""
                           fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 45vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                         />
                       ) : (
@@ -70,7 +70,7 @@ export function PortfolioCategoryClient({ category }: Props) {
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/15 via-transparent to-transparent opacity-50" />
                     </div>
                     <div className="border-b border-charcoal/12 pb-3 pt-2">
-                      <h2 className="font-display text-xl font-light text-charcoal transition-colors group-hover:text-accent md:text-2xl">
+                      <h2 className="font-display text-xl font-light text-charcoal transition-colors group-hover:text-accent md:text-2xl lg:text-3xl">
                         {sub.label}
                       </h2>
                     </div>

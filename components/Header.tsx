@@ -29,7 +29,8 @@ const baseNavItems: NavItem[] = [
     href: "/sobre-mi",
     label: "SOBRE MÍ",
     subItems: [
-      { href: "/sobre-mi#biografia", label: "BIOGRAFÍA" },
+      { href: "/sobre-mi", label: "BIOGRAFÍA" },
+      { href: "/sobre-mi/curriculo", label: "CURRÍCULO" },
       { href: "/sesion", label: "SESIÓN" },
       { href: "/contacto", label: "CONTACTO" },
     ],
@@ -52,10 +53,10 @@ const baseNavItems: NavItem[] = [
 ];
 
 const railLink =
-  "block w-full py-2.5 pl-0.5 text-left font-display text-[0.68rem] font-light uppercase tracking-[0.2em] text-charcoal transition-colors hover:text-accent";
+  "block w-full py-2.5 pl-0.5 text-left font-display text-[0.8rem] font-light uppercase tracking-[0.18em] text-charcoal transition-colors hover:text-accent lg:text-[0.85rem]";
 
 const railSubLink =
-  "block w-full py-1.5 pl-3 text-left font-display text-[0.62rem] font-light tracking-wide text-stone transition-colors hover:text-charcoal";
+  "block w-full py-1.5 pl-3 text-left font-display text-[0.72rem] font-light tracking-wide text-stone transition-colors hover:text-charcoal lg:text-[0.78rem]";
 
 const navSocialIconClass =
   "inline-flex size-9 shrink-0 items-center justify-center rounded-md text-charcoal/70 transition-colors hover:bg-charcoal/[0.06] hover:text-charcoal";
@@ -108,7 +109,7 @@ function CartNavLink({
           /* railLink usa `block` y anulaba el flex: icono y texto quedaban en columna */
           "flex w-full min-w-0 flex-nowrap items-center gap-2 py-2.5 text-left transition-colors hover:text-accent",
           variant === "sidebar" &&
-            "font-display text-[0.68rem] font-light uppercase tracking-[0.2em] text-charcoal pl-0.5",
+            "font-display text-[0.8rem] font-light uppercase tracking-[0.18em] text-charcoal pl-0.5 lg:text-[0.85rem]",
           variant === "drawer" && "justify-center text-center font-display text-lg font-light text-charcoal"
         )}
       >
@@ -341,9 +342,9 @@ export function Header() {
       <header className="fixed inset-x-0 top-0 z-[100] flex h-14 items-center justify-between bg-[var(--color-cream)] px-3 lg:hidden">
         <Link
           href="/"
-          className="font-display text-base font-light tracking-tight text-charcoal transition-colors hover:text-accent"
+          className="font-display text-lg font-light uppercase tracking-[0.12em] text-charcoal transition-colors hover:text-accent"
         >
-          Ana Harff
+          ANA HARFF
         </Link>
         <div className="flex items-center gap-0.5">
           <NavSocialLinks />
@@ -370,9 +371,9 @@ export function Header() {
         <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-8">
           <Link
             href="/"
-            className="mb-8 shrink-0 font-display text-xl font-light tracking-tight text-charcoal transition-colors hover:text-accent"
+            className="mb-8 shrink-0 font-display text-2xl font-light uppercase tracking-[0.14em] text-charcoal transition-colors hover:text-accent lg:text-[1.75rem]"
           >
-            Ana Harff
+            ANA HARFF
           </Link>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] pr-1">
             <NavRail navItems={navItems} />

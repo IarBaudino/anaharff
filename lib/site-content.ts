@@ -5,10 +5,20 @@ export interface StoreItem {
   precio: number;
   /** Una imagen por producto (tarjeta, carrito, checkout). */
   imagenUrl: string;
-  /** Si está activo, puede aparecer en "Trabajos recientes" del inicio. */
+  /** @deprecated Ya no se usa en el inicio; quedó en datos viejos de Firestore. */
   destacarEnInicio?: boolean;
-  /** Orden manual entre destacados (1 = primero). */
+  /** @deprecated Ver `destacarEnInicio`. */
   destacadoOrden?: number;
+}
+
+/** Imagen de galería elegida para «Trabajos recientes» en el inicio. */
+export interface HomeDestacado {
+  id: string;
+  imagenUrl: string;
+  titulo: string;
+  /** Subtítulo bajo el título (ej. nombre de categoría). */
+  etiqueta: string;
+  href: string;
 }
 
 export interface PortfolioSubcategory {
@@ -99,6 +109,10 @@ export interface HomeContent {
   destacadosKicker: string;
   destacadosTitulo: string;
   destacadosLinkTexto: string;
+  /** Cuántas tarjetas se muestran en «Trabajos recientes». */
+  destacadosCantidad: 3 | 4 | 6;
+  /** Imágenes elegidas desde portfolio/series (no productos de tienda). */
+  destacados: HomeDestacado[];
   cierreKicker: string;
   cierreTexto: string;
 }
@@ -113,10 +127,33 @@ export interface SobreMiIdioma {
   sesionTexto: string;
 }
 
+/** Una línea del currículo (exposición, premio, etc.). */
+export interface SobreMiCurriculoEntrada {
+  id: string;
+  anio: string;
+  nombre: string;
+  descripcion: string;
+  lugar: string;
+}
+
+/** Bloque del currículo con título libre (ej. «EXPOSICIONES»). */
+export interface SobreMiCurriculoSeccion {
+  id: string;
+  titulo: string;
+  entradas: SobreMiCurriculoEntrada[];
+}
+
+export interface SobreMiCurriculo {
+  /** Título de la página /sobre-mi/curriculo. */
+  titulo: string;
+  secciones: SobreMiCurriculoSeccion[];
+}
+
 export interface SobreMiContent {
   kickerColumna: string;
   tituloPagina: string;
   idiomas: SobreMiIdioma[];
+  curriculo: SobreMiCurriculo;
 }
 
 export interface BlogEntrada {
@@ -151,8 +188,8 @@ export interface SiteContent {
   tienda: {
     titulo: string;
     descripcion: string;
-    /** Cantidad de cards visibles en "Trabajos recientes" (inicio). */
-    destacadosCantidad: 3 | 4 | 6;
+    /** @deprecated Usar `home.destacadosCantidad`. */
+    destacadosCantidad?: 3 | 4 | 6;
     items: StoreItem[];
   };
 }
@@ -269,6 +306,8 @@ export const defaultSiteContent: SiteContent = {
     destacadosKicker: "Destacados",
     destacadosTitulo: "Trabajos recientes",
     destacadosLinkTexto: "Ver galeria completa",
+    destacadosCantidad: 3,
+    destacados: [],
     cierreKicker: "Contacto",
     cierreTexto: "Sesiones, colaboraciones o consultas por obra.",
   },
@@ -288,6 +327,10 @@ export const defaultSiteContent: SiteContent = {
           "Ofrezco sesiones de fotografía analógica personalizadas. Si te interesa reservar una sesión, no dudes en contactarme.",
       },
     ],
+    curriculo: {
+      titulo: "Currículo",
+      secciones: [],
+    },
   },
   blog: {
     kicker: "Textos",
@@ -412,7 +455,6 @@ export const defaultSiteContent: SiteContent = {
     titulo: "Tienda",
     descripcion:
       "Imágenes en edición limitada. Fotografía analógica impresa o en formato digital de alta resolución.",
-    destacadosCantidad: 3,
     items: [],
   },
 };
@@ -435,6 +477,63 @@ export function newTestimonioId(): string {
     return crypto.randomUUID();
   }
   return `test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function newHomeDestacadoId(): string {
+  return newManagedItemId("dest");
+}
+
+function normalizeHomeDestacados(raw: unknown): HomeDestacado[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((row, i) => {
+      const r = (row ?? {}) as Partial<HomeDestacado>;
+      const imagenUrl = sanitizePublicImageUrl(
+        typeof r.imagenUrl === "string" ? r.imagenUrl : ""
+      );
+      if (!imagenUrl) return null;
+      return {
+        id:
+          typeof r.id === "string" && r.id.trim()
+            ? r.id.trim()
+            : newHomeDestacadoId(),
+        imagenUrl,
+        titulo: typeof r.titulo === "string" ? r.titulo : `Trabajo ${i + 1}`,
+        etiqueta: typeof r.etiqueta === "string" ? r.etiqueta : "Galería",
+        href: typeof r.href === "string" && r.href.trim() ? r.href.trim() : "/galeria",
+      };
+    })
+    .filter((row): row is HomeDestacado => row !== null);
+}
+
+const LEGACY_DESTACADO_LINKS = ["/galeria", "/galeria", "/series"] as const;
+const LEGACY_DESTACADO_ETIQUETAS = ["Galería", "Galería", "Series"] as const;
+
+/** Migra destacados viejos que vivían en productos de tienda. */
+export function buildLegacyHomeDestacadosFromTienda(
+  items: StoreItem[]
+): HomeDestacado[] {
+  const chosen = items
+    .filter((it) => it.destacarEnInicio)
+    .sort(
+      (a, b) =>
+        (a.destacadoOrden ?? Number.MAX_SAFE_INTEGER) -
+        (b.destacadoOrden ?? Number.MAX_SAFE_INTEGER)
+    );
+
+  const rows: HomeDestacado[] = [];
+  chosen.forEach((item, i) => {
+    const imagenUrl = sanitizePublicImageUrl(item.imagenUrl);
+    if (!imagenUrl) return;
+    rows.push({
+      id: newHomeDestacadoId(),
+      imagenUrl,
+      titulo: item.titulo.trim() || `Trabajo ${i + 1}`,
+      etiqueta: LEGACY_DESTACADO_ETIQUETAS[i] ?? "Galería",
+      href: LEGACY_DESTACADO_LINKS[i] ?? "/galeria",
+    });
+  });
+  return rows;
 }
 
 export function normalizeHome(partial: unknown): HomeContent {
@@ -546,6 +645,11 @@ export function normalizeHome(partial: unknown): HomeContent {
       typeof p.destacadosTitulo === "string" ? p.destacadosTitulo : def.destacadosTitulo,
     destacadosLinkTexto:
       destacadosLinkTexto,
+    destacadosCantidad:
+      p.destacadosCantidad === 4 || p.destacadosCantidad === 6
+        ? p.destacadosCantidad
+        : def.destacadosCantidad,
+    destacados: normalizeHomeDestacados(p.destacados),
     cierreKicker:
       typeof p.cierreKicker === "string" ? p.cierreKicker : def.cierreKicker,
     cierreTexto:
@@ -637,6 +741,55 @@ export function normalizeSobreMi(partial: unknown): SobreMiContent {
     tituloPagina:
       typeof p.tituloPagina === "string" ? p.tituloPagina : def.tituloPagina,
     idiomas,
+    curriculo: normalizeSobreMiCurriculo(p.curriculo),
+  };
+}
+
+function normalizeSobreMiCurriculoEntrada(row: unknown): SobreMiCurriculoEntrada | null {
+  const r = (row ?? {}) as Partial<SobreMiCurriculoEntrada>;
+  const anio = typeof r.anio === "string" ? r.anio.trim() : "";
+  const nombre = typeof r.nombre === "string" ? r.nombre.trim() : "";
+  const descripcion = typeof r.descripcion === "string" ? r.descripcion.trim() : "";
+  const lugar = typeof r.lugar === "string" ? r.lugar.trim() : "";
+  if (!anio && !nombre && !descripcion && !lugar) return null;
+  return {
+    id: typeof r.id === "string" && r.id.trim() ? r.id.trim() : newManagedItemId("cv"),
+    anio,
+    nombre,
+    descripcion,
+    lugar,
+  };
+}
+
+function normalizeSobreMiCurriculoSeccion(row: unknown, index: number): SobreMiCurriculoSeccion | null {
+  const r = (row ?? {}) as Partial<SobreMiCurriculoSeccion>;
+  const titulo = typeof r.titulo === "string" ? r.titulo.trim() : "";
+  const entradas = Array.isArray(r.entradas)
+    ? r.entradas
+        .map((entry) => normalizeSobreMiCurriculoEntrada(entry))
+        .filter((entry): entry is SobreMiCurriculoEntrada => entry !== null)
+    : [];
+  if (!titulo && entradas.length === 0) return null;
+  return {
+    id: typeof r.id === "string" && r.id.trim() ? r.id.trim() : newManagedItemId("cv-sec"),
+    titulo: titulo || `Sección ${index + 1}`,
+    entradas,
+  };
+}
+
+export function normalizeSobreMiCurriculo(partial: unknown): SobreMiCurriculo {
+  const def = defaultSiteContent.sobreMi.curriculo;
+  if (!partial || typeof partial !== "object") return def;
+  const p = partial as Partial<SobreMiCurriculo>;
+  const secciones = Array.isArray(p.secciones)
+    ? p.secciones
+        .map((row, i) => normalizeSobreMiCurriculoSeccion(row, i))
+        .filter((row): row is SobreMiCurriculoSeccion => row !== null)
+    : [];
+  return {
+    titulo:
+      typeof p.titulo === "string" && p.titulo.trim() ? p.titulo.trim() : def.titulo,
+    secciones,
   };
 }
 
@@ -916,8 +1069,26 @@ export function parseTiendaItemsFromFirestore(tienda: unknown): unknown[] {
 }
 
 export function mergeSiteContentFromFirestore(partial: Partial<SiteContent>): SiteContent {
+  const tienda = mergeTiendaFromPartial(partial.tienda);
+  let home = normalizeHome(partial.home);
+
+  const legacyCantidad = partial.tienda?.destacadosCantidad;
+  if (
+    !partial.home?.destacadosCantidad &&
+    (legacyCantidad === 4 || legacyCantidad === 6)
+  ) {
+    home = { ...home, destacadosCantidad: legacyCantidad };
+  }
+
+  if (!home.destacados.length) {
+    const legacyDestacados = buildLegacyHomeDestacadosFromTienda(tienda.items);
+    if (legacyDestacados.length) {
+      home = { ...home, destacados: legacyDestacados };
+    }
+  }
+
   return {
-    home: normalizeHome(partial.home),
+    home,
     sobreMi: normalizeSobreMi(partial.sobreMi),
     blog: normalizeBlog(partial.blog),
     portfolio: {
@@ -926,7 +1097,7 @@ export function mergeSiteContentFromFirestore(partial: Partial<SiteContent>): Si
     series: {
       projects: normalizeSeriesProjects(partial.series?.projects),
     },
-    tienda: mergeTiendaFromPartial(partial.tienda),
+    tienda,
   };
 }
 
@@ -937,16 +1108,11 @@ export function mergeTiendaFromPartial(
     partialTienda && typeof partialTienda === "object"
       ? (partialTienda as Partial<SiteContent["tienda"]>)
       : {};
-  const cantidadRaw = partial.destacadosCantidad;
-  const destacadosCantidad = cantidadRaw === 4 || cantidadRaw === 6 ? cantidadRaw : 3;
-  const items = normalizeFeaturedOrder(
-    normalizeStoreItems(parseTiendaItemsFromFirestore(partial))
-  );
+  const items = normalizeStoreItems(parseTiendaItemsFromFirestore(partial));
 
   return {
     ...defaultSiteContent.tienda,
     ...partial,
-    destacadosCantidad,
     items,
   };
 }

@@ -15,6 +15,7 @@ import {
   adminNoticeVariant,
   useAdminPanelUi,
 } from "@/components/admin/admin-panel-ui";
+import { HomeDestacadosEditor } from "@/components/admin/HomeDestacadosEditor";
 import { StorageUploadField } from "@/components/admin/StorageUploadField";
 import {
   FieldLabel,
@@ -544,6 +545,7 @@ export function AdminEditorHome() {
             }
           />
         </div>
+        <HomeDestacadosEditor content={content} setContent={setContent} />
       </section>
 
       <section className="space-y-4">

@@ -14,24 +14,7 @@ import {
   defaultSiteContent,
   productGalleryUrls,
   sanitizePublicImageUrl,
-  type StoreItem,
 } from "@/lib/site-content";
-
-function featuredItems(items: StoreItem[], limit: number): StoreItem[] {
-  const chosen = items
-    .filter((it) => it.destacarEnInicio)
-    .sort((a, b) => (a.destacadoOrden ?? Number.MAX_SAFE_INTEGER) - (b.destacadoOrden ?? Number.MAX_SAFE_INTEGER));
-
-  const merged = [...chosen];
-  if (merged.length >= limit) return merged.slice(0, limit);
-
-  for (const it of items) {
-    if (merged.length >= limit) break;
-    if (!merged.some((m) => m.id === it.id)) merged.push(it);
-  }
-
-  return merged.slice(0, limit);
-}
 
 function heroSrc(
   heroUrl: string | undefined,
@@ -50,16 +33,15 @@ export default function HomePage() {
     tienda.items[0] != null ? productGalleryUrls(tienda.items[0])[0] : undefined;
   const heroUrl = heroSrc(home.heroImagenUrl, firstStoreImage);
 
-  const destacadoLinks = ["/galeria", "/galeria", "/series"] as const;
-  const destacadoEtiquetas = ["Galería", "Galería", "Series"] as const;
-
-  const destacados = featuredItems(tienda.items, tienda.destacadosCantidad ?? 3).map((item, i) => ({
+  const limit = home.destacadosCantidad ?? 3;
+  const destacados = home.destacados.slice(0, limit).map((item) => ({
     id: item.id,
-    url: sanitizePublicImageUrl(productGalleryUrls(item)[0] ?? ""),
+    url: sanitizePublicImageUrl(item.imagenUrl),
     titulo: item.titulo,
-    href: destacadoLinks[i] ?? "/tienda",
-    etiqueta: destacadoEtiquetas[i] ?? "Ver más",
+    href: item.href?.trim() || "/galeria",
+    etiqueta: item.etiqueta,
   }));
+
   return (
     <div>
       {/* Primer pantallazo: solo imagen de impacto (sin scroll dentro del bloque) */}
@@ -149,6 +131,7 @@ export default function HomePage() {
         </section>
 
       {/* Destacados — rejilla asimétrica */}
+      {destacados.length > 0 ? (
       <section className="border-b border-charcoal/[0.12] bg-cream">
         <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pb-24 lg:pt-8">
           <motion.div
@@ -218,6 +201,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* Cierre */}
       <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">

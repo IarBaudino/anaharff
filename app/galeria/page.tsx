@@ -35,7 +35,7 @@ function AlbumCover({ label, coverUrl }: { label: string; coverUrl: string }) {
       src={coverUrl}
       alt={`Portada de ${label}`}
       fill
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 45vw"
       className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
     />
   );
@@ -79,7 +79,7 @@ export default function GaleriaPage() {
 
   return (
     <div className="pb-24 pt-6 md:pt-24">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-10 pb-8 md:mb-12 md:pb-10">
           <p className="section-kicker mb-3">Colecciones</p>
           <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl lg:text-6xl">
@@ -89,7 +89,7 @@ export default function GaleriaPage() {
           <SectionDivider variant="double" className="mt-3 opacity-80" />
         </motion.header>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 lg:gap-10 xl:grid-cols-2">
           {albums.map((album, i) => (
             <motion.div
               key={album.id}
@@ -98,15 +98,15 @@ export default function GaleriaPage() {
               transition={{ delay: 0.05 + i * 0.05, duration: 0.45 }}
             >
               <Link href={album.href} className="group block">
-                <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05]">
+                <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05] lg:aspect-[3/2]">
                   <AlbumCover label={album.label} coverUrl={album.coverUrl} />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-transparent to-transparent opacity-55 transition-opacity duration-300 group-hover:opacity-65" />
                 </div>
                 <div className="border-b border-charcoal/12 pb-4 pt-3">
-                  <h2 className="font-display text-2xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent">
+                  <h2 className="font-display text-2xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-3xl lg:text-4xl">
                     {album.label}
                   </h2>
-                  <span className="mt-1 inline-block text-xs uppercase tracking-[0.18em] text-stone transition-colors group-hover:text-charcoal">
+                  <span className="mt-1.5 inline-block text-xs uppercase tracking-[0.18em] text-stone transition-colors group-hover:text-charcoal md:text-sm lg:mt-2 lg:text-base">
                     {album.note}
                   </span>
                 </div>

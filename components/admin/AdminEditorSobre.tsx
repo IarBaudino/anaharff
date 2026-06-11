@@ -10,6 +10,7 @@ import {
 } from "@/components/admin/admin-panel-ui";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { newIntroduccionLangId, type SobreMiIdioma } from "@/lib/site-content";
+import { AdminCurriculoEditor } from "@/components/admin/AdminCurriculoEditor";
 import {
   FieldLabel,
   HelpText,
@@ -229,6 +230,16 @@ export function AdminEditorSobre() {
           Añadir otro idioma
         </button>
       </section>
+
+      <AdminCurriculoEditor
+        sobreMi={sm}
+        onChange={(nextSobreMi) =>
+          setContent({
+            ...content,
+            sobreMi: nextSobreMi,
+          })
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-4">
         <button

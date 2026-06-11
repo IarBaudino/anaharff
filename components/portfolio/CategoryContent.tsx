@@ -31,7 +31,7 @@ export function CategoryContent({
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-display mb-12 text-4xl font-light tracking-tight md:text-5xl"
+          className="font-display mb-12 text-4xl font-light tracking-tight md:text-5xl lg:text-6xl"
         >
           {label}
         </motion.h1>
@@ -42,7 +42,11 @@ export function CategoryContent({
             aria-hidden
           />
         ) : (
-          <PhotoMasonryGallery imageUrls={urls} />
+          <PhotoMasonryGallery
+            imageUrls={urls}
+            className="lg:columns-2 lg:gap-10"
+            imageSizes="(max-width: 1024px) 100vw, 50vw"
+          />
         )}
       </div>
     </div>
