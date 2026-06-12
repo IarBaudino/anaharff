@@ -20,31 +20,35 @@ export function SobreMiCurriculoContent({ curriculo }: Props) {
 
   if (secciones.length === 0) {
     return (
-      <p className="max-w-2xl text-lg leading-relaxed text-charcoal/70">
+      <p className="max-w-2xl text-base font-normal leading-[1.65] text-charcoal/70">
         Próximamente.
       </p>
     );
   }
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-14">
       {secciones.map((sec) => (
         <div key={sec.id}>
-          <h2 className="text-xs font-medium uppercase tracking-[0.22em] text-charcoal/80">
+          <h2 className="mb-7 font-display text-xl font-light tracking-wide text-charcoal md:text-2xl">
             {sec.titulo}
           </h2>
-          <ul className="mt-5 space-y-3">
+          <ul className="divide-y divide-charcoal/[0.07]">
             {sec.entradas.map((entry) => (
               <li
                 key={entry.id}
-                className="max-w-3xl text-base leading-relaxed text-charcoal/90 md:text-lg"
+                className="grid max-w-3xl grid-cols-[2.75rem_minmax(0,1fr)] gap-x-5 py-3.5 sm:grid-cols-[3.25rem_minmax(0,1fr)] sm:gap-x-6 sm:py-4"
               >
                 {entry.anio ? (
-                  <span className="font-display font-light tabular-nums text-charcoal">
-                    {entry.anio}{" "}
+                  <span className="pt-px text-[0.8125rem] font-normal tabular-nums leading-[1.65] text-charcoal/50">
+                    {entry.anio}
                   </span>
-                ) : null}
-                <CurriculoEntryLine entry={entry} />
+                ) : (
+                  <span aria-hidden="true" />
+                )}
+                <p className="text-[0.9375rem] font-normal leading-[1.65] tracking-normal text-charcoal/88 sm:text-base">
+                  <CurriculoEntryLine entry={entry} />
+                </p>
               </li>
             ))}
           </ul>

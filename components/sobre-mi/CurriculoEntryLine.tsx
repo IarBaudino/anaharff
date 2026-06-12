@@ -7,7 +7,7 @@ type Props = {
 };
 
 const linkClass =
-  "underline decoration-charcoal/25 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent/50";
+  "font-normal underline decoration-charcoal/20 underline-offset-[3px] transition-colors hover:text-accent hover:decoration-accent/40";
 
 function LinkedSpan({ href, children }: { href: string; children: string }) {
   const external = /^https?:\/\//i.test(href);
