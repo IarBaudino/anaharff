@@ -36,6 +36,23 @@ Solo esos usuarios pueden entrar a `/admin` (después de iniciar sesión en `/ad
 - Guardar sesiones de checkout al crear preferencias de MercadoPago
 - Registrar pedidos desde el webhook y desde la página de éxito
 
+## Email (Gmail SMTP)
+
+Los mails salen del Gmail de Ana (sin Brevo ni Resend).
+
+1. [Google → Seguridad](https://myaccount.google.com/security) → activar **verificación en 2 pasos**
+2. **Contraseñas de aplicaciones** → generar una para «Correo»
+3. En Vercel (y `.env.local`):
+   - `SMTP_USER` — Gmail de Ana
+   - `SMTP_PASS` — contraseña de aplicación (16 caracteres, sin espacios o con espacios, da igual)
+   - `EMAIL_FROM` — ej. `Ana Harff <gmail@gmail.com>`
+   - `ADMIN_EMAIL` — misma bandeja para contacto y avisos de venta
+   - `NEXT_PUBLIC_APP_URL` — URL del sitio (links en los mails)
+
+Opcional: `SMTP_HOST` (default `smtp.gmail.com`), `SMTP_PORT` (default `587`).
+
+Envía: contacto, bienvenida al registrarse y mails de pago pendiente / aprobado / rechazado.
+
 ## MercadoPago
 
 - Access token en `MERCADOPAGO_ACCESS_TOKEN`

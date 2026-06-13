@@ -44,6 +44,21 @@ export default function RegistroPage() {
         createdAt: serverTimestamp(),
         ordersCount: 0,
       });
+
+      try {
+        const idToken = await cred.user.getIdToken();
+        await fetch("/api/email/welcome", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nombre: nombre.trim() }),
+        });
+      } catch {
+        /* el registro no debe fallar si el mail de bienvenida no sale */
+      }
+
       router.replace("/cuenta");
       router.refresh();
     } catch {

@@ -7,64 +7,13 @@ import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-const TIPOS_CONSULTA = [
-  { value: "sesion", label: "Sesión de fotos o encargo personal" },
-  { value: "tienda", label: "Compra de obra / tienda / edición limitada" },
-  { value: "colaboracion", label: "Colaboración, exposición o prensa" },
-  { value: "clases", label: "Taller, mentoría o consulta técnica" },
-  { value: "otro", label: "Otro motivo" },
-] as const;
-
-const PREFERENCIAS_CONTACTO = [
-  { value: "email", label: "Email" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "cualquiera", label: "Me da igual" },
-] as const;
-
-const ORIGENES = [
-  { value: "", label: "Elegí una opción (opcional)" },
-  { value: "instagram", label: "Instagram" },
-  { value: "recomendacion", label: "Recomendación de alguien" },
-  { value: "portfolio", label: "Vi el portfolio o el sitio" },
-  { value: "tienda_online", label: "Navegando la tienda" },
-  { value: "evento", label: "Feria, muestra o evento" },
-  { value: "busqueda", label: "Búsqueda en internet" },
-  { value: "otro", label: "Otro" },
-] as const;
-
-const schema = z.object({
-  nombre: z.string().min(2, "Nombre requerido"),
-  apellido: z.string().max(80, "Máximo 80 caracteres").optional(),
-  email: z.string().email("Email inválido"),
-  telefono: z
-    .string()
-    .refine(
-      (s) => !s.trim() || /^[\d\s+().-]{8,}$/.test(s.trim()),
-      "Si completás el teléfono, revisá el formato"
-    ),
-  tipoConsulta: z
-    .string()
-    .min(1, "Seleccioná el motivo del contacto")
-    .refine(
-      (v) => TIPOS_CONSULTA.some((t) => t.value === v),
-      "Elegí una opción válida"
-    ),
-  asunto: z.string().max(140, "Máximo 140 caracteres").optional(),
-  ubicacion: z.string().max(100, "Máximo 100 caracteres").optional(),
-  preferenciaContacto: z.enum(["email", "whatsapp", "cualquiera"]),
-  comoNosConociste: z.string().optional(),
-  mensaje: z
-    .string()
-    .min(20, "Contanos un poco más (al menos 20 caracteres)"),
-  consentimiento: z.boolean().refine((v) => v === true, {
-    message:
-      "Necesito tu conformidad para usar estos datos solo para responderte",
-  }),
-});
-
-type ContactFormValues = z.infer<typeof schema>;
+import {
+  contactFormClientSchema,
+  ORIGENES_CONTACTO,
+  PREFERENCIAS_CONTACTO,
+  TIPOS_CONSULTA,
+  type ContactFormClientValues,
+} from "@/lib/contact-schema";
 
 const inputClass =
   "w-full rounded-xl border-2 border-charcoal/15 bg-cream px-4 py-3 transition-colors focus:border-charcoal focus:outline-none";
@@ -72,13 +21,14 @@ const labelClass = "mb-2 block text-sm text-charcoal/90";
 
 export default function ContactoPage() {
   const [sent, setSent] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<ContactFormValues>({
-    resolver: zodResolver(schema),
+  } = useForm<ContactFormClientValues>({
+    resolver: zodResolver(contactFormClientSchema),
     defaultValues: {
       apellido: "",
       telefono: "",
@@ -87,15 +37,29 @@ export default function ContactoPage() {
       preferenciaContacto: "email",
       comoNosConociste: "",
       consentimiento: false,
+      website: "",
     },
   });
 
   const pref = watch("preferenciaContacto");
 
-  const onSubmit = async (values: ContactFormValues) => {
-    // TODO: POST a `/api/contact` con `values`.
-    await new Promise((r) => setTimeout(r, 900));
-    void values;
+  const onSubmit = async (values: ContactFormClientValues) => {
+    setSubmitError(null);
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...values,
+        consentimiento: true,
+      }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      setSubmitError(
+        data.error || "No se pudo enviar el mensaje. Probá de nuevo en unos minutos."
+      );
+      return;
+    }
     setSent(true);
   };
 
@@ -296,7 +260,7 @@ export default function ContactoPage() {
               <span className="text-stone"> · opcional</span>
             </label>
             <select id="comoNosConociste" {...register("comoNosConociste")} className={inputClass}>
-              {ORIGENES.map((o) => (
+              {ORIGENES_CONTACTO.map((o) => (
                 <option key={o.value || "empty"} value={o.value}>
                   {o.label}
                 </option>
@@ -341,6 +305,23 @@ export default function ContactoPage() {
               </p>
             )}
           </div>
+
+          <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+            <label htmlFor="website">No completar</label>
+            <input
+              id="website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              {...register("website")}
+            />
+          </div>
+
+          {submitError ? (
+            <p className="text-sm text-red-700" role="alert">
+              {submitError}
+            </p>
+          ) : null}
 
           <button
             type="submit"

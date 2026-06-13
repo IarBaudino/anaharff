@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
-import type { Firestore } from "firebase-admin/firestore";
+import type { DocumentReference, Firestore } from "firebase-admin/firestore";
 import type { CheckoutLineItem, OrderRecord, OrderStatus } from "@/lib/commerce-types";
+import { notifyOrderPaymentEmails } from "@/lib/email/order-notifications";
 
 type MPPayer = { email?: string; first_name?: string; last_name?: string };
 
@@ -51,6 +52,54 @@ function itemsFromPaymentOrSession(
   return sessionItems;
 }
 
+type OrderEmailContext = {
+  orderId: string;
+  orderStatus: OrderStatus;
+  previousNotifiedStatus: OrderStatus | null | undefined;
+  customerEmail: string | null;
+  payerName: string | null;
+  items: CheckoutLineItem[];
+  total: number;
+  currency_id: string;
+  paymentId: string;
+};
+
+async function sendOrderEmailsAndMark(
+  db: Firestore,
+  orderRef: DocumentReference,
+  ctx: OrderEmailContext
+) {
+  const notified = await notifyOrderPaymentEmails({
+    orderId: ctx.orderId,
+    status: ctx.orderStatus,
+    previousNotifiedStatus: ctx.previousNotifiedStatus,
+    customerEmail: ctx.customerEmail,
+    payerName: ctx.payerName,
+    items: ctx.items,
+    total: ctx.total,
+    currency_id: ctx.currency_id,
+    mercadoPagoPaymentId: ctx.paymentId,
+  });
+
+  if (notified) {
+    await orderRef.update({
+      lastEmailNotifiedStatus: notified,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+}
+
+async function bumpCustomerOrderStats(db: Firestore, customerUid: string) {
+  await db.collection("customers").doc(customerUid).set(
+    {
+      ordersCount: FieldValue.increment(1),
+      lastOrderAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
 export async function persistOrderFromPayment(params: {
   db: Firestore;
   payment: MPPayment;
@@ -66,15 +115,9 @@ export async function persistOrderFromPayment(params: {
     .limit(1)
     .get();
 
-  if (!existing.empty) {
-    const doc = existing.docs[0]!;
-    return { orderId: doc.id, created: false };
-  }
-
   const items = itemsFromPaymentOrSession(payment, sessionItems);
   const total =
-    payment.transaction_amount ??
-    items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+    payment.transaction_amount ?? items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
 
   const customerUid = payment.metadata?.customer_uid || null;
   const customerEmail = payment.payer?.email || payment.metadata?.customer_email || null;
@@ -82,8 +125,52 @@ export async function persistOrderFromPayment(params: {
     [payment.payer?.first_name, payment.payer?.last_name].filter(Boolean).join(" ").trim() ||
     null;
 
-  const orderRef = ordersCol.doc();
   const orderStatus = mapMpStatusToOrder(payment.status);
+
+  if (!existing.empty) {
+    const doc = existing.docs[0]!;
+    const prev = doc.data() as OrderRecord;
+    const prevStatus = prev.status;
+    const statusChanged = prevStatus !== orderStatus;
+
+    if (statusChanged) {
+      await doc.ref.update({
+        status: orderStatus,
+        mercadoPagoStatus: payment.status ?? null,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      if (orderStatus === "aprobado" && prevStatus !== "aprobado" && customerUid) {
+        await bumpCustomerOrderStats(db, customerUid);
+      }
+    }
+
+    if (preferenceId) {
+      await db.collection("checkout_sessions").doc(preferenceId).set(
+        {
+          status: orderStatus === "aprobado" ? "completado" : "pendiente",
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    await sendOrderEmailsAndMark(db, doc.ref, {
+      orderId: doc.id,
+      orderStatus,
+      previousNotifiedStatus: prev.lastEmailNotifiedStatus ?? null,
+      customerEmail: customerEmail ?? prev.customerEmail,
+      payerName: payerName ?? prev.payerName,
+      items: items.length ? items : prev.items,
+      total,
+      currency_id: payment.currency_id || prev.currency_id || "ARS",
+      paymentId: String(paymentId),
+    });
+
+    return { orderId: doc.id, created: false };
+  }
+
+  const orderRef = ordersCol.doc();
 
   const record: OrderRecord = {
     status: orderStatus,
@@ -105,15 +192,7 @@ export async function persistOrderFromPayment(params: {
   await orderRef.set(record);
 
   if (customerUid && orderStatus === "aprobado") {
-    const custRef = db.collection("customers").doc(customerUid);
-    await custRef.set(
-      {
-        ordersCount: FieldValue.increment(1),
-        lastOrderAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+    await bumpCustomerOrderStats(db, customerUid);
   }
 
   if (preferenceId) {
@@ -125,6 +204,18 @@ export async function persistOrderFromPayment(params: {
       { merge: true }
     );
   }
+
+  await sendOrderEmailsAndMark(db, orderRef, {
+    orderId: orderRef.id,
+    orderStatus,
+    previousNotifiedStatus: null,
+    customerEmail,
+    payerName,
+    items,
+    total,
+    currency_id: record.currency_id,
+    paymentId: String(paymentId),
+  });
 
   return { orderId: orderRef.id, created: true };
 }

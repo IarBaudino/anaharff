@@ -41,6 +41,8 @@ export interface OrderRecord {
   mercadoPagoStatus: string | null;
   externalReference: string | null;
   notasAdmin?: string;
+  /** Evita reenviar el mismo mail de estado de pago (pendiente / aprobado / rechazado). */
+  lastEmailNotifiedStatus?: OrderStatus | null;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
