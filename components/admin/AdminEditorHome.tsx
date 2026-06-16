@@ -33,14 +33,34 @@ export function AdminEditorHome() {
   const [message, setMessage] = useState<string | null>(null);
 
   function setHeroImagenes(next: string[]) {
-    const trimmed = next.slice(0, 6);
-    setContent({
-      ...content,
-      home: {
-        ...content.home,
-        heroImagenes: trimmed,
-        heroImagenUrl: trimmed[0] ?? "",
-      },
+    setContent((current) => {
+      const trimmed = next.slice(0, 6);
+      return {
+        ...current,
+        home: {
+          ...current.home,
+          heroImagenes: trimmed,
+          heroImagenUrl: trimmed[0] ?? "",
+        },
+      };
+    });
+  }
+
+  function appendHeroImage(secureUrl: string) {
+    const clean = secureUrl.trim();
+    if (!clean) return;
+    setContent((current) => {
+      const prev = resolveHomeHeroImages(current.home);
+      if (prev.includes(clean)) return current;
+      const trimmed = [...prev, clean].slice(0, 6);
+      return {
+        ...current,
+        home: {
+          ...current.home,
+          heroImagenes: trimmed,
+          heroImagenUrl: trimmed[0] ?? "",
+        },
+      };
     });
   }
 
@@ -167,10 +187,7 @@ export function AdminEditorHome() {
           folder="home"
           multiple
           disabled={saving || heroImages.length >= 6}
-          onUploaded={(secureUrl) => {
-            if (!secureUrl || heroImages.includes(secureUrl)) return;
-            setHeroImagenes([...heroImages, secureUrl]);
-          }}
+          onUploaded={(secureUrl) => appendHeroImage(secureUrl)}
         />
         {heroImages.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
