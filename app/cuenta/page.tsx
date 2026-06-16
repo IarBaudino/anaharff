@@ -8,6 +8,7 @@ import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { CuentaDashboard } from "@/components/cuenta/CuentaDashboard";
 import { siteButtonOutline, siteButtonSolid } from "@/lib/site-buttons";
+import { SITE_PAGE_SHELL_COMPACT } from "@/lib/layout-constants";
 
 export default function CuentaPage() {
   const { user, ready } = useAuth();
@@ -19,7 +20,7 @@ export default function CuentaPage() {
 
   if (!isFirebaseConfigured || !user) {
     return (
-      <div className="mx-auto max-w-md space-y-6 px-4 pb-20 pt-6 text-center md:pt-24">
+      <div className="mx-auto max-w-md space-y-6 px-4 pb-20 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -48,7 +49,7 @@ export default function CuentaPage() {
   }
 
   return (
-    <div className="pb-20 pt-4 md:pt-8">
+    <div className={SITE_PAGE_SHELL_COMPACT}>
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

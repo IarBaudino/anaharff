@@ -5,6 +5,8 @@ import { isAdminIdToken } from "@/lib/verify-admin-token";
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   if (!isSupabaseStorageConfigured()) {
     return NextResponse.json(

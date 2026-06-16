@@ -11,6 +11,7 @@ import { AdminCustomers } from "@/components/admin/AdminCustomers";
 import { AdminProducts } from "@/components/admin/AdminProducts";
 import { AdminCollections } from "@/components/admin/AdminCollections";
 import { AdminPanelUiProvider } from "@/components/admin/admin-panel-ui";
+import { AdminStorageStatus } from "@/components/admin/AdminStorageStatus";
 
 const tabs = [
   { id: "pagina", label: "Página principal", icon: Home },
@@ -54,6 +55,7 @@ export function AdminDashboard() {
 
       <div className="min-w-0 flex-1">
         <AdminPanelUiProvider>
+          <AdminStorageStatus />
           {tab === "pagina" && <AdminEditorHome />}
           {tab === "acerca" && <AdminEditorSobre />}
           {tab === "blog" && <AdminEditorBlog />}

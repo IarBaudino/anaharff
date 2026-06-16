@@ -21,17 +21,25 @@ import {
   where,
   Timestamp,
 } from "firebase/firestore";
-import { Package, User } from "lucide-react";
+import { Package, Truck, User } from "lucide-react";
 import { auth, db, isFirebaseConfigured } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { ensureCustomerProfile } from "@/lib/customer-profile";
 import type { CustomerRecord, OrderRecord, OrderStatus } from "@/lib/commerce-types";
 import { cn } from "@/lib/utils";
 import { siteButtonOutline, siteButtonSolid } from "@/lib/site-buttons";
+import { ShippingAddressForm } from "@/components/shipping/ShippingAddressForm";
+import {
+  emptyShippingAddress,
+  normalizeShippingAddress,
+  validateShippingAddress,
+  type ShippingAddress,
+} from "@/lib/shipping";
 import { PasswordField } from "@/components/ui/PasswordField";
 
 const tabs = [
   { id: "datos", label: "Mis datos", icon: User },
+  { id: "envio", label: "Envío", icon: Truck },
   { id: "pedidos", label: "Mis pedidos", icon: Package },
 ] as const;
 
@@ -114,6 +122,10 @@ export function CuentaDashboard() {
   const [passSaving, setPassSaving] = useState(false);
   const [passMsg, setPassMsg] = useState<string | null>(null);
 
+  const [envio, setEnvio] = useState<ShippingAddress>(() => emptyShippingAddress());
+  const [envioSaving, setEnvioSaving] = useState(false);
+  const [envioMsg, setEnvioMsg] = useState<string | null>(null);
+
   useEffect(() => {
     if (!user || !db || !isFirebaseConfigured) {
       setProfile(null);
@@ -138,6 +150,10 @@ export function CuentaDashboard() {
             setProfile(data);
             setNombre(data.nombre ?? "");
             setTelefono(data.telefono ?? "");
+            if (data.envio) {
+              const normalized = normalizeShippingAddress(data.envio);
+              if (normalized) setEnvio(normalized);
+            }
           }
           setProfileReady(true);
         },
@@ -253,6 +269,46 @@ export function CuentaDashboard() {
       setProfileMsg("No se pudieron guardar los datos.");
     } finally {
       setProfileSaving(false);
+    }
+  }
+
+  async function onSaveEnvio(e: FormEvent) {
+    e.preventDefault();
+    setEnvioMsg(null);
+    const err = validateShippingAddress(envio);
+    if (err) {
+      setEnvioMsg(err);
+      return;
+    }
+    if (!user || !db) return;
+    const normalized = normalizeShippingAddress(envio);
+    if (!normalized) return;
+    setEnvioSaving(true);
+    try {
+      const ref = doc(db, "customers", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        if (!user.email) {
+          setEnvioMsg("Tu cuenta no tiene email verificado.");
+          return;
+        }
+        await setDoc(ref, {
+          uid: user.uid,
+          email: user.email,
+          nombre: nombre.trim(),
+          telefono: telefono.trim(),
+          envio: normalized,
+          createdAt: serverTimestamp(),
+          ordersCount: 0,
+        });
+      } else {
+        await updateDoc(ref, { envio: normalized });
+      }
+      setEnvioMsg("Dirección de envío guardada.");
+    } catch {
+      setEnvioMsg("No se pudo guardar la dirección.");
+    } finally {
+      setEnvioSaving(false);
     }
   }
 
@@ -437,6 +493,35 @@ export function CuentaDashboard() {
                 </p>
               </section>
             ) : null}
+          </div>
+        )}
+
+        {tab === "envio" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="font-display text-2xl font-light text-charcoal">Datos de envío</h2>
+              <p className="mt-1 text-sm text-stone">
+                Guardá tu dirección para completar más rápido el carrito. Las compras son impresiones
+                físicas que enviamos por correo.
+              </p>
+            </div>
+            <section className="space-y-4 rounded-lg border border-charcoal/10 bg-cream/70 p-5">
+              {!profileReady ? (
+                <p className="text-sm text-stone">Cargando…</p>
+              ) : (
+                <form onSubmit={onSaveEnvio} className="space-y-4">
+                  <ShippingAddressForm value={envio} onChange={setEnvio} />
+                  <button
+                    type="submit"
+                    disabled={envioSaving}
+                    className={cn(siteButtonSolid, "w-full sm:w-auto")}
+                  >
+                    {envioSaving ? "Guardando…" : "Guardar dirección"}
+                  </button>
+                  {envioMsg ? <p className="text-sm text-charcoal/80">{envioMsg}</p> : null}
+                </form>
+              )}
+            </section>
           </div>
         )}
 

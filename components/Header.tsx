@@ -9,8 +9,6 @@ import { cn } from "@/lib/utils";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
-import { useSiteContent } from "@/hooks/useSiteContent";
-import { defaultSiteContent } from "@/lib/site-content";
 import { useCartStore } from "@/stores/cart-store";
 import { SITE_NAV_SIDEBAR_WIDTH_CLASS } from "@/lib/layout-constants";
 import { SITE_INSTAGRAM_URL } from "@/lib/site-links";
@@ -21,31 +19,27 @@ type NavItem = {
   subItems?: { href: string; label: string }[];
 };
 
-const galleryCategoryOrder = ["desnudos", "retratos", "artistico", "familia", "naturaleza", "experimental"];
-
 const baseNavItems: NavItem[] = [
   { href: "/", label: "HOME" },
   {
-    href: "/sobre-mi",
-    label: "SOBRE MÍ",
+    href: "/galeria",
+    label: "PORTFOLIO",
     subItems: [
-      { href: "/sobre-mi", label: "BIOGRAFÍA" },
-      { href: "/sobre-mi/curriculo", label: "CURRÍCULO" },
-      { href: "/sesion", label: "SESIÓN" },
-      { href: "/contacto", label: "CONTACTO" },
+      { href: "/series", label: "SERIES" },
+      { href: "/portfolio/retratos", label: "RETRATO" },
+      { href: "/portfolio/desnudos", label: "DESNUDO" },
+      { href: "/portfolio/familia", label: "FAMILIAR" },
+      { href: "/portfolio/eventos", label: "EVENTOS" },
+      { href: "/portfolio/naturaleza", label: "NATURALEZA" },
     ],
   },
   {
-    href: "/galeria",
-    label: "GALERÍA",
+    href: "/sobre-mi",
+    label: "LA ARTISTA",
     subItems: [
-      { href: "/series", label: "SERIES" },
-      { href: "/portfolio/desnudos", label: "DESNUDO" },
-      { href: "/portfolio/retratos", label: "RETRATOS" },
-      { href: "/portfolio/artistico", label: "ARTÍSTICO" },
-      { href: "/portfolio/familia", label: "FAMILIAR" },
-      { href: "/portfolio/naturaleza", label: "NATURALEZA" },
-      { href: "/portfolio/experimental", label: "EXPERIMENTAL" },
+      { href: "/sobre-mi", label: "BIO" },
+      { href: "/sobre-mi/curriculo", label: "CURRICULUM" },
+      { href: "/contacto", label: "CONTACTO" },
     ],
   },
   { href: "/blog", label: "BLOG" },
@@ -250,34 +244,7 @@ export function Header() {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { content } = useSiteContent();
-  const portfolioCategories = content?.portfolio.categories?.length
-    ? content.portfolio.categories
-    : defaultSiteContent.portfolio.categories;
-  const orderedPortfolioCategories = [...portfolioCategories].sort((a, b) => {
-    const ai = galleryCategoryOrder.indexOf(a.slug);
-    const bi = galleryCategoryOrder.indexOf(b.slug);
-    const va = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
-    const vb = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
-    return va - vb;
-  });
-
-  const navItems: NavItem[] = baseNavItems.map((item) => {
-    if (item.href === "/galeria") {
-      const gallerySubItems = [
-        { href: "/series", label: "SERIES" },
-        ...orderedPortfolioCategories.map((c) => ({
-          href: `/portfolio/${c.slug}`,
-          label: c.label.toUpperCase(),
-        })),
-      ];
-      return {
-        ...item,
-        subItems: gallerySubItems,
-      };
-    }
-    return item;
-  });
+  const navItems = baseNavItems;
 
   useEffect(() => {
     function onResize() {

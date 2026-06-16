@@ -1,6 +1,7 @@
 import { absoluteUrl } from "@/lib/seo";
 import { escapeHtml, formatMoneyArs } from "@/lib/email/format";
-import type { CheckoutLineItem } from "@/lib/commerce-types";
+import type { CheckoutLineItem, OrderShipping } from "@/lib/commerce-types";
+import { formatShippingAddressBlock } from "@/lib/shipping";
 
 function layout(title: string, bodyHtml: string): string {
   return `<!DOCTYPE html>
@@ -99,7 +100,7 @@ export function welcomeCustomerEmail(nombre: string, email: string) {
   const html = layout(
     "Bienvenida a tu cuenta",
     `<p style="margin:0 0 16px;">${saludo}, gracias por registrarte en el sitio.</p>
-     <p style="margin:0 0 16px;">Desde tu cuenta podés ver el historial de tus compras de obras digitales y actualizar tus datos.</p>
+     <p style="margin:0 0 16px;">Desde tu cuenta podés ver el historial de tus compras de impresiones y guardar tu dirección de envío.</p>
      <p style="margin:0 0 20px;">
        <a href="${cuentaUrl}" style="color:#5c4d3d;">Ir a mi cuenta</a>
        ·
@@ -123,7 +124,18 @@ export type OrderEmailPayload = {
   total: number;
   currency_id: string;
   mercadoPagoPaymentId: string;
+  shipping?: OrderShipping | null;
 };
+
+function shippingBlockHtml(shipping?: OrderShipping | null): string {
+  if (!shipping?.address) return "";
+  const text = formatShippingAddressBlock(shipping.address);
+  const cost =
+    shipping.cost > 0
+      ? `<p style="margin:0 0 8px;"><strong style="color:#5c4d3d;">Envío (${escapeHtml(shipping.zonaLabel)}):</strong> ${formatMoneyArs(shipping.cost, "ARS")}</p>`
+      : `<p style="margin:0 0 8px;"><strong style="color:#5c4d3d;">Envío (${escapeHtml(shipping.zonaLabel)}):</strong> sin cargo</p>`;
+  return `${cost}<pre style="margin:0 0 16px;padding:12px;background:#f7f5f0;border:1px solid #e8e4dc;font-family:Georgia,serif;font-size:13px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(text)}</pre>`;
+}
 
 export function orderCustomerEmail(payload: OrderEmailPayload) {
   const saludo = payload.payerName?.trim() ? escapeHtml(payload.payerName.trim()) : "hola";
@@ -133,7 +145,8 @@ export function orderCustomerEmail(payload: OrderEmailPayload) {
   const html = layout(
     "Confirmación de compra",
     `<p style="margin:0 0 16px;">${saludo}, recibimos tu pago. Gracias por tu compra.</p>
-     <p style="margin:0 0 8px;">Las obras que adquiriste son <strong>digitales</strong>. No hace falta envío ni seguimiento: guardamos el registro de tu pedido y, si necesitás los archivos o tenés alguna consulta, escribime.</p>
+     <p style="margin:0 0 8px;">Preparamos tu <strong>impresión</strong> y la enviamos a la dirección indicada. Te avisaremos cuando esté en camino.</p>
+     ${shippingBlockHtml(payload.shipping)}
      <p style="margin:0 0 4px;font-size:13px;color:#8c8c8c;">Pedido #${escapeHtml(payload.orderId.slice(0, 8))}</p>
      ${itemsTableHtml(payload.items)}
      <p style="margin:8px 0 20px;font-size:16px;"><strong>Total: ${formatMoneyArs(payload.total, payload.currency_id)}</strong></p>
@@ -163,6 +176,7 @@ function orderAdminDetails(payload: OrderEmailPayload): string {
 
   return `<p style="margin:0 0 10px;"><strong style="color:#5c4d3d;">Cliente:</strong> ${escapeHtml(cliente)}</p>
      <p style="margin:0 0 10px;"><strong style="color:#5c4d3d;">Email:</strong> ${escapeHtml(payload.customerEmail || "—")}</p>
+     ${shippingBlockHtml(payload.shipping)}
      <p style="margin:0 0 10px;"><strong style="color:#5c4d3d;">Pago MP:</strong> ${escapeHtml(payload.mercadoPagoPaymentId)}</p>
      <p style="margin:0 0 4px;font-size:13px;color:#8c8c8c;">Pedido #${escapeHtml(payload.orderId)}</p>
      ${itemsTableHtml(payload.items)}
@@ -190,7 +204,8 @@ export function orderPendingCustomerEmail(payload: OrderEmailPayload) {
   const html = layout(
     "Pago en proceso",
     `<p style="margin:0 0 16px;">${saludo}, recibimos tu pedido pero el pago todavía está <strong>pendiente de confirmación</strong>.</p>
-     <p style="margin:0 0 8px;">Cuando Mercado Pago lo apruebe te llegará otro correo con la confirmación. Las obras son digitales: no hay envío ni seguimiento.</p>
+     <p style="margin:0 0 8px;">Cuando Mercado Pago lo apruebe te llegará otro correo. Tu compra incluye impresión física con envío.</p>
+     ${shippingBlockHtml(payload.shipping)}
      <p style="margin:0 0 4px;font-size:13px;color:#8c8c8c;">Pedido #${escapeHtml(payload.orderId.slice(0, 8))}</p>
      ${itemsTableHtml(payload.items)}
      <p style="margin:8px 0 20px;font-size:16px;"><strong>Total: ${formatMoneyArs(payload.total, payload.currency_id)}</strong></p>

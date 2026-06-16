@@ -3,29 +3,60 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { CheckoutButton } from "@/components/tienda/CheckoutButton";
+import { doc, onSnapshot } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { CartCheckoutPanel } from "@/components/tienda/CartCheckoutPanel";
+import { useAuth } from "@/components/AuthProvider";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { db } from "@/lib/firebase-client";
+import { defaultSiteContent } from "@/lib/site-content";
+import type { CustomerRecord } from "@/lib/commerce-types";
+import { normalizeShippingAddress } from "@/lib/shipping";
 import { useCartStore } from "@/stores/cart-store";
-import type { CheckoutLineItem } from "@/lib/commerce-types";
+import { SITE_PAGE_SHELL } from "@/lib/layout-constants";
 
 export default function CarritoPage() {
+  const { user } = useAuth();
+  const { content } = useSiteContent();
+  const envios = content?.tienda?.envios ?? defaultSiteContent.tienda.envios;
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const clear = useCartStore((s) => s.clear);
 
-  const total = items.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
-  const checkoutItems: CheckoutLineItem[] = items.map((i) => ({
-    id: i.id,
-    title: i.title,
-    quantity: i.quantity,
-    unit_price: i.unit_price,
-    currency_id: "ARS",
-    description: i.description,
-    picture_url: i.picture_url,
-  }));
+  const [profileNombre, setProfileNombre] = useState("");
+  const [profileTelefono, setProfileTelefono] = useState("");
+  const [savedAddress, setSavedAddress] = useState(
+    null as ReturnType<typeof normalizeShippingAddress>
+  );
+
+  useEffect(() => {
+    if (!user || !db) {
+      setProfileNombre("");
+      setProfileTelefono("");
+      setSavedAddress(null);
+      return;
+    }
+
+    const ref = doc(db, "customers", user.uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) {
+        setProfileNombre("");
+        setProfileTelefono("");
+        setSavedAddress(null);
+        return;
+      }
+      const data = snap.data() as CustomerRecord;
+      setProfileNombre(data.nombre ?? "");
+      setProfileTelefono(data.telefono ?? "");
+      setSavedAddress(data.envio ? normalizeShippingAddress(data.envio) : null);
+    });
+
+    return () => unsub();
+  }, [user]);
 
   return (
-    <div className="pb-24 pt-6 md:pt-24">
+    <div className={SITE_PAGE_SHELL}>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
@@ -33,6 +64,9 @@ export default function CarritoPage() {
             <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl">
               Carrito
             </h1>
+            <p className="mt-2 max-w-xl text-sm text-stone">
+              Impresiones físicas en edición limitada. Completá el envío antes de pagar.
+            </p>
           </div>
           <Link href="/tienda" className="text-sm text-stone underline underline-offset-4">
             Seguir comprando
@@ -51,7 +85,7 @@ export default function CarritoPage() {
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-12">
-            <ul className="space-y-4 lg:col-span-8">
+            <ul className="space-y-4 lg:col-span-7">
               {items.map((item) => (
                 <li
                   key={item.id}
@@ -77,7 +111,7 @@ export default function CarritoPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-xl font-light text-charcoal">{item.title}</p>
                       <p className="mt-1 text-sm text-stone">
-                        ${item.unit_price.toLocaleString("es-AR")} ARS
+                        ${item.unit_price.toLocaleString("es-AR")} ARS · impresión
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -112,26 +146,14 @@ export default function CarritoPage() {
               ))}
             </ul>
 
-            <aside className="space-y-4 rounded-xl border border-charcoal/10 bg-cream/80 p-5 lg:col-span-4 lg:sticky lg:top-24 lg:h-fit">
-              <h2 className="font-display text-2xl font-light text-charcoal">Resumen</h2>
-              <div className="flex items-center justify-between border-t border-charcoal/10 pt-4 text-sm">
-                <span className="text-stone">Productos</span>
-                <span>{items.length}</span>
-              </div>
-              <div className="flex items-center justify-between text-lg">
-                <span className="font-medium text-charcoal">Total</span>
-                <span className="font-medium">${total.toLocaleString("es-AR")} ARS</span>
-              </div>
-              <div className="pt-2">
-                <CheckoutButton
-                  items={checkoutItems}
-                  checkoutScope="cart"
-                  label="Pagar carrito"
-                  onSuccessRedirect={(url) => {
-                    window.location.href = url;
-                  }}
-                />
-              </div>
+            <aside className="space-y-4 rounded-xl border border-charcoal/10 bg-cream/80 p-5 lg:col-span-5 lg:sticky lg:top-24 lg:h-fit">
+              <CartCheckoutPanel
+                cartItems={items}
+                envios={envios}
+                savedAddress={savedAddress}
+                profileNombre={profileNombre}
+                profileTelefono={profileTelefono}
+              />
               <button
                 type="button"
                 onClick={clear}

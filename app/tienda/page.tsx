@@ -7,6 +7,8 @@ import { TiendaGrid } from "@/components/tienda/TiendaGrid";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { defaultSiteContent } from "@/lib/site-content";
 import { useCartStore } from "@/stores/cart-store";
+import { cn } from "@/lib/utils";
+import { SITE_PAGE_SHELL } from "@/lib/layout-constants";
 
 export default function TiendaPage() {
   const { content } = useSiteContent();
@@ -15,39 +17,43 @@ export default function TiendaPage() {
   const cartCount = useCartStore((s) => s.items.reduce((sum, it) => sum + it.quantity, 0));
 
   return (
-    <div className="pt-6 md:pt-24 pb-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className={SITE_PAGE_SHELL}>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 pb-10 md:mb-8 md:pb-12"
+          className="mb-8 pb-6 md:mb-10 md:pb-8"
         >
-          <p className="section-kicker mb-3">Edición limitada</p>
-          <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl lg:text-6xl">
-            {tienda.titulo}
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-charcoal/80">
-            {tienda.descripcion}
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="section-kicker mb-3">Edición limitada</p>
+              <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl lg:text-6xl">
+                {tienda.titulo}
+              </h1>
+              {tienda.descripcion.trim() ? (
+                <p className="mt-4 max-w-xl text-base leading-relaxed text-charcoal/75 md:text-[1.05rem]">
+                  {tienda.descripcion}
+                </p>
+              ) : null}
+            </div>
             <Link
               href="/tienda/carrito"
-              className="inline-flex items-center rounded-full border border-charcoal/25 px-4 py-2 text-sm text-charcoal transition-colors hover:bg-charcoal/[0.06]"
+              className={cn(
+                "shrink-0 self-start text-sm text-charcoal/80 transition-colors hover:text-accent sm:self-end",
+                "border-b border-charcoal/20 pb-0.5 sm:text-xs sm:uppercase sm:tracking-[0.18em]"
+              )}
             >
-              Ver carrito ({cartCount})
+              Carrito ({cartCount})
             </Link>
           </div>
-          <SectionDivider variant="ornament" className="mt-10" />
-          <SectionDivider variant="double" className="mt-4 opacity-90" />
+          <SectionDivider
+            variant="line"
+            className="mt-6 md:mt-8 [&>div:last-child]:!w-12 [&>div:last-child]:max-w-[3rem]"
+          />
         </motion.header>
 
-        <SectionDivider variant="wide" className="mb-12 md:mb-14" />
-
         {visibleItems.length === 0 ? (
-          <div
-            className="mx-auto max-w-lg rounded-2xl border border-charcoal/10 bg-charcoal/[0.02] py-20"
-            aria-hidden
-          />
+          <p className="text-center text-sm text-stone">Próximamente.</p>
         ) : (
           <TiendaGrid items={visibleItems} />
         )}

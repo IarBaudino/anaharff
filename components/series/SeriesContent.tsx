@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { SITE_PAGE_SHELL_COMPACT } from "@/lib/layout-constants";
 import { PhotoMasonryGallery } from "@/components/ui/PhotoMasonryGallery";
 
 interface SeriesContentProps {
@@ -20,7 +21,7 @@ export function SeriesContent({
   const urls = imageUrls.filter(Boolean);
 
   return (
-    <div className="pb-20 pt-6 md:pt-24">
+    <div className={SITE_PAGE_SHELL_COMPACT}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link
           href={backHref}

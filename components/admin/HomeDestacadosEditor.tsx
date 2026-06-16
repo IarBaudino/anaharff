@@ -10,7 +10,7 @@ import {
   type HomeDestacado,
   type SiteContent,
 } from "@/lib/site-content";
-import { HelpText, inputClass } from "@/components/admin/admin-fields";
+import { AdminField, AdminInput, HelpText } from "@/components/admin/admin-fields";
 
 function siteContentStub(_next: SiteContent): void {
   void _next;
@@ -97,32 +97,34 @@ export function HomeDestacadosEditor({ content, setContent }: Props) {
         </HelpText>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor="destacados-cantidad" className="text-sm font-medium text-charcoal">
-          Cantidad visible en el inicio
-        </label>
-        <select
-          id="destacados-cantidad"
-          className={cn(inputClass(), "max-w-[8rem]")}
-          value={content.home.destacadosCantidad ?? 3}
-          onChange={(e) =>
-            setContent({
-              ...content,
-              home: {
-                ...content.home,
-                destacadosCantidad: Number(e.target.value) as 3 | 4 | 6,
-              },
-            })
-          }
-        >
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-          <option value={6}>6</option>
-        </select>
-        <span className="text-xs text-stone">
-          Seleccionadas: {content.home.destacados.length} / {limit}
-        </span>
-      </div>
+      <AdminField
+        label="Cantidad visible en el inicio"
+        hint="Cuántas imágenes de la grilla se muestran en el home. Podés elegir más y reordenarlas abajo."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            id="destacados-cantidad"
+            className="mt-1 max-w-[8rem] border border-charcoal/20 bg-cream px-4 py-3 text-charcoal focus:border-charcoal focus:outline-none"
+            value={content.home.destacadosCantidad ?? 3}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                home: {
+                  ...content.home,
+                  destacadosCantidad: Number(e.target.value) as 3 | 4 | 6,
+                },
+              })
+            }
+          >
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+            <option value={6}>6</option>
+          </select>
+          <span className="text-xs text-stone">
+            Seleccionadas: {content.home.destacados.length} / {limit}
+          </span>
+        </div>
+      </AdminField>
 
       {content.home.destacados.length === 0 ? (
         <p className="text-sm text-stone">
@@ -139,22 +141,25 @@ export function HomeDestacadosEditor({ content, setContent }: Props) {
                 <Image src={item.imagenUrl} alt="" fill className="object-cover" sizes="112px" />
               </div>
               <div className="space-y-2">
-                <input
-                  className={inputClass()}
+                <AdminInput
+                  label="Título de la tarjeta"
+                  hint="Texto principal bajo la imagen en el inicio."
+                  example="Retrato en estudio"
                   value={item.titulo}
-                  placeholder="Título"
                   onChange={(e) => patchDestacado(item.id, { titulo: e.target.value })}
                 />
-                <input
-                  className={inputClass()}
+                <AdminInput
+                  label="Subtítulo / categoría"
+                  hint="Línea pequeña debajo del título (origen de la foto en galería)."
+                  example="Retratos"
                   value={item.etiqueta}
-                  placeholder="Subtítulo (ej. Retratos)"
                   onChange={(e) => patchDestacado(item.id, { etiqueta: e.target.value })}
                 />
-                <input
-                  className={inputClass()}
+                <AdminInput
+                  label="Enlace al hacer clic"
+                  hint="Ruta interna del sitio. Debe empezar con /."
+                  example="/portfolio/retratos"
                   value={item.href}
-                  placeholder="Enlace (ej. /portfolio/retratos)"
                   onChange={(e) => patchDestacado(item.id, { href: e.target.value })}
                 />
               </div>

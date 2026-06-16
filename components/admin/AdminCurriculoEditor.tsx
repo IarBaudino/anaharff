@@ -11,7 +11,7 @@ import {
 import { CurriculoBulkImport } from "@/components/admin/CurriculoBulkImport";
 import { CurriculoFullDocumentImport } from "@/components/admin/CurriculoFullDocumentImport";
 import { formatCurriculoFullLine } from "@/lib/curriculo-display";
-import { FieldLabel, HelpText, SectionHeading, inputClass } from "@/components/admin/admin-fields";
+import { AdminInput, HelpText, SectionHeading } from "@/components/admin/admin-fields";
 import { cn } from "@/lib/utils";
 
 function sobreMiChangeStub(_next: SobreMiContent): void {
@@ -193,16 +193,14 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
 
       <CurriculoFullDocumentImport onImport={importFullDocument} />
 
-      <div>
-        <FieldLabel htmlFor="cv-titulo">Título de la sección en el sitio</FieldLabel>
-        <input
-          id="cv-titulo"
-          className={inputClass()}
-          value={cv.titulo}
-          onChange={(e) => patchCurriculo(sobreMi, onChange, { titulo: e.target.value })}
-          placeholder="Currículo"
-        />
-      </div>
+      <AdminInput
+        id="cv-titulo"
+        label="Título de la sección en el sitio"
+        hint="Encabezado de la página /sobre-mi/curriculo."
+        example="Currículo"
+        value={cv.titulo}
+        onChange={(e) => patchCurriculo(sobreMi, onChange, { titulo: e.target.value })}
+      />
 
       <div className="space-y-3">
         {cv.secciones.map((sec, secIdx) => {
@@ -253,18 +251,16 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
 
               {secExpanded ? (
                 <div className="space-y-4 border-t border-charcoal/10 px-4 py-4">
-                  <div>
-                    <FieldLabel htmlFor={`cv-sec-titulo-${sec.id}`}>Título del bloque</FieldLabel>
-                    <input
-                      id={`cv-sec-titulo-${sec.id}`}
-                      className={inputClass()}
-                      value={sec.titulo}
-                      onChange={(e) =>
-                        patchSeccion(sobreMi, onChange, sec.id, { titulo: e.target.value })
-                      }
-                      placeholder="EXPOSICIONES"
-                    />
-                  </div>
+                  <AdminInput
+                    id={`cv-sec-titulo-${sec.id}`}
+                    label="Título del bloque"
+                    hint="Nombre de la sección en mayúsculas o como prefieras (exposiciones, premios…)."
+                    example="EXPOSICIONES"
+                    value={sec.titulo}
+                    onChange={(e) =>
+                      patchSeccion(sobreMi, onChange, sec.id, { titulo: e.target.value })
+                    }
+                  />
 
                   <CurriculoBulkImport onImport={(entradas) => importEntradas(sec.id, entradas)} />
 
@@ -336,68 +332,56 @@ export function AdminCurriculoEditor({ sobreMi, onChange }: Props) {
                           {entryExpanded ? (
                             <div className="space-y-3 border-t border-charcoal/10 px-3 py-3">
                               <div className="grid gap-3 md:grid-cols-[6rem_1fr]">
-                                <div>
-                                  <FieldLabel htmlFor={`cv-anio-${entry.id}`}>Año</FieldLabel>
-                                  <input
-                                    id={`cv-anio-${entry.id}`}
-                                    className={inputClass()}
-                                    value={entry.anio}
-                                    onChange={(e) =>
-                                      patchEntrada(sobreMi, onChange, sec.id, entry.id, {
-                                        anio: e.target.value,
-                                      })
-                                    }
-                                    placeholder="2024"
-                                  />
-                                </div>
-                                <div>
-                                  <FieldLabel htmlFor={`cv-linea-${entry.id}`}>
-                                    Texto en el sitio (después del año)
-                                  </FieldLabel>
-                                  <input
-                                    id={`cv-linea-${entry.id}`}
-                                    className={inputClass()}
-                                    value={entry.linea ?? ""}
-                                    onChange={(e) =>
-                                      patchEntrada(sobreMi, onChange, sec.id, entry.id, {
-                                        linea: e.target.value,
-                                      })
-                                    }
-                                    placeholder="Cuerpo - Centro Cultural Laura Bonaparte (Buenos Aires - AR)"
-                                  />
-                                </div>
+                                <AdminInput
+                                  id={`cv-anio-${entry.id}`}
+                                  label="Año"
+                                  hint="Cuatro dígitos o rango corto."
+                                  example="2024"
+                                  value={entry.anio}
+                                  onChange={(e) =>
+                                    patchEntrada(sobreMi, onChange, sec.id, entry.id, {
+                                      anio: e.target.value,
+                                    })
+                                  }
+                                />
+                                <AdminInput
+                                  id={`cv-linea-${entry.id}`}
+                                  label="Texto en el sitio (después del año)"
+                                  hint="Título, lugar y ciudad tal como quieras que se lea en la línea."
+                                  example="Cuerpo - Centro Cultural Laura Bonaparte (Buenos Aires - AR)"
+                                  value={entry.linea ?? ""}
+                                  onChange={(e) =>
+                                    patchEntrada(sobreMi, onChange, sec.id, entry.id, {
+                                      linea: e.target.value,
+                                    })
+                                  }
+                                />
                               </div>
                               <div className="grid gap-3 md:grid-cols-2">
-                                <div>
-                                  <FieldLabel htmlFor={`cv-nombre-${entry.id}`}>
-                                    Texto del enlace (opcional)
-                                  </FieldLabel>
-                                  <input
-                                    id={`cv-nombre-${entry.id}`}
-                                    className={inputClass()}
-                                    value={entry.nombre}
-                                    onChange={(e) =>
-                                      patchEntrada(sobreMi, onChange, sec.id, entry.id, {
-                                        nombre: e.target.value,
-                                      })
-                                    }
-                                    placeholder="Solo si querés enlazar una parte del texto"
-                                  />
-                                </div>
-                                <div>
-                                  <FieldLabel htmlFor={`cv-link-${entry.id}`}>URL del enlace</FieldLabel>
-                                  <input
-                                    id={`cv-link-${entry.id}`}
-                                    className={inputClass()}
-                                    value={entry.enlace ?? ""}
-                                    onChange={(e) =>
-                                      patchEntrada(sobreMi, onChange, sec.id, entry.id, {
-                                        enlace: e.target.value,
-                                      })
-                                    }
-                                    placeholder="https://… o /galeria"
-                                  />
-                                </div>
+                                <AdminInput
+                                  id={`cv-nombre-${entry.id}`}
+                                  label="Texto del enlace (opcional)"
+                                  hint="Parte del texto que será clickeable. Dejá vacío si no hay enlace."
+                                  example="Centro Cultural Laura Bonaparte"
+                                  value={entry.nombre}
+                                  onChange={(e) =>
+                                    patchEntrada(sobreMi, onChange, sec.id, entry.id, {
+                                      nombre: e.target.value,
+                                    })
+                                  }
+                                />
+                                <AdminInput
+                                  id={`cv-link-${entry.id}`}
+                                  label="URL del enlace"
+                                  hint="Dirección web completa o ruta interna del sitio."
+                                  example="https://ejemplo.org o /portfolio"
+                                  value={entry.enlace ?? ""}
+                                  onChange={(e) =>
+                                    patchEntrada(sobreMi, onChange, sec.id, entry.id, {
+                                      enlace: e.target.value,
+                                    })
+                                  }
+                                />
                               </div>
                             </div>
                           ) : null}

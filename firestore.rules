@@ -45,7 +45,7 @@ service cloud.firestore {
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.email == resource.data.email
         && request.resource.data.ordersCount == resource.data.ordersCount
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono', 'envio']);
     }
 
     // Contenido público del sitio (CMS)

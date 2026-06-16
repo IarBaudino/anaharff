@@ -30,7 +30,7 @@ export function SobreMiCurriculoContent({ curriculo }: Props) {
     <div className="space-y-14">
       {secciones.map((sec) => (
         <div key={sec.id}>
-          <h2 className="mb-7 font-display text-xl font-light tracking-wide text-charcoal md:text-2xl">
+          <h2 className="mb-7 font-display text-2xl font-light tracking-tight text-charcoal md:text-3xl">
             {sec.titulo}
           </h2>
           <ul className="divide-y divide-charcoal/[0.07]">

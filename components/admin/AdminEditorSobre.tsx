@@ -12,9 +12,9 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { newIntroduccionLangId, type SobreMiIdioma } from "@/lib/site-content";
 import { AdminCurriculoEditor } from "@/components/admin/AdminCurriculoEditor";
 import {
-  FieldLabel,
+  AdminInput,
+  AdminTextarea,
   HelpText,
-  inputClass,
   PanelTitle,
   SectionHeading,
 } from "@/components/admin/admin-fields";
@@ -123,35 +123,32 @@ export function AdminEditorSobre() {
 
       <section className="space-y-4">
         <SectionHeading>Cabecera de la página</SectionHeading>
-        <div>
-          <FieldLabel htmlFor="sm-kicker">Etiqueta chica (columna izquierda)</FieldLabel>
-          <HelpText>Rubro o palabra suelta arriba del título grande.</HelpText>
-          <input
-            id="sm-kicker"
-            className={inputClass()}
-            value={sm.kickerColumna}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                sobreMi: { ...sm, kickerColumna: e.target.value },
-              })
-            }
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="sm-titulo">Título grande de la página</FieldLabel>
-          <input
-            id="sm-titulo"
-            className={inputClass()}
-            value={sm.tituloPagina}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                sobreMi: { ...sm, tituloPagina: e.target.value },
-              })
-            }
-          />
-        </div>
+        <AdminInput
+          id="sm-kicker"
+          label="Etiqueta chica (columna izquierda)"
+          hint="Rubro o palabra suelta arriba del título grande en /sobre-mi."
+          example="Fotografía"
+          value={sm.kickerColumna}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              sobreMi: { ...sm, kickerColumna: e.target.value },
+            })
+          }
+        />
+        <AdminInput
+          id="sm-titulo"
+          label="Título grande de la página"
+          hint="Encabezado principal de la biografía."
+          example="Sobre mí"
+          value={sm.tituloPagina}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              sobreMi: { ...sm, tituloPagina: e.target.value },
+            })
+          }
+        />
       </section>
 
       <section className="space-y-4">
@@ -179,43 +176,47 @@ export function AdminEditorSobre() {
                   </button>
                 </div>
               )}
-              <input
-                className={inputClass()}
+              <AdminInput
+                label="Etiqueta del bloque (solo panel)"
+                hint="Nombre para encontrar este idioma en el editor. No se muestra en el sitio."
+                example="Español"
                 value={bloque.etiqueta}
                 onChange={(e) => patchIdioma(bloque.id, { etiqueta: e.target.value })}
-                placeholder="Español, Inglés, …"
-                aria-label="Nombre del bloque"
               />
-              <textarea
-                className={`${inputClass()} mt-3`}
+              <AdminTextarea
+                label="Biografía — primer párrafo"
+                hint="Texto principal del bloque en este idioma."
+                example="Soy fotógrafa basada en Buenos Aires…"
                 rows={5}
+                className="mt-3"
                 value={bloque.bio1}
                 onChange={(e) => patchIdioma(bloque.id, { bio1: e.target.value })}
-                placeholder="Primer párrafo de la biografía"
-                aria-label="Biografía párrafo 1"
               />
-              <textarea
-                className={`${inputClass()} mt-3`}
+              <AdminTextarea
+                label="Biografía — segundo párrafo"
+                hint="Continuación opcional. Podés dejarlo vacío."
+                example="Mi trabajo explora la intimidad y la luz natural."
                 rows={5}
+                className="mt-3"
                 value={bloque.bio2}
                 onChange={(e) => patchIdioma(bloque.id, { bio2: e.target.value })}
-                placeholder="Segundo párrafo de la biografía"
-                aria-label="Biografía párrafo 2"
               />
-              <input
-                className={`${inputClass()} mt-3`}
+              <AdminInput
+                label="Título del bloque «sesiones»"
+                hint="Encabezado de la sección sobre sesiones de fotos en este idioma."
+                example="Sesión de fotos"
+                className="mt-3"
                 value={bloque.tituloSesion}
                 onChange={(e) => patchIdioma(bloque.id, { tituloSesion: e.target.value })}
-                placeholder="Título del bloque sesiones (ej. Sesión de fotos)"
-                aria-label="Título sesión"
               />
-              <textarea
-                className={`${inputClass()} mt-3`}
+              <AdminTextarea
+                label="Texto sobre sesiones"
+                hint="Información de contacto, tipos de sesión, duración, etc."
+                example="Ofrezco sesiones en estudio y exteriores. Escribime para coordinar."
                 rows={4}
+                className="mt-3"
                 value={bloque.sesionTexto}
                 onChange={(e) => patchIdioma(bloque.id, { sesionTexto: e.target.value })}
-                placeholder="Texto sobre sesiones"
-                aria-label="Texto sesión"
               />
             </div>
           ))}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { motion } from "framer-motion";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
@@ -16,7 +16,17 @@ function inputClass() {
 }
 
 export default function IngresarPage() {
+  return (
+    <Suspense fallback={<div className="py-24 text-center text-stone">Cargando…</div>}>
+      <IngresarForm />
+    </Suspense>
+  );
+}
+
+function IngresarForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") || "/cuenta";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +48,7 @@ export default function IngresarPage() {
       } catch {
         /* el panel intentará crear el perfil al cargar */
       }
-      router.replace("/cuenta");
+      router.replace(nextPath.startsWith("/") ? nextPath : "/cuenta");
       router.refresh();
     } catch {
       setError("Email o contraseña incorrectos.");
@@ -48,7 +58,7 @@ export default function IngresarPage() {
   }
 
   return (
-    <div className="pt-6 md:pt-24 pb-20 min-h-[70vh] flex items-center justify-center px-4">
+    <div className="pb-20 min-h-[70vh] flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -96,7 +106,7 @@ export default function IngresarPage() {
         </form>
         <p className="mt-6 text-sm text-stone">
           ¿No tenés cuenta?{" "}
-          <Link href="/cuenta/registro" className="text-accent underline">
+          <Link href={`/cuenta/registro?next=${encodeURIComponent(nextPath)}`} className="text-accent underline">
             Registrate
           </Link>
         </p>

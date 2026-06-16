@@ -12,9 +12,10 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { newIntroduccionLangId, type BlogEntrada } from "@/lib/site-content";
 import { StorageUploadField } from "@/components/admin/StorageUploadField";
 import {
-  FieldLabel,
+  AdminField,
+  AdminInput,
+  AdminTextarea,
   HelpText,
-  inputClass,
   PanelTitle,
   SectionHeading,
 } from "@/components/admin/admin-fields";
@@ -119,53 +120,46 @@ export function AdminEditorBlog() {
 
       <section className="space-y-4">
         <SectionHeading>Cabecera de la página /blog</SectionHeading>
-        <div>
-          <FieldLabel htmlFor="blog-kicker">Etiqueta pequeña</FieldLabel>
-          <input
-            id="blog-kicker"
-            className={inputClass()}
-            value={blog.kicker}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                blog: { ...blog, kicker: e.target.value },
-              })
-            }
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="blog-titulo-pagina">Título grande de la página</FieldLabel>
-          <input
-            id="blog-titulo-pagina"
-            className={inputClass()}
-            value={blog.tituloPagina}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                blog: { ...blog, tituloPagina: e.target.value },
-              })
-            }
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="blog-intro">Texto introductorio (opcional)</FieldLabel>
-          <HelpText>
-            Aparece debajo del título y <strong>arriba</strong> de la lista de entradas. Podés
-            dejarlo en blanco si solo querés mostrar posts.
-          </HelpText>
-          <textarea
-            id="blog-intro"
-            className={inputClass()}
-            rows={5}
-            value={blog.introduccion}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                blog: { ...blog, introduccion: e.target.value },
-              })
-            }
-          />
-        </div>
+        <AdminInput
+          id="blog-kicker"
+          label="Etiqueta pequeña"
+          hint="Palabra o frase corta arriba del título grande en /blog."
+          example="Notas"
+          value={blog.kicker}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              blog: { ...blog, kicker: e.target.value },
+            })
+          }
+        />
+        <AdminInput
+          id="blog-titulo-pagina"
+          label="Título grande de la página"
+          hint="Encabezado principal que ve el visitante."
+          example="Blog"
+          value={blog.tituloPagina}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              blog: { ...blog, tituloPagina: e.target.value },
+            })
+          }
+        />
+        <AdminTextarea
+          id="blog-intro"
+          label="Texto introductorio (opcional)"
+          hint="Aparece debajo del título y arriba de la lista de entradas. Podés dejarlo en blanco."
+          example="Reflexiones sobre el proceso creativo y novedades del estudio."
+          rows={5}
+          value={blog.introduccion}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              blog: { ...blog, introduccion: e.target.value },
+            })
+          }
+        />
       </section>
 
       <section className="space-y-5">
@@ -192,23 +186,24 @@ export function AdminEditorBlog() {
                 Eliminar entrada
               </button>
             </div>
-            <input
-              className={inputClass()}
+            <AdminInput
+              label="Título de la entrada"
+              hint="Encabezado del artículo en la lista y en su página."
+              example="Nueva serie en blanco y negro"
               value={entrada.titulo}
               onChange={(e) => patchEntrada(entrada.id, { titulo: e.target.value })}
-              placeholder="Título de la entrada"
             />
-            <input
-              className={inputClass()}
+            <AdminInput
+              label="Fecha (opcional)"
+              hint="Texto libre que se muestra junto al título. No tiene que ser una fecha real."
+              example="2025-04-06"
               value={entrada.fecha}
               onChange={(e) => patchEntrada(entrada.id, { fecha: e.target.value })}
-              placeholder="Fecha opcional (ej. 2025-04-06)"
             />
-            <div>
-              <FieldLabel>Foto de la entrada (opcional)</FieldLabel>
-              <HelpText className="!mt-0.5">
-                Se muestra arriba del título en el sitio. Podés subirla desde acá o dejarla vacía.
-              </HelpText>
+            <AdminField
+              label="Foto de la entrada (opcional)"
+              hint="Se muestra arriba del título en el sitio. Podés subirla desde acá o dejarla vacía."
+            >
               <StorageUploadField
                 folder="blog"
                 previewUrl={entrada.imagenUrl}
@@ -216,13 +211,14 @@ export function AdminEditorBlog() {
                 disabled={saving}
                 autoDeletePrevious
               />
-            </div>
-            <textarea
-              className={inputClass()}
+            </AdminField>
+            <AdminTextarea
+              label="Cuerpo del texto"
+              hint="Párrafos del artículo. Podés usar saltos de línea; se respetan en el sitio."
+              example="Este proyecto nació durante un viaje por la costa…"
               rows={6}
               value={entrada.cuerpo}
               onChange={(e) => patchEntrada(entrada.id, { cuerpo: e.target.value })}
-              placeholder="Cuerpo del texto"
             />
           </div>
         ))}

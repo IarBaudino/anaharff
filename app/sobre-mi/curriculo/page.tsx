@@ -14,6 +14,7 @@ export default function CurriculoPage() {
       kicker={sobreMi.kickerColumna}
       title={sobreMi.curriculo.titulo}
       sectionId="curriculo"
+      layout="stacked"
     >
       <SobreMiCurriculoContent curriculo={sobreMi.curriculo} />
     </SobreMiPageShell>

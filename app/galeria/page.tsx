@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { SITE_PAGE_SHELL } from "@/lib/layout-constants";
 import {
   defaultSiteContent,
   resolveCategoryCover,
@@ -19,7 +20,7 @@ type GalleryAlbum = {
   coverUrl: string;
 };
 
-const galleryCategoryOrder = ["desnudos", "retratos", "artistico", "familia", "naturaleza", "experimental"];
+const galleryCategoryOrder = ["retratos", "desnudos", "familia", "eventos", "naturaleza"];
 
 function AlbumCover({ label, coverUrl }: { label: string; coverUrl: string }) {
   if (!coverUrl) {
@@ -72,18 +73,18 @@ export default function GaleriaPage() {
       id: cat.id,
       label: cat.label,
       href: `/portfolio/${cat.slug}`,
-      note: "Ver galería",
+      note: "Ver portfolio",
       coverUrl: resolveCategoryCover(cat),
     })),
   ];
 
   return (
-    <div className="pb-24 pt-6 md:pt-24">
+    <div className={SITE_PAGE_SHELL}>
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:max-w-7xl lg:px-8">
         <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-10 pb-8 md:mb-12 md:pb-10">
           <p className="section-kicker mb-3">Colecciones</p>
           <h1 className="font-display text-4xl font-light tracking-tight text-charcoal md:text-5xl lg:text-6xl">
-            Galería
+            Portfolio
           </h1>
           <SectionDivider variant="line" className="mt-10" />
           <SectionDivider variant="double" className="mt-3 opacity-80" />

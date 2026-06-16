@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { Eye } from "lucide-react";
-import { CheckoutButton } from "./CheckoutButton";
 import { AddToCartButton } from "./AddToCartButton";
 import { ProductPreviewModal } from "./ProductPreviewModal";
-import { Card, CardContent } from "@/components/ui/Card";
 import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
+import { cn } from "@/lib/utils";
+import { siteButtonGhost, siteButtonSolid } from "@/lib/site-buttons";
 
 interface ImageCardProps {
   item: StoreItem;
@@ -19,59 +20,79 @@ export function ImageCard({ item }: ImageCardProps) {
   const main = urls[0];
 
   return (
-    <Card
-      as="article"
-      className="relative max-w-[16.5rem] sm:max-w-[17rem]"
-    >
-      <div className="overflow-hidden">
-        <div className="relative aspect-[3/4] overflow-hidden bg-transparent">
-          {main ? (
-            <Image
-              src={main}
-              fill
-              alt={item.titulo}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-contain transition-opacity duration-300 group-hover:opacity-95"
-            />
-          ) : (
-            <div
-              className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.07] via-charcoal/[0.03] to-transparent"
-              aria-hidden
-            />
-          )}
+    <article className="group block w-full">
+      <button
+        type="button"
+        disabled={urls.length === 0}
+        onClick={() => setPreviewOpen(true)}
+        className={cn(
+          "relative block w-full overflow-hidden bg-charcoal/[0.05] text-left",
+          "aspect-[4/5] disabled:cursor-default"
+        )}
+        aria-label={`Vista previa de ${item.titulo}`}
+      >
+        {main ? (
+          <Image
+            src={main}
+            fill
+            alt={item.titulo}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.07] via-charcoal/[0.03] to-transparent"
+            aria-hidden
+          />
+        )}
+        {urls.length > 0 ? (
+          <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/25 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        ) : null}
+        {urls.length > 0 ? (
+          <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-cream/90 px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.16em] text-charcoal opacity-0 shadow-sm transition-opacity duration-300 group-hover:opacity-100">
+            <Eye className="size-3.5" strokeWidth={1.75} aria-hidden />
+            Vista previa
+          </span>
+        ) : null}
+      </button>
+
+      <div className="border-b border-charcoal/12 pb-5 pt-3">
+        <button
+          type="button"
+          onClick={() => setPreviewOpen(true)}
+          className="w-full text-left"
+          disabled={urls.length === 0}
+        >
+          <h2 className="font-display text-xl font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-2xl">
+            {item.titulo}
+          </h2>
+          <p className="mt-1 text-sm font-medium tabular-nums text-charcoal">
+            ${item.precio.toLocaleString("es-AR")} ARS
+          </p>
+        </button>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <AddToCartButton item={item} className={cn(siteButtonGhost, "w-full sm:w-auto")} />
+          <Link
+            href="/tienda/carrito"
+            className={cn(
+              siteButtonSolid,
+              "inline-flex w-full items-center justify-center sm:w-auto"
+            )}
+          >
+            Comprar
+          </Link>
         </div>
       </div>
-      <CardContent>
-        <h2 className="mb-1.5 font-display text-xl font-semibold tracking-tight text-charcoal">
-          {item.titulo}
-        </h2>
-        {item.descripcion ? (
-          <p className="mb-4 text-sm text-stone">{item.descripcion}</p>
-        ) : null}
-        <p className="mb-4 text-sm font-medium text-charcoal">
-          ${item.precio.toLocaleString("es-AR")} ARS
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            disabled={urls.length === 0}
-            onClick={() => setPreviewOpen(true)}
-            className="inline-flex items-center rounded-full border border-charcoal/20 bg-cream px-4 py-2.5 text-sm font-medium text-charcoal shadow-sm transition-colors hover:border-charcoal/40 hover:bg-charcoal/[0.06] disabled:cursor-not-allowed disabled:opacity-45"
-          >
-            Vista previa
-            <Eye className="ms-1.5 h-4 w-4" strokeWidth={2} />
-          </button>
-          <AddToCartButton item={item} />
-          <CheckoutButton item={item} />
-        </div>
-      </CardContent>
 
       <ProductPreviewModal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         titulo={item.titulo}
+        descripcion={item.descripcion}
+        precio={item.precio}
         urls={urls}
       />
-    </Card>
+    </article>
   );
 }

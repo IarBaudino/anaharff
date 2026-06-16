@@ -3,35 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { CSSProperties } from "react";
-import { HomeHeroTitle } from "@/components/home/HomeHeroTitle";
+import { HomeHeroGallery } from "@/components/home/HomeHeroGallery";
 import { HomeTestimoniosSection } from "@/components/home/HomeTestimoniosSection";
-import { SectionDivider } from "@/components/SectionDivider";
 import { cn } from "@/lib/utils";
 import { siteButtonOutline, siteButtonSolid } from "@/lib/site-buttons";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import {
   defaultSiteContent,
-  productGalleryUrls,
+  resolveHomeHeroImages,
   sanitizePublicImageUrl,
 } from "@/lib/site-content";
-
-function heroSrc(
-  heroUrl: string | undefined,
-  firstStoreUrl: string | undefined
-): string {
-  const h = sanitizePublicImageUrl(heroUrl);
-  if (h) return h;
-  return sanitizePublicImageUrl(firstStoreUrl);
-}
 
 export default function HomePage() {
   const { content } = useSiteContent();
   const home = content?.home ?? defaultSiteContent.home;
-  const tienda = content?.tienda ?? defaultSiteContent.tienda;
-  const firstStoreImage =
-    tienda.items[0] != null ? productGalleryUrls(tienda.items[0])[0] : undefined;
-  const heroUrl = heroSrc(home.heroImagenUrl, firstStoreImage);
+  const heroImages = resolveHomeHeroImages(home);
 
   const limit = home.destacadosCantidad ?? 3;
   const destacados = home.destacados.slice(0, limit).map((item) => ({
@@ -44,36 +30,7 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Primer pantallazo: solo imagen de impacto (sin scroll dentro del bloque) */}
-      <section
-        aria-label="Imagen principal"
-        className="relative -mt-14 h-[66.67vw] min-h-[220px] max-h-[72dvh] w-full bg-[var(--color-cream)] lg:mt-0 lg:h-dvh lg:min-h-dvh lg:max-h-none"
-      >
-        {heroUrl ? (
-          <Image
-            src={heroUrl}
-            alt={`Imagen principal — ${home.titulo}`}
-            fill
-            priority
-            sizes="100vw"
-            className="object-contain [object-position:var(--hero-mobile-pos)] lg:object-cover lg:[object-position:var(--hero-desktop-pos)]"
-            style={
-              {
-                "--hero-mobile-pos": `${home.heroFocoXMobile}% top`,
-                "--hero-desktop-pos": `${home.heroFocoX}% ${home.heroFocoY}%`,
-              } as CSSProperties
-            }
-          />
-        ) : (
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-charcoal/[0.06] via-transparent to-charcoal/[0.04]"
-            aria-hidden
-          />
-        )}
-        <div className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-charcoal/55 lg:bottom-8">
-          <span className="block h-6 w-px bg-gradient-to-b from-charcoal/35 to-transparent" aria-hidden />
-        </div>
-      </section>
+      <HomeHeroGallery images={heroImages} />
 
       <HomeTestimoniosSection
         kicker={home.testimoniosKicker}
@@ -81,18 +38,7 @@ export default function HomePage() {
         items={home.testimonios}
       />
 
-      <div className="bg-cream pt-6 md:pt-12">
-        {/* Título del sitio + Instagram / contacto */}
-        <HomeHeroTitle titulo={home.titulo} />
-
-        {/* Doble línea decorativa */}
-        <div className="bg-cream">
-          <div className="mx-auto max-w-[1600px] px-4 pb-2 pt-1 sm:px-6 lg:px-10">
-            <SectionDivider variant="double" className="opacity-90" />
-          </div>
-        </div>
-
-        {/* Manifiesto (la imagen de impacto ya se vio arriba) */}
+      <div className="bg-cream">
         <section className="relative border-b border-charcoal/[0.12]">
           <div className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 sm:py-14 lg:px-10 lg:py-16">
             <motion.div
@@ -102,8 +48,10 @@ export default function HomePage() {
               transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
               className="mx-auto max-w-3xl"
             >
-              <p className="section-kicker mb-8">{home.heroKicker}</p>
-              <h2 className="sr-only">Manifiesto</h2>
+              {home.heroKicker.trim() ? (
+                <p className="section-kicker mb-8 text-base md:text-lg">{home.heroKicker}</p>
+              ) : null}
+              <h1 className="sr-only">{home.titulo}</h1>
               {home.introduccionIdiomas.map((bloque, i) => (
                 <p
                   key={bloque.id}
@@ -120,7 +68,7 @@ export default function HomePage() {
               <div className="rule-fade my-10" aria-hidden />
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <Link href="/galeria" className={siteButtonOutline}>
-                  Ver galería
+                  Ver portfolio
                 </Link>
                 <Link href="/tienda" className={siteButtonSolid}>
                   Tienda
@@ -130,100 +78,93 @@ export default function HomePage() {
           </div>
         </section>
 
-      {/* Destacados — rejilla asimétrica */}
-      {destacados.length > 0 ? (
-      <section className="border-b border-charcoal/[0.12] bg-cream">
-        <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pb-24 lg:pt-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.5 }}
-            className="mb-10 flex flex-col gap-2 sm:mb-14 sm:flex-row sm:items-end sm:justify-between"
-          >
-            <div>
-              <p className="section-kicker mb-2">{home.destacadosKicker}</p>
-              <h2 className="font-display text-3xl font-light tracking-tight text-charcoal md:text-4xl">
-                {home.destacadosTitulo}
-              </h2>
-            </div>
-            <Link
-              href="/galeria"
-              className="text-sm text-stone underline decoration-charcoal/20 underline-offset-4 transition-colors hover:text-charcoal hover:decoration-charcoal/40"
-            >
-              {home.destacadosLinkTexto}
-            </Link>
-          </motion.div>
-
-          <div
-            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {destacados.map((d, i) => (
+        {destacados.length > 0 ? (
+          <section className="border-b border-charcoal/[0.12] bg-cream">
+            <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pb-24 lg:pt-8">
               <motion.div
-                key={d.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-20px" }}
-                transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.5 }}
+                className="mb-10 flex flex-col gap-2 sm:mb-14 sm:flex-row sm:items-end sm:justify-between"
               >
+                <div>
+                  <p className="section-kicker mb-2">{home.destacadosKicker}</p>
+                  <h2 className="font-display text-3xl font-light tracking-tight text-charcoal md:text-4xl">
+                    {home.destacadosTitulo}
+                  </h2>
+                </div>
                 <Link
-                  href={d.href}
-                  className="group block"
+                  href="/galeria"
+                  className="text-sm text-stone underline decoration-charcoal/20 underline-offset-4 transition-colors hover:text-charcoal hover:decoration-charcoal/40"
                 >
-                  <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05]">
-                    {d.url ? (
-                      <Image
-                        src={d.url}
-                        alt={d.titulo}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div
-                        className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.07] via-charcoal/[0.03] to-transparent"
-                        aria-hidden
-                      />
-                    )}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-charcoal/0 to-charcoal/5" />
-                  </div>
-                  <div className="border-b border-charcoal/12 pb-4 pt-3">
-                    <p className="font-display text-lg font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-xl">
-                      {d.titulo}
-                    </p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.18em] text-stone">
-                      {d.etiqueta}
-                    </p>
-                  </div>
+                  {home.destacadosLinkTexto}
                 </Link>
               </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      ) : null}
 
-      {/* Cierre */}
-      <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mx-auto max-w-2xl text-center"
-        >
-          <p className="section-kicker mb-4">{home.cierreKicker}</p>
-          <p className="font-display text-2xl font-light leading-snug text-charcoal md:text-3xl">
-            {home.cierreTexto}
-          </p>
-          <Link
-            href="/contacto"
-            className={cn("mt-10", siteButtonOutline, "border-charcoal/45 px-8")}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {destacados.map((d, i) => (
+                  <motion.div
+                    key={d.id}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-20px" }}
+                    transition={{ delay: i * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <Link href={d.href} className="group block">
+                      <div className="relative aspect-[16/11] overflow-hidden bg-charcoal/[0.05]">
+                        {d.url ? (
+                          <Image
+                            src={d.url}
+                            alt={d.titulo}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                          />
+                        ) : (
+                          <div
+                            className="absolute inset-0 bg-gradient-to-br from-charcoal/[0.07] via-charcoal/[0.03] to-transparent"
+                            aria-hidden
+                          />
+                        )}
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/20 via-charcoal/0 to-charcoal/5" />
+                      </div>
+                      <div className="border-b border-charcoal/12 pb-4 pt-3">
+                        <p className="font-display text-lg font-light tracking-tight text-charcoal transition-colors group-hover:text-accent md:text-xl">
+                          {d.titulo}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-stone">
+                          {d.etiqueta}
+                        </p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-2xl text-center"
           >
-            Escribir
-          </Link>
-        </motion.div>
-      </section>
+            <p className="section-kicker mb-4">{home.cierreKicker}</p>
+            <p className="font-display text-2xl font-light leading-snug text-charcoal md:text-3xl">
+              {home.cierreTexto}
+            </p>
+            <Link
+              href="/contacto"
+              className={cn("mt-10", siteButtonOutline, "border-charcoal/45 px-8")}
+            >
+              Escribir
+            </Link>
+          </motion.div>
+        </section>
       </div>
     </div>
   );

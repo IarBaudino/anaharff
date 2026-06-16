@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { SITE_PAGE_SHELL_COMPACT } from "@/lib/layout-constants";
 
 export default function SesionPage() {
   return (
-    <div className="pt-6 md:pt-24 pb-20">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+    <div className={SITE_PAGE_SHELL_COMPACT}>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

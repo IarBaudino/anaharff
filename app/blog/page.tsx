@@ -5,13 +5,14 @@ import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { defaultSiteContent, type BlogEntrada } from "@/lib/site-content";
+import { SITE_PAGE_SHELL } from "@/lib/layout-constants";
 
 export default function BlogPage() {
   const { content } = useSiteContent();
   const blog = content?.blog ?? defaultSiteContent.blog;
 
   return (
-    <div className="pb-24 pt-6 md:pt-24">
+    <div className={SITE_PAGE_SHELL}>
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <motion.header
           initial={{ opacity: 0, y: 16 }}

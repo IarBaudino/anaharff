@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase-client";
 import type { OrderRecord, OrderStatus } from "@/lib/commerce-types";
+import { formatShippingAddressBlock } from "@/lib/shipping";
 
 function formatDate(d: unknown) {
   if (!d) return "—";
@@ -212,6 +213,20 @@ function OrderDetail({
             <span className="text-stone">Usuario UID:</span> {order.customerUid || "—"}
           </p>
         </div>
+        {order.shipping ? (
+          <div className="rounded border border-charcoal/10 bg-cream/60 p-3 text-sm">
+            <p className="text-xs uppercase tracking-widest text-stone mb-2">Envío</p>
+            <p className="mb-2">
+              {order.shipping.zonaLabel} —{" "}
+              {order.shipping.cost > 0
+                ? `$${order.shipping.cost.toLocaleString("es-AR")} ARS`
+                : "Sin cargo"}
+            </p>
+            <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-charcoal/90">
+              {formatShippingAddressBlock(order.shipping.address)}
+            </pre>
+          </div>
+        ) : null}
         <ul className="text-sm border-t border-charcoal/10 pt-3 space-y-2">
           {(order.items ?? []).map((item, i) => (
             <li key={i}>

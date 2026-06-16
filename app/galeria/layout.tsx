@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
 
-const title = "Galería";
+const title = "Portfolio";
 const description = "Álbumes fotográficos y series de Ana Harff en una sola navegación.";
 
 export const metadata: Metadata = {

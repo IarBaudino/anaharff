@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import type { DocumentReference, Firestore } from "firebase-admin/firestore";
-import type { CheckoutLineItem, OrderRecord, OrderStatus } from "@/lib/commerce-types";
+import type { CheckoutLineItem, OrderRecord, OrderShipping, OrderStatus } from "@/lib/commerce-types";
 import { notifyOrderPaymentEmails } from "@/lib/email/order-notifications";
 
 type MPPayer = { email?: string; first_name?: string; last_name?: string };
@@ -62,6 +62,7 @@ type OrderEmailContext = {
   total: number;
   currency_id: string;
   paymentId: string;
+  shipping?: OrderShipping | null;
 };
 
 async function sendOrderEmailsAndMark(
@@ -79,6 +80,7 @@ async function sendOrderEmailsAndMark(
     total: ctx.total,
     currency_id: ctx.currency_id,
     mercadoPagoPaymentId: ctx.paymentId,
+    shipping: ctx.shipping ?? null,
   });
 
   if (notified) {
@@ -106,8 +108,9 @@ export async function persistOrderFromPayment(params: {
   paymentId: string;
   preferenceId: string | null;
   sessionItems: CheckoutLineItem[];
+  sessionShipping?: OrderShipping | null;
 }): Promise<{ orderId: string; created: boolean }> {
-  const { db, payment, paymentId, preferenceId, sessionItems } = params;
+  const { db, payment, paymentId, preferenceId, sessionItems, sessionShipping } = params;
 
   const ordersCol = db.collection("orders");
   const existing = await ordersCol
@@ -165,6 +168,7 @@ export async function persistOrderFromPayment(params: {
       total,
       currency_id: payment.currency_id || prev.currency_id || "ARS",
       paymentId: String(paymentId),
+      shipping: sessionShipping ?? prev.shipping ?? null,
     });
 
     return { orderId: doc.id, created: false };
@@ -180,6 +184,7 @@ export async function persistOrderFromPayment(params: {
     customerUid,
     customerEmail,
     payerName,
+    shipping: sessionShipping ?? undefined,
     mercadoPagoPaymentId: String(paymentId),
     mercadoPagoPreferenceId: preferenceId,
     mercadoPagoStatus: payment.status ?? null,
@@ -215,6 +220,7 @@ export async function persistOrderFromPayment(params: {
     total,
     currency_id: record.currency_id,
     paymentId: String(paymentId),
+    shipping: sessionShipping ?? null,
   });
 
   return { orderId: orderRef.id, created: true };
@@ -224,8 +230,19 @@ export async function loadCheckoutSession(
   db: Firestore,
   preferenceId: string
 ): Promise<CheckoutLineItem[]> {
+  const data = await loadCheckoutSessionData(db, preferenceId);
+  return data.items;
+}
+
+export async function loadCheckoutSessionData(
+  db: Firestore,
+  preferenceId: string
+): Promise<{ items: CheckoutLineItem[]; shipping?: OrderShipping | null }> {
   const snap = await db.collection("checkout_sessions").doc(preferenceId).get();
-  if (!snap.exists) return [];
-  const data = snap.data() as { items?: CheckoutLineItem[] };
-  return data.items ?? [];
+  if (!snap.exists) return { items: [] };
+  const data = snap.data() as { items?: CheckoutLineItem[]; shipping?: OrderShipping };
+  return {
+    items: data.items ?? [],
+    shipping: data.shipping ?? null,
+  };
 }

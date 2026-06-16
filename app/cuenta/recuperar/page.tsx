@@ -48,7 +48,7 @@ export default function RecuperarContrasenaPage() {
   }
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-4 pb-20 pt-6 md:pt-24">
+    <div className="flex min-h-[70vh] items-center justify-center px-4 pb-20">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

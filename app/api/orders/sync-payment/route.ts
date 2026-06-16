@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import {
   fetchMercadoPagoPayment,
-  loadCheckoutSession,
+  loadCheckoutSessionData,
   persistOrderFromPayment,
 } from "@/lib/orders-from-mp";
 
@@ -42,14 +42,17 @@ export async function POST(request: NextRequest) {
     const preferenceId =
       payment.preference_id != null ? String(payment.preference_id) : null;
 
-    const sessionItems = preferenceId ? await loadCheckoutSession(db, preferenceId) : [];
+    const session = preferenceId
+      ? await loadCheckoutSessionData(db, preferenceId)
+      : { items: [], shipping: null };
 
     const result = await persistOrderFromPayment({
       db,
       payment,
       paymentId,
       preferenceId,
-      sessionItems,
+      sessionItems: session.items,
+      sessionShipping: session.shipping,
     });
 
     return NextResponse.json({

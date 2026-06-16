@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { CategoryContent } from "@/components/portfolio/CategoryContent";
 import { resolvePortfolioSubcategoryCover, type PortfolioCategory } from "@/lib/site-content";
+import { SITE_PAGE_SHELL_COMPACT } from "@/lib/layout-constants";
 
 type Props = {
   category: PortfolioCategory;
@@ -15,13 +16,13 @@ export function PortfolioCategoryClient({ category }: Props) {
 
   if (subs.length > 0) {
     return (
-      <div className="pb-20 pt-6 md:pt-24">
+      <div className={SITE_PAGE_SHELL_COMPACT}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link
             href="/galeria"
             className="mb-8 inline-block text-sm tracking-widest text-stone hover:text-accent"
           >
-            ← Galería
+            ← Portfolio
           </Link>
           <motion.header
             initial={{ opacity: 0, y: 16 }}

@@ -3,6 +3,8 @@ import { isSupabaseStorageConfigured } from "@/lib/storage-config";
 import { deleteStorageObjectByUrl } from "@/lib/supabase-storage-server";
 import { isAdminIdToken } from "@/lib/verify-admin-token";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
   if (!isSupabaseStorageConfigured()) {
     return NextResponse.json(

@@ -16,10 +16,13 @@ import {
   type StoreItem,
 } from "@/lib/site-content";
 import { StorageUploadField } from "@/components/admin/StorageUploadField";
-
-function inputClass() {
-  return "w-full border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
-}
+import {
+  AdminField,
+  AdminInput,
+  AdminTextarea,
+  HelpText,
+  PanelTitle,
+} from "@/components/admin/admin-fields";
 
 export function AdminProducts() {
   const { confirmDelete } = useAdminPanelUi();
@@ -96,14 +99,17 @@ export function AdminProducts() {
         </div>
       )}
 
-      <section className="space-y-3">
-        <h2 className="font-display text-2xl font-light text-charcoal">Tienda</h2>
-        <p className="text-sm text-stone">
-          Obras a la venta. Para mostrar fotos de galería en el inicio, usá{" "}
-          <strong>Página principal → Trabajos recientes</strong>.
-        </p>
-        <input
-          className={inputClass()}
+      <section className="space-y-4">
+        <PanelTitle>Tienda</PanelTitle>
+        <HelpText>
+          Impresiones a la venta en <strong>/tienda</strong>. El comprador debe tener cuenta y completar
+          datos de envío en el carrito. Configurá los costos de envío abajo.
+        </HelpText>
+        <AdminInput
+          id="tienda-titulo"
+          label="Título de la página"
+          hint="Encabezado grande que ve el visitante al entrar a la tienda."
+          example="Tienda"
           value={content.tienda.titulo}
           onChange={(e) =>
             setContent({
@@ -112,8 +118,11 @@ export function AdminProducts() {
             })
           }
         />
-        <textarea
-          className={inputClass()}
+        <AdminTextarea
+          id="tienda-descripcion"
+          label="Texto introductorio"
+          hint="Párrafo breve debajo del título. Podés dejarlo vacío."
+          example="Impresiones en edición limitada. Fotografía analógica en papel fine art."
           rows={3}
           value={content.tienda.descripcion}
           onChange={(e) =>
@@ -125,7 +134,78 @@ export function AdminProducts() {
         />
       </section>
 
-      <div className="space-y-5">
+      <section className="space-y-4 rounded-lg border border-charcoal/10 bg-cream/60 p-4">
+        <p className="text-sm font-medium text-charcoal">Costos de envío (ARS)</p>
+        <HelpText>
+          Montos que se suman al carrito según la zona que elija el comprador. Podés poner{" "}
+          <strong>0</strong> si el envío es sin cargo en esa zona.
+        </HelpText>
+        <div className="grid gap-3 md:grid-cols-3">
+          <AdminInput
+            label="CABA y GBA"
+            hint="Buenos Aires ciudad y conurbano."
+            example="0"
+            type="number"
+            min={0}
+            value={content.tienda.envios.buenosAires}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                tienda: {
+                  ...content.tienda,
+                  envios: {
+                    ...content.tienda.envios,
+                    buenosAires: Number(e.target.value) || 0,
+                  },
+                },
+              })
+            }
+          />
+          <AdminInput
+            label="Resto de Argentina"
+            hint="Provincias fuera de CABA y GBA."
+            example="8000"
+            type="number"
+            min={0}
+            value={content.tienda.envios.restoArgentina}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                tienda: {
+                  ...content.tienda,
+                  envios: {
+                    ...content.tienda.envios,
+                    restoArgentina: Number(e.target.value) || 0,
+                  },
+                },
+              })
+            }
+          />
+          <AdminInput
+            label="Internacional"
+            hint="Envíos fuera de Argentina."
+            example="25000"
+            type="number"
+            min={0}
+            value={content.tienda.envios.internacional}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                tienda: {
+                  ...content.tienda,
+                  envios: {
+                    ...content.tienda.envios,
+                    internacional: Number(e.target.value) || 0,
+                  },
+                },
+              })
+            }
+          />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <p className="text-sm font-medium text-charcoal">Productos (impresiones)</p>
         {content.tienda.items.map((item, idx) => (
           <div key={item.id} className="space-y-3 rounded-lg border border-charcoal/10 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -140,15 +220,20 @@ export function AdminProducts() {
               </button>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <input
-                className={inputClass()}
+              <AdminInput
+                label="Nombre del producto"
+                hint="Título en la tarjeta y en el checkout de Mercado Pago."
+                example="Serie Única — impresión 30×40 cm"
                 value={item.titulo}
                 onChange={(e) => updateItem(content, setContent, idx, { titulo: e.target.value })}
               />
-              <input
-                className={inputClass()}
-                value={item.precio}
+              <AdminInput
+                label="Precio (ARS)"
+                hint="Monto en pesos argentinos, sin puntos ni símbolo."
+                example="45000"
                 type="number"
+                min={0}
+                value={item.precio}
                 onChange={(e) =>
                   updateItem(content, setContent, idx, {
                     precio: Number(e.target.value) || 0,
@@ -156,35 +241,40 @@ export function AdminProducts() {
                 }
               />
             </div>
-            <textarea
-              className={inputClass()}
+            <AdminTextarea
+              label="Descripción"
+              hint="Detalle de la impresión: técnica, tamaño, papel, tirada, etc."
+              example="Fotografía analógica 35mm, impresión fine art 30×40 cm en papel algodón."
               rows={2}
               value={item.descripcion}
               onChange={(e) =>
                 updateItem(content, setContent, idx, { descripcion: e.target.value })
               }
             />
-            <div className="rounded-lg border border-charcoal/10 bg-cream/70 p-3">
-              <p className="text-xs uppercase tracking-widest text-stone">Foto del producto</p>
-              <StorageUploadField
-                folder="tienda"
-                previewUrl={item.imagenUrl}
-                onUploaded={(secureUrl) =>
-                  updateItem(content, setContent, idx, { imagenUrl: secureUrl })
-                }
-                autoDeletePrevious
-                disabled={saving}
-              />
-              {!item.imagenUrl?.trim() ? (
-                <p className="mt-2 text-xs text-amber-900">
-                  Sin foto válida: en la tienda se ve un recuadro vacío. Subí imagen o eliminá este
-                  producto.
-                </p>
-              ) : null}
-            </div>
+            <AdminField
+              label="Foto del producto"
+            >
+              <div className="rounded-lg border border-charcoal/10 bg-cream/70 p-3">
+                <StorageUploadField
+                  folder="tienda"
+                  previewUrl={item.imagenUrl}
+                  onUploaded={(secureUrl) =>
+                    updateItem(content, setContent, idx, { imagenUrl: secureUrl })
+                  }
+                  autoDeletePrevious
+                  disabled={saving}
+                />
+                {!item.imagenUrl?.trim() ? (
+                  <p className="mt-2 text-xs text-amber-900">
+                    Sin foto válida: en la tienda se ve un recuadro vacío. Subí imagen o eliminá este
+                    producto.
+                  </p>
+                ) : null}
+              </div>
+            </AdminField>
           </div>
         ))}
-      </div>
+      </section>
 
       <button
         type="button"

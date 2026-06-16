@@ -1,4 +1,7 @@
 import { ensureCurriculoLinea } from "@/lib/curriculo-display";
+import { normalizeTiendaEnvios, type TiendaEnvios } from "@/lib/shipping";
+
+export type { TiendaEnvios };
 
 export interface StoreItem {
   id: string;
@@ -89,8 +92,11 @@ export interface HomeContent {
   /** Título muy visible que se muestra al público (encima de las líneas decorativas y en el hero). */
   titulo: string;
   /**
-   * Imagen vertical del hero (columna izquierda en escritorio). Obligatoria al publicar;
-   * URL HTTPS asignada al subir desde el panel.
+   * Imágenes verticales de la portada (hasta 6). Si está vacío, se usa `heroImagenUrl`.
+   */
+  heroImagenes: string[];
+  /**
+   * @deprecated Usar `heroImagenes`. Se mantiene como primera imagen al guardar.
    */
   heroImagenUrl: string;
   /** Punto de enfoque horizontal de la portada (0 a 100). */
@@ -194,6 +200,8 @@ export interface SiteContent {
   tienda: {
     titulo: string;
     descripcion: string;
+    /** Costos de envío en ARS por zona. */
+    envios: TiendaEnvios;
     /** @deprecated Usar `home.destacadosCantidad`. */
     destacadosCantidad?: 3 | 4 | 6;
     items: StoreItem[];
@@ -271,6 +279,7 @@ export function resolveSeriesCover(
 export const defaultSiteContent: SiteContent = {
   home: {
     titulo: "ANA HARFF",
+    heroImagenes: [],
     heroImagenUrl: HOME_HERO_DEFAULT,
     heroFocoX: 50,
     heroFocoY: 50,
@@ -348,19 +357,9 @@ export const defaultSiteContent: SiteContent = {
   portfolio: {
     categories: [
       {
-        id: "cat-desnudos",
-        slug: "desnudos",
-        label: "Desnudos (nude)",
-        description:
-          "Galería de desnudo artístico y editorial en fotografía analógica. Ana Harff, Buenos Aires.",
-        coverImageUrl: "",
-        galleryImages: [],
-        subcategories: [],
-      },
-      {
         id: "cat-retratos",
         slug: "retratos",
-        label: "Retratos (portrait)",
+        label: "Retrato",
         description:
           "Retratos en fotografía analógica: mirada, identidad y presencia. Ana Harff, Buenos Aires.",
         coverImageUrl: "",
@@ -368,21 +367,11 @@ export const defaultSiteContent: SiteContent = {
         subcategories: [],
       },
       {
-        id: "cat-artistico",
-        slug: "artistico",
-        label: "Artístico (art & shows)",
+        id: "cat-desnudos",
+        slug: "desnudos",
+        label: "Desnudo",
         description:
-          "Obra artística, muestras y proyectos editoriales en analógico. Ana Harff, Buenos Aires.",
-        coverImageUrl: "",
-        galleryImages: [],
-        subcategories: [],
-      },
-      {
-        id: "cat-experimental",
-        slug: "experimental",
-        label: "Experimental",
-        description:
-          "Procesos experimentales y lecturas libres del cuerpo y el espacio en analógico. Ana Harff.",
+          "Galería de desnudo artístico y editorial en fotografía analógica. Ana Harff, Buenos Aires.",
         coverImageUrl: "",
         galleryImages: [],
         subcategories: [],
@@ -390,9 +379,19 @@ export const defaultSiteContent: SiteContent = {
       {
         id: "cat-familia",
         slug: "familia",
-        label: "Familia",
+        label: "Familiar",
         description:
           "Books de embarazo, pareja y familia en fotografía analógica. Ana Harff, Buenos Aires.",
+        coverImageUrl: "",
+        galleryImages: [],
+        subcategories: [],
+      },
+      {
+        id: "cat-eventos",
+        slug: "eventos",
+        label: "Eventos",
+        description:
+          "Cobertura de eventos y encuentros en fotografía analógica. Ana Harff, Buenos Aires.",
         coverImageUrl: "",
         galleryImages: [],
         subcategories: [],
@@ -460,7 +459,12 @@ export const defaultSiteContent: SiteContent = {
   tienda: {
     titulo: "Tienda",
     descripcion:
-      "Imágenes en edición limitada. Fotografía analógica impresa o en formato digital de alta resolución.",
+      "Impresiones en edición limitada. Fotografía analógica en papel fine art.",
+    envios: {
+      buenosAires: 0,
+      restoArgentina: 8000,
+      internacional: 25000,
+    },
     items: [],
   },
 };
@@ -542,6 +546,39 @@ export function buildLegacyHomeDestacadosFromTienda(
   return rows;
 }
 
+function normalizeHeroImagenes(raw: unknown, legacySingle: string): string[] {
+  const list: string[] = [];
+  if (Array.isArray(raw)) {
+    for (const row of raw) {
+      const url = sanitizePublicImageUrl(row);
+      if (url && !list.includes(url)) list.push(url);
+      if (list.length >= 6) break;
+    }
+  }
+  if (list.length === 0) {
+    const single = sanitizePublicImageUrl(legacySingle);
+    if (single) list.push(single);
+  }
+  return list;
+}
+
+export function resolveHomeHeroImages(
+  home: Pick<HomeContent, "heroImagenes" | "heroImagenUrl">
+): string[] {
+  const fromList = (home.heroImagenes ?? [])
+    .map((url) => sanitizePublicImageUrl(url))
+    .filter(Boolean);
+  if (fromList.length > 0) return fromList.slice(0, 6);
+  const single = sanitizePublicImageUrl(home.heroImagenUrl);
+  return single ? [single] : [];
+}
+
+export function isHomeHeroConfigured(
+  home: Pick<HomeContent, "heroImagenes" | "heroImagenUrl">
+): boolean {
+  return resolveHomeHeroImages(home).length > 0;
+}
+
 export function normalizeHome(partial: unknown): HomeContent {
   const p = (partial ?? {}) as LegacyHome;
   const def = defaultSiteContent.home;
@@ -550,7 +587,12 @@ export function normalizeHome(partial: unknown): HomeContent {
 
   let heroImagenUrl = typeof p.heroImagenUrl === "string" ? p.heroImagenUrl.trim() : "";
   heroImagenUrl = sanitizePublicImageUrl(heroImagenUrl);
-  if (!heroImagenUrl) heroImagenUrl = HOME_HERO_DEFAULT;
+  const heroImagenes = normalizeHeroImagenes(
+    (p as { heroImagenes?: unknown }).heroImagenes,
+    heroImagenUrl
+  );
+  if (heroImagenes.length > 0) heroImagenUrl = heroImagenes[0];
+  else if (!heroImagenUrl) heroImagenUrl = HOME_HERO_DEFAULT;
   const rawFocoX = (p as unknown as Record<string, unknown>).heroFocoX;
   const rawFocoY = (p as unknown as Record<string, unknown>).heroFocoY;
   const rawFocoXMobile = (p as unknown as Record<string, unknown>).heroFocoXMobile;
@@ -634,6 +676,7 @@ export function normalizeHome(partial: unknown): HomeContent {
 
   return {
     titulo,
+    heroImagenes,
     heroImagenUrl,
     heroFocoX,
     heroFocoY,
@@ -1131,6 +1174,7 @@ export function mergeTiendaFromPartial(
   return {
     ...defaultSiteContent.tienda,
     ...partial,
+    envios: normalizeTiendaEnvios(partial.envios ?? defaultSiteContent.tienda.envios),
     items,
   };
 }

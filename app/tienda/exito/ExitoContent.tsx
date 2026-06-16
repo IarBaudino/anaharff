@@ -94,7 +94,7 @@ export function ExitoContent() {
   }, [searchParams]);
 
   return (
-    <div className="pt-6 md:pt-24 pb-20 min-h-[60vh] flex items-center justify-center">
+    <div className="pb-20 min-h-[60vh] flex items-center justify-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

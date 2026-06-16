@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
+import { SITE_PAGE_SHELL } from "@/lib/layout-constants";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -65,12 +66,12 @@ export default function ContactoPage() {
 
   if (sent) {
     return (
-      <div className="pt-6 md:pt-8 pb-24">
-        <div className="mx-auto max-w-xl px-4 text-center">
+      <div className={SITE_PAGE_SHELL}>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
+            className="max-w-xl space-y-4"
           >
             <p className="font-display text-2xl text-charcoal">
               Mensaje enviado. Te responderé pronto.
@@ -86,8 +87,8 @@ export default function ContactoPage() {
   }
 
   return (
-    <div className="pt-6 md:pt-12 pb-24">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6">
+    <div className={SITE_PAGE_SHELL}>
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -110,7 +111,7 @@ export default function ContactoPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6"
+          className="max-w-2xl space-y-6"
         >
           <div className="grid gap-6 sm:grid-cols-2">
             <div>

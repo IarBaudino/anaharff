@@ -6,7 +6,13 @@ import { useCartStore } from "@/stores/cart-store";
 import { cn } from "@/lib/utils";
 import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
 
-export function AddToCartButton({ item }: { item: StoreItem }) {
+export function AddToCartButton({
+  item,
+  className,
+}: {
+  item: StoreItem;
+  className?: string;
+}) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -23,7 +29,7 @@ export function AddToCartButton({ item }: { item: StoreItem }) {
       id: item.id,
       title: item.titulo,
       unit_price: item.precio,
-      description: item.descripcion || "Fotografía analógica - Ana Harff",
+      description: item.descripcion || "Impresión fotográfica - Ana Harff",
       picture_url: pics[0],
     });
     setAdded(true);
@@ -39,7 +45,8 @@ export function AddToCartButton({ item }: { item: StoreItem }) {
         "inline-flex items-center rounded-full border px-4 py-2.5 text-sm font-medium leading-5 shadow-sm transition-colors",
         added
           ? "border-green-700/35 bg-green-50 text-green-900"
-          : "border-charcoal/20 bg-cream text-charcoal hover:border-charcoal/40 hover:bg-charcoal/[0.06]"
+          : "border-charcoal/20 bg-cream text-charcoal hover:border-charcoal/40 hover:bg-charcoal/[0.06]",
+        className
       )}
     >
       {added ? (

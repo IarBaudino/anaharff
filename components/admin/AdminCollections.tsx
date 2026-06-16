@@ -14,7 +14,7 @@ import {
   type SiteContent,
 } from "@/lib/site-content";
 import { StorageUploadField } from "@/components/admin/StorageUploadField";
-import { HelpText } from "@/components/admin/admin-fields";
+import { AdminInput, AdminTextarea, HelpText } from "@/components/admin/admin-fields";
 import {
   ADMIN_SAVE_SUCCESS,
   AdminPanelNotice,
@@ -31,10 +31,6 @@ import {
 
 const VALIDATION_SUMMARY =
   "Revisá los avisos en rojo antes de guardar: nombre vacío, enlace vacío o enlace repetido.";
-
-function inputClass() {
-  return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
-}
 
 type RowErrors = { label?: string; slug?: string };
 
@@ -342,39 +338,38 @@ export function AdminCollections() {
                     <p className="text-[11px] uppercase tracking-widest text-stone">
                       Categoría {idx + 1}
                     </p>
-              <div>
-                <input
-                  className={cn(inputClass(), err?.label && "border-red-500")}
-                  value={cat.label}
-                  onChange={(e) => {
-                    clearAllFieldErrors();
-                    updateCategory(idx, { label: e.target.value }, content, setContent);
-                  }}
-                  placeholder="Nombre visible"
-                />
-                {err?.label && <p className="mt-1 text-xs text-red-700">{err.label}</p>}
-              </div>
-              <div>
-                <input
-                  className={cn(inputClass(), err?.slug && "border-red-500")}
-                  value={cat.slug}
-                  onChange={(e) => {
-                    clearAllFieldErrors();
-                    updateCategory(idx, { slug: slugifyLabel(e.target.value) }, content, setContent);
-                  }}
-                  placeholder="URL (slug): familia, retratos, etc."
-                />
-                {err?.slug && <p className="mt-1 text-xs text-red-700">{err.slug}</p>}
-              </div>
-              <textarea
-                className={inputClass()}
+              <AdminInput
+                label="Nombre visible"
+                hint="Título en el menú de galería y en la cabecera de la categoría."
+                example="Retratos"
+                value={cat.label}
+                onChange={(e) => {
+                  clearAllFieldErrors();
+                  updateCategory(idx, { label: e.target.value }, content, setContent);
+                }}
+                error={err?.label}
+              />
+              <AdminInput
+                label="URL (slug)"
+                hint="Parte de la dirección web. Solo minúsculas y guiones, sin espacios ni tildes."
+                example="retratos"
+                value={cat.slug}
+                onChange={(e) => {
+                  clearAllFieldErrors();
+                  updateCategory(idx, { slug: slugifyLabel(e.target.value) }, content, setContent);
+                }}
+                error={err?.slug}
+              />
+              <AdminTextarea
+                label="Descripción corta"
+                hint="Texto breve para buscadores y la cabecera de la categoría."
+                example="Retratos en estudio y en exteriores."
                 rows={2}
                 value={cat.description}
                 onChange={(e) => {
                   clearAllFieldErrors();
                   updateCategory(idx, { description: e.target.value }, content, setContent);
                 }}
-                placeholder="Descripción corta para SEO"
               />
               <div className="space-y-3 rounded-lg border border-charcoal/10 bg-cream/70 p-3">
                 <p className="text-xs uppercase tracking-widest text-stone">Imágenes de la categoría</p>
@@ -524,16 +519,20 @@ export function AdminCollections() {
                           <p className="text-[11px] uppercase tracking-wide text-stone">
                             Subcategoría {si + 1} · edición
                           </p>
-                      <input
-                        className={cn(inputClass(), sErr?.label && "border-red-500")}
+                      <AdminInput
+                        label="Nombre visible"
+                        hint="Título de la subcategoría en el menú y en su página."
+                        example="Familia"
                         value={sub.label}
                         onChange={(e) =>
                           updatePortfolioSub(idx, si, { label: e.target.value }, content, setContent)
                         }
+                        error={sErr?.label}
                       />
-                      {sErr?.label && <p className="text-xs text-red-700">{sErr.label}</p>}
-                      <input
-                        className={cn(inputClass(), sErr?.slug && "border-red-500")}
+                      <AdminInput
+                        label="URL (slug)"
+                        hint="Parte de la URL: /portfolio/categoría/subcategoría."
+                        example="familia"
                         value={sub.slug}
                         onChange={(e) =>
                           updatePortfolioSub(
@@ -544,10 +543,12 @@ export function AdminCollections() {
                             setContent
                           )
                         }
+                        error={sErr?.slug}
                       />
-                      {sErr?.slug && <p className="text-xs text-red-700">{sErr.slug}</p>}
-                      <textarea
-                        className={inputClass()}
+                      <AdminTextarea
+                        label="Descripción corta"
+                        hint="Texto breve para buscadores y la cabecera de la subcategoría."
+                        example="Sesiones familiares en estudio."
                         rows={2}
                         value={sub.description}
                         onChange={(e) =>
@@ -758,49 +759,49 @@ export function AdminCollections() {
                     <p className="text-[11px] uppercase tracking-widest text-stone">
                       Serie {idx + 1}
                     </p>
-              <div>
-                <input
-                  className={cn(inputClass(), err?.label && "border-red-500")}
-                  value={project.label}
-                  onChange={(e) => {
-                    clearAllFieldErrors();
-                    updateProject(idx, { label: e.target.value }, content, setContent);
-                  }}
-                  placeholder="Nombre visible"
-                />
-                {err?.label && <p className="mt-1 text-xs text-red-700">{err.label}</p>}
-              </div>
-              <div>
-                <input
-                  className={cn(inputClass(), err?.slug && "border-red-500")}
-                  value={project.slug}
-                  onChange={(e) => {
-                    clearAllFieldErrors();
-                    updateProject(idx, { slug: slugifyLabel(e.target.value) }, content, setContent);
-                  }}
-                  placeholder="URL (slug): unica, ser-gorda..."
-                />
-                {err?.slug && <p className="mt-1 text-xs text-red-700">{err.slug}</p>}
-              </div>
-              <textarea
-                className={inputClass()}
+              <AdminInput
+                label="Nombre visible"
+                hint="Título de la serie en el menú y en la cabecera de su página."
+                example="Ser gorda"
+                value={project.label}
+                onChange={(e) => {
+                  clearAllFieldErrors();
+                  updateProject(idx, { label: e.target.value }, content, setContent);
+                }}
+                error={err?.label}
+              />
+              <AdminInput
+                label="URL (slug)"
+                hint="Parte de la dirección web. Solo minúsculas y guiones."
+                example="ser-gorda"
+                value={project.slug}
+                onChange={(e) => {
+                  clearAllFieldErrors();
+                  updateProject(idx, { slug: slugifyLabel(e.target.value) }, content, setContent);
+                }}
+                error={err?.slug}
+              />
+              <AdminTextarea
+                label="Manifiesto / statement"
+                hint="Texto artístico visible debajo del título en la página de la serie."
+                example="Una exploración del cuerpo y la luz natural."
                 rows={3}
                 value={project.statement}
                 onChange={(e) => {
                   clearAllFieldErrors();
                   updateProject(idx, { statement: e.target.value }, content, setContent);
                 }}
-                placeholder="Statement visible debajo del título"
               />
-              <textarea
-                className={inputClass()}
+              <AdminTextarea
+                label="Descripción corta"
+                hint="Texto breve para buscadores (no se muestra como manifiesto)."
+                example="Serie fotográfica en blanco y negro, 2023."
                 rows={2}
                 value={project.description}
                 onChange={(e) => {
                   clearAllFieldErrors();
                   updateProject(idx, { description: e.target.value }, content, setContent);
                 }}
-                placeholder="Descripción corta para SEO"
               />
               <div className="space-y-3 rounded-lg border border-charcoal/10 bg-cream/70 p-3">
                 <p className="text-xs uppercase tracking-widest text-stone">Imágenes de la serie</p>
@@ -950,16 +951,20 @@ export function AdminCollections() {
                           <p className="text-[11px] uppercase tracking-wide text-stone">
                             Subserie {si + 1} · edición
                           </p>
-                      <input
-                        className={cn(inputClass(), sErr?.label && "border-red-500")}
+                      <AdminInput
+                        label="Nombre visible"
+                        hint="Título de la subserie en el menú y en su página."
+                        example="Capítulo I"
                         value={sub.label}
                         onChange={(e) =>
                           updateSeriesSub(idx, si, { label: e.target.value }, content, setContent)
                         }
+                        error={sErr?.label}
                       />
-                      {sErr?.label && <p className="text-xs text-red-700">{sErr.label}</p>}
-                      <input
-                        className={cn(inputClass(), sErr?.slug && "border-red-500")}
+                      <AdminInput
+                        label="URL (slug)"
+                        hint="Parte de la URL: /series/serie/subserie."
+                        example="capitulo-i"
                         value={sub.slug}
                         onChange={(e) =>
                           updateSeriesSub(
@@ -970,18 +975,22 @@ export function AdminCollections() {
                             setContent
                           )
                         }
+                        error={sErr?.slug}
                       />
-                      {sErr?.slug && <p className="text-xs text-red-700">{sErr.slug}</p>}
-                      <textarea
-                        className={inputClass()}
+                      <AdminTextarea
+                        label="Manifiesto / statement"
+                        hint="Texto artístico debajo del título en la subserie."
+                        example="Primer bloque de la serie."
                         rows={2}
                         value={sub.statement}
                         onChange={(e) =>
                           updateSeriesSub(idx, si, { statement: e.target.value }, content, setContent)
                         }
                       />
-                      <textarea
-                        className={inputClass()}
+                      <AdminTextarea
+                        label="Descripción corta"
+                        hint="Texto breve para buscadores."
+                        example="Fotografías tomadas en verano 2024."
                         rows={2}
                         value={sub.description}
                         onChange={(e) =>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
@@ -16,7 +16,17 @@ function inputClass() {
 }
 
 export default function RegistroPage() {
+  return (
+    <Suspense fallback={<div className="py-24 text-center text-stone">Cargando…</div>}>
+      <RegistroForm />
+    </Suspense>
+  );
+}
+
+function RegistroForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") || "/cuenta";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
@@ -59,7 +69,7 @@ export default function RegistroPage() {
         /* el registro no debe fallar si el mail de bienvenida no sale */
       }
 
-      router.replace("/cuenta");
+      router.replace(nextPath.startsWith("/") ? nextPath : "/cuenta");
       router.refresh();
     } catch {
       setError("No se pudo crear la cuenta. Probá otro email o una contraseña más segura.");
@@ -69,7 +79,7 @@ export default function RegistroPage() {
   }
 
   return (
-    <div className="pt-6 md:pt-24 pb-20 min-h-[70vh] flex items-center justify-center px-4">
+    <div className="pb-20 min-h-[70vh] flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,8 +87,8 @@ export default function RegistroPage() {
       >
         <h1 className="font-display text-3xl font-light mb-2">Crear cuenta</h1>
         <p className="text-sm text-stone mb-6">
-          Registrate para asociar tus compras a tu perfil (opcional: también podés comprar como
-          invitado).
+          Creá tu cuenta para comprar impresiones con envío. Podés guardar tu dirección y ver el
+          estado de tus pedidos.
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -139,7 +149,7 @@ export default function RegistroPage() {
         </form>
         <p className="mt-6 text-sm text-stone">
           ¿Ya tenés cuenta?{" "}
-          <Link href="/cuenta/ingresar" className="text-accent underline">
+          <Link href={`/cuenta/ingresar?next=${encodeURIComponent(nextPath)}`} className="text-accent underline">
             Ingresar
           </Link>
         </p>

@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import {
-  isPlaceholderHeroUrl,
+  isHomeHeroConfigured,
   newIntroduccionLangId,
   newTestimonioId,
+  resolveHomeHeroImages,
   type IntroduccionIdioma,
 } from "@/lib/site-content";
 import {
@@ -18,9 +19,9 @@ import {
 import { HomeDestacadosEditor } from "@/components/admin/HomeDestacadosEditor";
 import { StorageUploadField } from "@/components/admin/StorageUploadField";
 import {
-  FieldLabel,
+  AdminInput,
+  AdminTextarea,
   HelpText,
-  inputClass,
   PanelTitle,
   SectionHeading,
 } from "@/components/admin/admin-fields";
@@ -30,13 +31,23 @@ export function AdminEditorHome() {
   const { content, setContent, save, saving, loading, error, isFirebaseConfigured } =
     useSiteContent();
   const [message, setMessage] = useState<string | null>(null);
-  const heroPreviewRef = useRef<HTMLDivElement | null>(null);
-  const heroPreviewMobileRef = useRef<HTMLDivElement | null>(null);
+
+  function setHeroImagenes(next: string[]) {
+    const trimmed = next.slice(0, 6);
+    setContent({
+      ...content,
+      home: {
+        ...content.home,
+        heroImagenes: trimmed,
+        heroImagenUrl: trimmed[0] ?? "",
+      },
+    });
+  }
 
   async function onSave() {
-    if (isPlaceholderHeroUrl(content.home.heroImagenUrl)) {
+    if (!isHomeHeroConfigured(content.home)) {
       setMessage(
-        "Tenés que subir la foto principal del inicio con el botón «Subir imagen». No se puede guardar dejando solo la imagen de muestra."
+        "Tenés que subir al menos una imagen vertical para la portada del inicio (hasta 6)."
       );
       return;
     }
@@ -100,31 +111,7 @@ export function AdminEditorHome() {
     });
   }
 
-  function updateHeroFocusFromPointer(clientX: number, clientY: number) {
-    const el = heroPreviewRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    const clamp = (v: number) => Math.max(0, Math.min(100, v));
-    setContent({
-      ...content,
-      home: { ...content.home, heroFocoX: clamp(x), heroFocoY: clamp(y) },
-    });
-  }
-
-  function updateHeroFocusMobileFromPointer(clientX: number, clientY: number) {
-    const el = heroPreviewMobileRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * 100;
-    const y = ((clientY - rect.top) / rect.height) * 100;
-    const clamp = (v: number) => Math.max(0, Math.min(100, v));
-    setContent({
-      ...content,
-      home: { ...content.home, heroFocoXMobile: clamp(x), heroFocoYMobile: clamp(y) },
-    });
-  }
+  const heroImages = resolveHomeHeroImages(content.home);
 
   if (loading) {
     return <p className="text-stone">Cargando contenido...</p>;
@@ -148,33 +135,110 @@ export function AdminEditorHome() {
       <div>
         <PanelTitle>Página principal</PanelTitle>
         <HelpText>
-          Todo lo de esta pestaña se ve en el <strong>inicio del sitio</strong>: portada a
-          pantalla completa, testimonios, título y textos. La portada usa recorte tipo{" "}
-          <strong>cover</strong> y podés mover el foco.
+          Orden en el sitio: <strong>portada</strong> (imágenes verticales) →{" "}
+          <strong>testimonios</strong> → subtítulo e <strong>introducción</strong>.
         </HelpText>
       </div>
 
       <section className="space-y-4">
-        <SectionHeading>Título del sitio</SectionHeading>
-        <div>
-          <FieldLabel htmlFor="home-titulo">Nombre que se muestra como titular principal</FieldLabel>
-          <HelpText>
-            Aparece muy grande en el inicio (debajo de testimonios) y en el encabezado del navegador
-            si no definís otro. Los enlaces a Instagram y contacto están en la barra lateral del
-            sitio. Suele ser tu nombre artístico en mayúsculas o el que prefieras.
-          </HelpText>
-          <input
-            id="home-titulo"
-            className={inputClass()}
-            value={content.home.titulo}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, titulo: e.target.value },
-              })
-            }
-          />
-        </div>
+        <SectionHeading>Nombre del sitio (solo SEO)</SectionHeading>
+        <AdminInput
+          id="home-titulo"
+          label="Título para buscadores y pestaña del navegador"
+          hint="Ya no se muestra grande en el inicio. El visitante ve el subtítulo (línea sobre la intro) y los textos de presentación."
+          example="Ana Harff"
+          value={content.home.titulo}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, titulo: e.target.value },
+            })
+          }
+        />
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading>Portada del inicio (imágenes verticales)</SectionHeading>
+        <HelpText>
+          Hasta <strong>6 fotos verticales</strong> en fila, estilo portfolio editorial. El orden
+          acá es el orden en el sitio.
+        </HelpText>
+        <StorageUploadField
+          folder="home"
+          multiple
+          disabled={saving || heroImages.length >= 6}
+          onUploaded={(secureUrl) => {
+            if (!secureUrl || heroImages.includes(secureUrl)) return;
+            setHeroImagenes([...heroImages, secureUrl]);
+          }}
+        />
+        {heroImages.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {heroImages.map((url, idx) => (
+              <div key={url} className="space-y-2 rounded-lg border border-charcoal/10 p-2">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-charcoal/[0.04]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[11px] text-stone">#{idx + 1}</span>
+                  <div className="flex gap-0.5">
+                    <button
+                      type="button"
+                      className="rounded border border-charcoal/15 p-1 disabled:opacity-40"
+                      disabled={idx === 0}
+                      onClick={() => {
+                        const next = [...heroImages];
+                        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                        setHeroImagenes(next);
+                      }}
+                      aria-label="Mover antes"
+                    >
+                      <ArrowUp className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded border border-charcoal/15 p-1 disabled:opacity-40"
+                      disabled={idx === heroImages.length - 1}
+                      onClick={() => {
+                        const next = [...heroImages];
+                        [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                        setHeroImagenes(next);
+                      }}
+                      aria-label="Mover después"
+                    >
+                      <ArrowDown className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded border border-red-200 p-1 text-red-800"
+                      onClick={() =>
+                        void (async () => {
+                          if (
+                            !(await confirmDelete({
+                              detail: "Vas a quitar esta imagen de la portada.",
+                              deletesStoredImages: true,
+                            }))
+                          ) {
+                            return;
+                          }
+                          setHeroImagenes(heroImages.filter((u) => u !== url));
+                        })()
+                      }
+                      aria-label="Quitar imagen"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-amber-900">
+            Todavía no hay imágenes de portada. Subí al menos una (idealmente 6 verticales).
+          </p>
+        )}
       </section>
 
       <section className="space-y-4">
@@ -203,20 +267,21 @@ export function AdminEditorHome() {
                   </button>
                 </div>
               )}
-              <input
-                className={inputClass()}
+              <AdminInput
+                label="Etiqueta del bloque (solo panel)"
+                hint="Nombre para encontrar este idioma en el editor. No se muestra en el sitio."
+                example="Español"
                 value={bloque.etiqueta}
                 onChange={(e) => updateIdioma(bloque.id, { etiqueta: e.target.value })}
-                placeholder="Español, Inglés, …"
-                aria-label="Nombre del bloque (solo para tu referencia en el panel)"
               />
-              <textarea
-                className={`${inputClass()} mt-3`}
+              <AdminTextarea
+                label="Texto de introducción"
+                hint="Primer bloque: texto principal. Los siguientes se muestran más suaves (cursiva)."
+                example="Trabajo la fotografía como un diario visual…"
                 rows={5}
+                className="mt-3"
                 value={bloque.texto}
                 onChange={(e) => updateIdioma(bloque.id, { texto: e.target.value })}
-                placeholder="Texto que verá el visitante en este idioma"
-                aria-label="Texto del bloque"
               />
             </div>
           ))}
@@ -233,99 +298,6 @@ export function AdminEditorHome() {
       </section>
 
       <section className="space-y-4">
-        <SectionHeading>Foto principal del inicio</SectionHeading>
-        <HelpText>
-          <strong>Obligatoria:</strong> es la imagen de la portada a pantalla completa. Se muestra{" "}
-          con recorte automático para cubrir todo el bloque. Podés ajustar el foco horizontal y
-          vertical justo debajo. Subila con el botón. No se puede guardar dejando solo la imagen de
-          muestra.
-        </HelpText>
-        <StorageUploadField
-          folder="home"
-          previewUrl={content.home.heroImagenUrl}
-          onUploaded={(secureUrl) =>
-            setContent({
-              ...content,
-              home: { ...content.home, heroImagenUrl: secureUrl },
-            })
-          }
-          disabled={saving}
-          autoDeletePrevious
-        />
-        <div className="space-y-2">
-          <FieldLabel>Ajuste de recorte (arrastrá en la imagen)</FieldLabel>
-          <HelpText>
-            Vista desktop y móvil con el mismo recorte real del home (cover). Arrastrá en la desktop
-            para mover el foco.
-          </HelpText>
-          <div
-            ref={heroPreviewRef}
-            className="relative w-full cursor-move overflow-hidden rounded-lg border border-charcoal/15 bg-charcoal/[0.04] h-[calc(100dvh-3.5rem)] max-h-[820px] min-h-[320px] lg:h-[100dvh]"
-            style={{ width: "min(100%, calc(100vw - 14rem - 3rem))" }}
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture(e.pointerId);
-              updateHeroFocusFromPointer(e.clientX, e.clientY);
-            }}
-            onPointerMove={(e) => {
-              if (e.buttons !== 1) return;
-              updateHeroFocusFromPointer(e.clientX, e.clientY);
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={content.home.heroImagenUrl}
-              alt=""
-              className="h-full w-full object-cover"
-              style={{ objectPosition: `${content.home.heroFocoX}% ${content.home.heroFocoY}%` }}
-            />
-            <div
-              className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cream bg-charcoal/35 shadow"
-              style={{ left: `${content.home.heroFocoX}%`, top: `${content.home.heroFocoY}%` }}
-            />
-          </div>
-          <div className="pt-3">
-            <p className="mb-2 text-xs uppercase tracking-widest text-stone">Vista móvil</p>
-            <div
-              ref={heroPreviewMobileRef}
-              className="w-full cursor-move overflow-hidden rounded-lg border border-charcoal/15 bg-charcoal/[0.04]"
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-                updateHeroFocusMobileFromPointer(e.clientX, e.clientY);
-              }}
-              onPointerMove={(e) => {
-                if (e.buttons !== 1) return;
-                updateHeroFocusMobileFromPointer(e.clientX, e.clientY);
-              }}
-            >
-              <div className="relative h-[62dvh] max-h-[620px] min-h-[260px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={content.home.heroImagenUrl}
-                  alt=""
-                  className="h-full w-full object-contain"
-                  style={{
-                    objectPosition: `${content.home.heroFocoXMobile}% top`,
-                  }}
-                />
-                <div
-                  className="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-cream bg-charcoal/35 shadow"
-                  style={{
-                    left: `${content.home.heroFocoXMobile}%`,
-                    top: "8px",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          <p className="text-xs text-stone">
-            Foco desktop: X {Math.round(content.home.heroFocoX)}% · Y {Math.round(content.home.heroFocoY)}% ·
-            Foco móvil: X {Math.round(content.home.heroFocoXMobile)}% · Y{" "}
-            {Math.round(content.home.heroFocoYMobile)}%
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-4">
         <SectionHeading>Testimonios (debajo de la portada)</SectionHeading>
         <HelpText>
           Tres columnas en escritorio: arriba el <strong>trabajo realizado</strong> (pequeño), línea
@@ -333,34 +305,32 @@ export function AdminEditorHome() {
           sitio. Añadí o quitá filas con los botones de abajo.
         </HelpText>
         <div className="space-y-3">
-          <div>
-            <FieldLabel htmlFor="test-kicker">Etiqueta pequeña</FieldLabel>
-            <input
-              id="test-kicker"
-              className={inputClass()}
-              value={content.home.testimoniosKicker}
-              onChange={(e) =>
-                setContent({
-                  ...content,
-                  home: { ...content.home, testimoniosKicker: e.target.value },
-                })
-              }
-            />
-          </div>
-          <div>
-            <FieldLabel htmlFor="test-titulo">Título de la sección</FieldLabel>
-            <input
-              id="test-titulo"
-              className={inputClass()}
-              value={content.home.testimoniosTitulo}
-              onChange={(e) =>
-                setContent({
-                  ...content,
-                  home: { ...content.home, testimoniosTitulo: e.target.value },
-                })
-              }
-            />
-          </div>
+          <AdminInput
+            id="test-kicker"
+            label="Etiqueta pequeña"
+            hint="Palabra o frase corta arriba del título de la sección de testimonios."
+            example="Clientes"
+            value={content.home.testimoniosKicker}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                home: { ...content.home, testimoniosKicker: e.target.value },
+              })
+            }
+          />
+          <AdminInput
+            id="test-titulo"
+            label="Título de la sección"
+            hint="Encabezado de los testimonios debajo de la portada."
+            example="Lo que dicen"
+            value={content.home.testimoniosTitulo}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                home: { ...content.home, testimoniosTitulo: e.target.value },
+              })
+            }
+          />
         </div>
         <div className="space-y-5">
           {content.home.testimonios.map((t) => (
@@ -394,67 +364,65 @@ export function AdminEditorHome() {
                   Quitar
                 </button>
               </div>
-              <div>
-                <FieldLabel htmlFor={`test-trabajo-${t.id}`}>Trabajo realizado (opcional)</FieldLabel>
-                <input
-                  id={`test-trabajo-${t.id}`}
-                  className={`${inputClass()} mt-1`}
-                  value={t.trabajoRealizado ?? ""}
-                  placeholder="Ej.: Sesión retrato, edición limitada…"
-                  onChange={(e) =>
-                    setContent({
-                      ...content,
-                      home: {
-                        ...content.home,
-                        testimonios: content.home.testimonios.map((x) =>
-                          x.id === t.id
-                            ? { ...x, trabajoRealizado: e.target.value || undefined }
-                            : x
-                        ),
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div className="mt-3">
-                <FieldLabel htmlFor={`test-nombre-${t.id}`}>Nombre</FieldLabel>
-                <input
-                  id={`test-nombre-${t.id}`}
-                  className={`${inputClass()} mt-1`}
-                  value={t.nombre}
-                  onChange={(e) =>
-                    setContent({
-                      ...content,
-                      home: {
-                        ...content.home,
-                        testimonios: content.home.testimonios.map((x) =>
-                          x.id === t.id ? { ...x, nombre: e.target.value } : x
-                        ),
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div className="mt-3">
-                <FieldLabel htmlFor={`test-texto-${t.id}`}>Testimonio</FieldLabel>
-                <textarea
-                  id={`test-texto-${t.id}`}
-                  className={`${inputClass()} mt-1`}
-                  rows={4}
-                  value={t.testimonio}
-                  onChange={(e) =>
-                    setContent({
-                      ...content,
-                      home: {
-                        ...content.home,
-                        testimonios: content.home.testimonios.map((x) =>
-                          x.id === t.id ? { ...x, testimonio: e.target.value } : x
-                        ),
-                      },
-                    })
-                  }
-                />
-              </div>
+              <AdminInput
+                id={`test-trabajo-${t.id}`}
+                label="Trabajo realizado (opcional)"
+                hint="Línea pequeña arriba del nombre en el sitio."
+                example="Sesión retrato"
+                value={t.trabajoRealizado ?? ""}
+                onChange={(e) =>
+                  setContent({
+                    ...content,
+                    home: {
+                      ...content.home,
+                      testimonios: content.home.testimonios.map((x) =>
+                        x.id === t.id
+                          ? { ...x, trabajoRealizado: e.target.value || undefined }
+                          : x
+                      ),
+                    },
+                  })
+                }
+              />
+              <AdminInput
+                id={`test-nombre-${t.id}`}
+                label="Nombre"
+                hint="Persona o cliente que da el testimonio."
+                example="María G."
+                className="mt-3"
+                value={t.nombre}
+                onChange={(e) =>
+                  setContent({
+                    ...content,
+                    home: {
+                      ...content.home,
+                      testimonios: content.home.testimonios.map((x) =>
+                        x.id === t.id ? { ...x, nombre: e.target.value } : x
+                      ),
+                    },
+                  })
+                }
+              />
+              <AdminTextarea
+                id={`test-texto-${t.id}`}
+                label="Testimonio"
+                hint="Cita o comentario que se muestra en la columna."
+                example="Una experiencia increíble, las fotos quedaron naturales y emotivas."
+                rows={4}
+                className="mt-3"
+                value={t.testimonio}
+                onChange={(e) =>
+                  setContent({
+                    ...content,
+                    home: {
+                      ...content.home,
+                      testimonios: content.home.testimonios.map((x) =>
+                        x.id === t.id ? { ...x, testimonio: e.target.value } : x
+                      ),
+                    },
+                  })
+                }
+              />
             </div>
           ))}
         </div>
@@ -480,105 +448,95 @@ export function AdminEditorHome() {
       </section>
 
       <section className="space-y-4">
-        <SectionHeading>Línea sobre la foto</SectionHeading>
-        <div>
-          <FieldLabel htmlFor="hero-kicker">Texto pequeño (encima del manifiesto)</FieldLabel>
-          <HelpText>
-            Frase cortita de contexto (rubro, ciudad…) que se muestra antes del texto principal del
-            inicio.
-          </HelpText>
-          <input
-            id="hero-kicker"
-            className={inputClass()}
-            value={content.home.heroKicker}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, heroKicker: e.target.value },
-              })
-            }
-          />
-        </div>
+        <SectionHeading>Subtítulo (sobre la introducción)</SectionHeading>
+        <AdminInput
+          id="hero-kicker"
+          label="Línea visible antes del texto de presentación"
+          hint="Es lo que ve el visitante encima de la introducción (ya no hay titular grande con tu nombre)."
+          example="Fotografía analógica · Buenos Aires"
+          value={content.home.heroKicker}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, heroKicker: e.target.value },
+            })
+          }
+        />
       </section>
 
       <section className="space-y-4">
         <SectionHeading>Sección “Trabajos recientes”</SectionHeading>
-        <div>
-          <FieldLabel htmlFor="dest-kicker">Etiqueta pequeña (arriba del título)</FieldLabel>
-          <input
-            id="dest-kicker"
-            className={inputClass()}
-            value={content.home.destacadosKicker}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, destacadosKicker: e.target.value },
-              })
-            }
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="dest-titulo">Título de la sección</FieldLabel>
-          <input
-            id="dest-titulo"
-            className={inputClass()}
-            value={content.home.destacadosTitulo}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, destacadosTitulo: e.target.value },
-              })
-            }
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="dest-link">Texto del enlace a galería</FieldLabel>
-          <input
-            id="dest-link"
-            className={inputClass()}
-            value={content.home.destacadosLinkTexto}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, destacadosLinkTexto: e.target.value },
-              })
-            }
-          />
-        </div>
+        <AdminInput
+          id="dest-kicker"
+          label="Etiqueta pequeña (arriba del título)"
+          hint="Palabra suelta sobre el título de «Trabajos recientes»."
+          example="Portfolio"
+          value={content.home.destacadosKicker}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, destacadosKicker: e.target.value },
+            })
+          }
+        />
+        <AdminInput
+          id="dest-titulo"
+          label="Título de la sección"
+          hint="Encabezado de la grilla de trabajos recientes."
+          example="Trabajos recientes"
+          value={content.home.destacadosTitulo}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, destacadosTitulo: e.target.value },
+            })
+          }
+        />
+        <AdminInput
+          id="dest-link"
+          label="Texto del enlace a portfolio"
+          hint="Etiqueta del enlace que lleva al portfolio completo."
+          example="Ver portfolio"
+          value={content.home.destacadosLinkTexto}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, destacadosLinkTexto: e.target.value },
+            })
+          }
+        />
         <HomeDestacadosEditor content={content} setContent={setContent} />
       </section>
 
       <section className="space-y-4">
         <SectionHeading>Cierre de página (antes del pie)</SectionHeading>
-        <div>
-          <FieldLabel htmlFor="cierre-kicker">Etiqueta pequeña</FieldLabel>
-          <input
-            id="cierre-kicker"
-            className={inputClass()}
-            value={content.home.cierreKicker}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, cierreKicker: e.target.value },
-              })
-            }
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="cierre-texto">Frase principal</FieldLabel>
-          <textarea
-            id="cierre-texto"
-            className={inputClass()}
-            rows={3}
-            value={content.home.cierreTexto}
-            onChange={(e) =>
-              setContent({
-                ...content,
-                home: { ...content.home, cierreTexto: e.target.value },
-              })
-            }
-          />
-        </div>
+        <AdminInput
+          id="cierre-kicker"
+          label="Etiqueta pequeña"
+          hint="Palabra suelta arriba de la frase de cierre, antes del pie de página."
+          example="Contacto"
+          value={content.home.cierreKicker}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, cierreKicker: e.target.value },
+            })
+          }
+        />
+        <AdminTextarea
+          id="cierre-texto"
+          label="Frase principal"
+          hint="Texto de cierre o llamada a la acción al final del inicio."
+          example="¿Querés trabajar juntos? Escribime."
+          rows={3}
+          value={content.home.cierreTexto}
+          onChange={(e) =>
+            setContent({
+              ...content,
+              home: { ...content.home, cierreTexto: e.target.value },
+            })
+          }
+        />
       </section>
 
       <div className="flex flex-wrap items-center gap-4">

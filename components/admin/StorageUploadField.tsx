@@ -120,7 +120,12 @@ export function StorageUploadField({
       return null;
     }
     if (!res.ok) {
-      setErr(data.error || "Error al subir");
+      const base = data.error || "Error al subir";
+      setErr(
+        res.status === 503
+          ? `${base} Revisá NEXT_PUBLIC_SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY en .env.local (local) o en Vercel (producción), y reiniciá el servidor.`
+          : base
+      );
       return null;
     }
     const url = String(data.publicUrl || "").trim();
@@ -134,7 +139,11 @@ export function StorageUploadField({
   function openFilePicker() {
     setErr(null);
     if (disabled) {
-      setErr("Esperá a que termine de guardar y volvé a intentar.");
+      setErr(
+        multiple
+          ? "No podés subir más imágenes ahora (límite alcanzado o guardado en curso)."
+          : "Esperá a que termine de guardar y volvé a intentar."
+      );
       return;
     }
     if (loading) return;

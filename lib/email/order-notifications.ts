@@ -1,4 +1,4 @@
-import type { CheckoutLineItem, OrderStatus } from "@/lib/commerce-types";
+import type { CheckoutLineItem, OrderShipping, OrderStatus } from "@/lib/commerce-types";
 import { sendOrderPaymentEmails } from "@/lib/email/send";
 
 const PAYMENT_NOTIFY_STATUSES = new Set<OrderStatus>(["pendiente", "aprobado", "rechazado"]);
@@ -13,6 +13,7 @@ export async function notifyOrderPaymentEmails(params: {
   total: number;
   currency_id: string;
   mercadoPagoPaymentId: string;
+  shipping?: OrderShipping | null;
 }): Promise<OrderStatus | null> {
   const { status, previousNotifiedStatus } = params;
 
@@ -27,6 +28,7 @@ export async function notifyOrderPaymentEmails(params: {
     total: params.total,
     currency_id: params.currency_id,
     mercadoPagoPaymentId: params.mercadoPagoPaymentId,
+    shipping: params.shipping ?? null,
   };
 
   try {

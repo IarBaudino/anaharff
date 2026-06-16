@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { defaultSiteContent, resolveSeriesCover } from "@/lib/site-content";
+import { SITE_PAGE_SHELL } from "@/lib/layout-constants";
 
 function SeriesCardCover({ label, coverUrl }: { label: string; coverUrl: string }) {
   if (!coverUrl) {
@@ -34,7 +35,7 @@ export default function SeriesPage() {
     : defaultSiteContent.series.projects;
 
   return (
-    <div className="pb-24 pt-6 md:pt-24">
+    <div className={SITE_PAGE_SHELL}>
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
