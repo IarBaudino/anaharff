@@ -40,13 +40,13 @@ export default function HomePage() {
 
       <div className="bg-cream">
         <section className="relative border-b border-charcoal/[0.12]">
-          <div className="mx-auto max-w-[1600px] px-4 py-12 sm:px-6 sm:py-14 lg:px-10 lg:py-16">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              className="mx-auto max-w-3xl"
+              className="max-w-3xl"
             >
               {home.heroKicker.trim() ? (
                 <p className="section-kicker mb-8 text-base md:text-lg">{home.heroKicker}</p>
@@ -80,7 +80,7 @@ export default function HomePage() {
 
         {destacados.length > 0 ? (
           <section className="border-b border-charcoal/[0.12] bg-cream">
-            <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 lg:px-10 lg:pb-24 lg:pt-8">
+            <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pb-24 lg:pt-8">
               <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
@@ -145,13 +145,14 @@ export default function HomePage() {
           </section>
         ) : null}
 
-        <section className="px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+        <section className="py-12 lg:py-16">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="mx-auto max-w-2xl text-center"
+            className="max-w-2xl text-left"
           >
             <p className="section-kicker mb-4">{home.cierreKicker}</p>
             <p className="font-display text-2xl font-light leading-snug text-charcoal md:text-3xl">
@@ -164,6 +165,7 @@ export default function HomePage() {
               Escribir
             </Link>
           </motion.div>
+          </div>
         </section>
       </div>
     </div>

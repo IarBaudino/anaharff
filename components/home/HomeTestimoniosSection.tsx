@@ -18,9 +18,9 @@ export function HomeTestimoniosSection({
   return (
     <section
       aria-labelledby="home-testimonios-heading"
-      className="border-b border-charcoal/[0.1] bg-cream px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-24"
+      className="border-b border-charcoal/[0.1] bg-cream py-16 sm:py-20 lg:py-24"
     >
-      <div className="mx-auto max-w-[1600px]">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <p className="section-kicker mb-2">{kicker}</p>
         <h2
           id="home-testimonios-heading"

@@ -39,7 +39,7 @@ export function Footer({ className }: { className?: string }) {
           </Link>
         </div>
         <div className="flex w-full items-center justify-center gap-3 sm:w-auto sm:justify-end">
-          <span className="text-cream/50">© {new Date().getFullYear()}</span>
+          <span className="text-cream/50">Copyright © All rights reserved.</span>
           <Link
             href="/admin"
             className="rounded-full border border-cream/20 px-2.5 py-0.5 text-[0.6rem] tracking-wide text-cream/55 transition-colors hover:border-cream/35 hover:text-cream"
