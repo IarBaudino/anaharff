@@ -23,6 +23,10 @@ export function HomeHeroGallery({ images }: Props) {
     const el = scrollerRef.current;
     if (!el || images.length < 2) return;
 
+    // Rueda → horizontal solo en desktop; en móvil bloqueaba el scroll vertical.
+    const finePointer = window.matchMedia("(pointer: fine)");
+    if (!finePointer.matches) return;
+
     let targetScroll = el.scrollLeft;
     let rafId = 0;
 
@@ -105,7 +109,7 @@ export function HomeHeroGallery({ images }: Props) {
     <section aria-label="Imagen principal" className="relative w-full bg-[var(--color-cream)]">
       <div
         ref={scrollerRef}
-        className={`flex w-full snap-x snap-proximity overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x ${STRIP_HEIGHT} [scrollbar-width:thin]`}
+        className={`flex w-full snap-x snap-proximity overflow-x-auto overflow-y-hidden ${STRIP_HEIGHT} [scrollbar-width:thin] [-webkit-overflow-scrolling:touch]`}
       >
         {images.map((url, index) => (
           <div
@@ -126,8 +130,8 @@ export function HomeHeroGallery({ images }: Props) {
       </div>
       {images.length > 1 ? (
         <p className="sr-only">
-          Deslizá horizontalmente o usá la rueda del mouse sobre las imágenes para ver todas las
-          fotos de la portada.
+          Deslizá horizontalmente para ver todas las fotos de la portada; deslizá verticalmente para
+          bajar al resto de la página.
         </p>
       ) : null}
     </section>
