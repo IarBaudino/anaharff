@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SeriesProjectClient } from "@/components/series/SeriesProjectClient";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import { siteConfig } from "@/lib/seo";
+import { buildAbsolutePageMetadata } from "@/lib/seo-metadata";
 import { getServerSiteContent } from "@/lib/site-content-server";
 
 export async function generateMetadata({
@@ -16,21 +17,11 @@ export async function generateMetadata({
   const path = `/series/${slug}`;
   const description = project.description || project.statement || `Serie ${project.label}`;
 
-  return {
-    title: { absolute: `${project.label} · Series · ${siteConfig.name}` },
+  return buildAbsolutePageMetadata({
+    absoluteTitle: `${project.label} · Series · ${siteConfig.name}`,
     description,
-    alternates: { canonical: absoluteUrl(path) },
-    openGraph: {
-      title: `${project.label} · ${siteConfig.name}`,
-      description,
-      url: absoluteUrl(path),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${project.label} · ${siteConfig.name}`,
-      description,
-    },
-  };
+    path,
+  });
 }
 
 export default async function SeriesDetailPage({

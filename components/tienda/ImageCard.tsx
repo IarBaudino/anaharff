@@ -7,6 +7,7 @@ import { Eye } from "lucide-react";
 import { AddToCartButton } from "./AddToCartButton";
 import { ProductPreviewModal } from "./ProductPreviewModal";
 import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
+import { isProductSoldOut, stockBadgeText } from "@/lib/stock";
 import { cn } from "@/lib/utils";
 import { siteButtonGhost, siteButtonSolid } from "@/lib/site-buttons";
 
@@ -18,6 +19,8 @@ export function ImageCard({ item }: ImageCardProps) {
   const urls = productGalleryUrls(item);
   const [previewOpen, setPreviewOpen] = useState(false);
   const main = urls[0];
+  const soldOut = isProductSoldOut(item);
+  const stockLabel = stockBadgeText(item);
 
   return (
     <article className="group block w-full">
@@ -69,19 +72,45 @@ export function ImageCard({ item }: ImageCardProps) {
           <p className="mt-1 text-sm font-medium tabular-nums text-charcoal">
             ${item.precio.toLocaleString("es-AR")} ARS
           </p>
+          {stockLabel ? (
+            <p
+              className={cn(
+                "mt-1 text-xs uppercase tracking-wide",
+                soldOut ? "text-red-700" : "text-stone"
+              )}
+            >
+              {stockLabel}
+            </p>
+          ) : null}
         </button>
 
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <AddToCartButton item={item} className={cn(siteButtonGhost, "w-full sm:w-auto")} />
-          <Link
-            href="/tienda/carrito"
-            className={cn(
-              siteButtonSolid,
-              "inline-flex w-full items-center justify-center sm:w-auto"
-            )}
-          >
-            Comprar
-          </Link>
+          <AddToCartButton
+            item={item}
+            disabled={soldOut}
+            className={cn(siteButtonGhost, "w-full sm:w-auto")}
+          />
+          {soldOut ? (
+            <span
+              className={cn(
+                siteButtonSolid,
+                "inline-flex w-full cursor-not-allowed items-center justify-center opacity-50 sm:w-auto"
+              )}
+              aria-disabled
+            >
+              Agotado
+            </span>
+          ) : (
+            <Link
+              href="/tienda/carrito"
+              className={cn(
+                siteButtonSolid,
+                "inline-flex w-full items-center justify-center sm:w-auto"
+              )}
+            >
+              Comprar
+            </Link>
+          )}
         </div>
       </div>
 

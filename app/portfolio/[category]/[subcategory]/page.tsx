@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryContent } from "@/components/portfolio/CategoryContent";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import { siteConfig } from "@/lib/seo";
+import { buildAbsolutePageMetadata } from "@/lib/seo-metadata";
 import { getServerSiteContent } from "@/lib/site-content-server";
 
 export async function generateMetadata({
@@ -17,16 +18,11 @@ export async function generateMetadata({
   const path = `/portfolio/${category}/${subcategory}`;
   const description = sub.description || `${sub.label} · ${siteConfig.name}`;
 
-  return {
-    title: { absolute: `${sub.label} · ${cat.label} · ${siteConfig.name}` },
+  return buildAbsolutePageMetadata({
+    absoluteTitle: `${sub.label} · ${cat.label} · ${siteConfig.name}`,
     description,
-    alternates: { canonical: absoluteUrl(path) },
-    openGraph: {
-      title: `${sub.label} · ${siteConfig.name}`,
-      description,
-      url: absoluteUrl(path),
-    },
-  };
+    path,
+  });
 }
 
 export default async function PortfolioSubcategoryPage({

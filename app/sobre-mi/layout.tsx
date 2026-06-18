@@ -1,26 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 
-const title = "Acerca de mí";
+const title = "La artista";
 const description =
-  "Biografía, enfoque y sesiones de Ana Harff. Fotografía analógica en Buenos Aires.";
+  "Biografía y trayectoria de Ana Harff. Fotografía analógica en Buenos Aires.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  alternates: { canonical: absoluteUrl("/sobre-mi") },
-  openGraph: {
-    title: `${title} · ${siteConfig.name}`,
-    description,
-    url: absoluteUrl("/sobre-mi"),
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${title} · ${siteConfig.name}`,
-    description,
-  },
-};
+  path: "/sobre-mi",
+});
 
 export default function SobreMiLayout({ children }: { children: ReactNode }) {
   return children;

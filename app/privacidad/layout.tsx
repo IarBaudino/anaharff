@@ -2,16 +2,16 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { buildPageMetadata } from "@/lib/seo-metadata";
 
-const title = "Tienda";
+const title = "Privacidad";
 const description =
-  "Edición limitada y obras disponibles para adquirir. Fotografía analógica de Ana Harff.";
+  "Política de privacidad y tratamiento de datos personales del sitio de Ana Harff (Argentina).";
 
 export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  path: "/tienda",
+  path: "/privacidad",
 });
 
-export default function TiendaLayout({ children }: { children: ReactNode }) {
+export default function PrivacidadLayout({ children }: { children: ReactNode }) {
   return children;
 }

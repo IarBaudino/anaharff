@@ -6,6 +6,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
+  verifyBeforeUpdateEmail,
 } from "firebase/auth";
 import {
   collection,
@@ -25,7 +26,8 @@ import { Package, Truck, User } from "lucide-react";
 import { auth, db, isFirebaseConfigured } from "@/lib/firebase-client";
 import { useAuth } from "@/components/AuthProvider";
 import { ensureCustomerProfile } from "@/lib/customer-profile";
-import type { CustomerRecord, OrderRecord, OrderStatus } from "@/lib/commerce-types";
+import type { CustomerRecord, OrderRecord } from "@/lib/commerce-types";
+import { OrderCustomerCard } from "@/components/orders/OrderCustomerCard";
 import { cn } from "@/lib/utils";
 import { siteButtonOutline, siteButtonSolid } from "@/lib/site-buttons";
 import { ShippingAddressForm } from "@/components/shipping/ShippingAddressForm";
@@ -47,37 +49,6 @@ type TabId = (typeof tabs)[number]["id"];
 
 function inputClass() {
   return "w-full rounded-xl border border-charcoal/20 bg-cream px-4 py-3 focus:border-charcoal focus:outline-none";
-}
-
-const statusLabels: Record<OrderStatus, string> = {
-  pendiente: "Pendiente",
-  aprobado: "Aprobado",
-  rechazado: "Rechazado",
-  en_preparacion: "En preparación",
-  completado: "Completado",
-  cancelado: "Cancelado",
-};
-
-function statusBadgeClass(status: OrderStatus): string {
-  switch (status) {
-    case "aprobado":
-    case "completado":
-      return "border-emerald-200 bg-emerald-50 text-emerald-900";
-    case "en_preparacion":
-      return "border-sky-200 bg-sky-50 text-sky-900";
-    case "rechazado":
-    case "cancelado":
-      return "border-red-200 bg-red-50 text-red-900";
-    default:
-      return "border-amber-200 bg-amber-50 text-amber-900";
-  }
-}
-
-function formatDate(d: unknown) {
-  if (!d) return "—";
-  if (d instanceof Timestamp) return d.toDate().toLocaleString("es-AR");
-  if (d instanceof Date) return d.toLocaleString("es-AR");
-  return String(d);
 }
 
 function mergeOrderLists(
@@ -121,6 +92,11 @@ export function CuentaDashboard() {
   const [passConfirm, setPassConfirm] = useState("");
   const [passSaving, setPassSaving] = useState(false);
   const [passMsg, setPassMsg] = useState<string | null>(null);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPass, setEmailPass] = useState("");
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
 
   const [envio, setEnvio] = useState<ShippingAddress>(() => emptyShippingAddress());
   const [envioSaving, setEnvioSaving] = useState(false);
@@ -234,6 +210,23 @@ export function CuentaDashboard() {
     return () => unsub();
   }, [user]);
 
+  useEffect(() => {
+    if (!user?.email || !profileReady) return;
+    if (profile?.email === user.email) return;
+
+    void (async () => {
+      try {
+        const token = await user.getIdToken();
+        await fetch("/api/account/sync-email", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        /* no bloquea la cuenta */
+      }
+    })();
+  }, [user, profile?.email, profileReady]);
+
   async function onSaveProfile(e: FormEvent) {
     e.preventDefault();
     setProfileMsg(null);
@@ -340,6 +333,38 @@ export function CuentaDashboard() {
     }
   }
 
+  async function onChangeEmail(e: FormEvent) {
+    e.preventDefault();
+    setEmailMsg(null);
+    if (!auth || !user?.email) return;
+
+    const trimmed = newEmail.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setEmailMsg("Ingresá un email válido.");
+      return;
+    }
+    if (trimmed.toLowerCase() === user.email.toLowerCase()) {
+      setEmailMsg("Ese ya es tu email actual.");
+      return;
+    }
+
+    setEmailSaving(true);
+    try {
+      const cred = EmailAuthProvider.credential(user.email, emailPass);
+      await reauthenticateWithCredential(user, cred);
+      await verifyBeforeUpdateEmail(user, trimmed);
+      setNewEmail("");
+      setEmailPass("");
+      setEmailMsg(
+        "Te enviamos un enlace al nuevo correo. Confirmalo para completar el cambio."
+      );
+    } catch {
+      setEmailMsg("No se pudo iniciar el cambio. Revisá tu contraseña y el email nuevo.");
+    } finally {
+      setEmailSaving(false);
+    }
+  }
+
   if (!user) return null;
 
   return (
@@ -383,14 +408,51 @@ export function CuentaDashboard() {
             <div>
               <h2 className="font-display text-2xl font-light text-charcoal">Mis datos</h2>
               <p className="mt-1 text-sm text-stone">
-                Actualizá tu nombre y teléfono. El correo de la cuenta solo puede cambiarlo quien
-                administra el sitio.
+                Actualizá tu nombre, teléfono y correo de la cuenta.
               </p>
             </div>
 
             <section className="space-y-4 rounded-lg border border-charcoal/10 bg-cream/70 p-5">
-              <p className="text-xs uppercase tracking-widest text-stone">Cuenta</p>
+              <p className="text-xs uppercase tracking-widest text-stone">Correo de la cuenta</p>
               <p className="break-all text-sm text-charcoal">{user.email}</p>
+              <form onSubmit={onChangeEmail} className="space-y-4 border-t border-charcoal/10 pt-4">
+                <div>
+                  <label className="mb-2 block text-xs tracking-widest" htmlFor="cuenta-email-new">
+                    Nuevo email
+                  </label>
+                  <input
+                    id="cuenta-email-new"
+                    type="email"
+                    className={inputClass()}
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    autoComplete="email"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs tracking-widest" htmlFor="cuenta-email-pass">
+                    Contraseña actual (para confirmar)
+                  </label>
+                  <PasswordField
+                    id="cuenta-email-pass"
+                    value={emailPass}
+                    onChange={(e) => setEmailPass(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={emailSaving}
+                  className={cn(siteButtonOutline, "w-full sm:w-auto")}
+                >
+                  {emailSaving ? "Enviando…" : "Cambiar email"}
+                </button>
+                {emailMsg ? <p className="text-sm text-charcoal/80">{emailMsg}</p> : null}
+                <p className="text-xs text-stone">
+                  Firebase te enviará un enlace de verificación al nuevo correo. Hasta confirmarlo,
+                  seguís ingresando con el email actual.
+                </p>
+              </form>
             </section>
 
             <section className="space-y-4 rounded-lg border border-charcoal/10 bg-cream/70 p-5">
@@ -550,41 +612,7 @@ export function CuentaDashboard() {
             ) : (
               <ul className="space-y-4">
                 {orders.map((o) => (
-                  <li
-                    key={o.id}
-                    className="rounded-lg border border-charcoal/10 bg-cream/80 p-5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs text-stone">{formatDate(o.createdAt)}</p>
-                        <p className="mt-1 text-xs text-stone">Pedido #{o.id.slice(0, 8)}…</p>
-                      </div>
-                      <span
-                        className={cn(
-                          "rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wide",
-                          statusBadgeClass(o.status)
-                        )}
-                      >
-                        {statusLabels[o.status] ?? o.status}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-lg font-medium text-charcoal">
-                      ${Number(o.total).toLocaleString("es-AR")}{" "}
-                      <span className="text-sm font-normal text-stone">{o.currency_id}</span>
-                    </p>
-                    <ul className="mt-4 space-y-2 border-t border-charcoal/10 pt-4 text-sm text-charcoal/90">
-                      {o.items.map((it, idx) => (
-                        <li key={`${o.id}-${it.id}-${idx}`} className="flex justify-between gap-4">
-                          <span>
-                            {it.title} ×{it.quantity}
-                          </span>
-                          <span className="shrink-0 text-stone">
-                            ${(it.unit_price * it.quantity).toLocaleString("es-AR")}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
+                  <OrderCustomerCard key={o.id} order={o} />
                 ))}
               </ul>
             )}

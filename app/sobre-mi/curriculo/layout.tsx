@@ -1,26 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 
 const title = "Currículo";
 const description =
   "Trayectoria, exposiciones y proyectos de Ana Harff. Fotografía analógica en Buenos Aires.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  alternates: { canonical: absoluteUrl("/sobre-mi/curriculo") },
-  openGraph: {
-    title: `${title} · ${siteConfig.name}`,
-    description,
-    url: absoluteUrl("/sobre-mi/curriculo"),
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${title} · ${siteConfig.name}`,
-    description,
-  },
-};
+  path: "/sobre-mi/curriculo",
+});
 
 export default function CurriculoLayout({ children }: { children: ReactNode }) {
   return children;

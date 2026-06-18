@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { motion } from "framer-motion";
 import { auth, isFirebaseConfigured } from "@/lib/firebase-client";
+import {
+  passwordResetUserMessage,
+  shouldTreatPasswordResetAsSuccess,
+} from "@/lib/firebase-auth-messages";
+import { getClientSiteOrigin } from "@/lib/site-origin-client";
 import { cn } from "@/lib/utils";
 import { siteButtonSolid } from "@/lib/site-buttons";
 
@@ -13,10 +19,28 @@ function inputClass() {
 }
 
 export default function RecuperarContrasenaPage() {
+  return (
+    <Suspense fallback={<div className="py-24 text-center text-stone">Cargando…</div>}>
+      <RecuperarForm />
+    </Suspense>
+  );
+}
+
+function RecuperarForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("email")?.trim();
+    if (fromQuery) setEmail(fromQuery);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (auth) auth.languageCode = "es";
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -36,12 +60,18 @@ export default function RecuperarContrasenaPage() {
 
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, trimmed);
+      await sendPasswordResetEmail(auth, trimmed, {
+        url: `${getClientSiteOrigin()}/cuenta/ingresar?reset=ok`,
+        handleCodeInApp: false,
+      });
       setSuccess(true);
-    } catch {
-      setError(
-        "No pudimos enviar el correo. Revisá que el email sea el de tu cuenta o probá de nuevo en unos minutos."
-      );
+    } catch (err) {
+      if (shouldTreatPasswordResetAsSuccess(err)) {
+        setSuccess(true);
+        return;
+      }
+      const msg = passwordResetUserMessage(err);
+      setError(msg || "No pudimos enviar el correo. Probá de nuevo en unos minutos.");
     } finally {
       setLoading(false);
     }

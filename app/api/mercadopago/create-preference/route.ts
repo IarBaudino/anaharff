@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import type { CheckoutLineItem, OrderShipping } from "@/lib/commerce-types";
 import { getServerSiteContent } from "@/lib/site-content-server";
+import { validateCheckoutStock } from "@/lib/stock";
 import {
   normalizeShippingAddress,
   shippingCostForZone,
@@ -87,6 +88,11 @@ export async function POST(request: NextRequest) {
         picture_url: item.picture_url,
       })
     );
+
+    const stockError = validateCheckoutStock(site.tienda.items, normalizedItems);
+    if (stockError) {
+      return NextResponse.json({ error: stockError }, { status: 400 });
+    }
 
     if (expectedShippingCost > 0) {
       normalizedItems.push({

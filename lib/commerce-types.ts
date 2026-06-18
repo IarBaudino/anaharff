@@ -54,6 +54,8 @@ export interface OrderRecord {
   notasAdmin?: string;
   /** Evita reenviar el mismo mail de estado de pago (pendiente / aprobado / rechazado). */
   lastEmailNotifiedStatus?: OrderStatus | null;
+  /** Evita descontar stock más de una vez por el mismo pedido. */
+  stockApplied?: boolean;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

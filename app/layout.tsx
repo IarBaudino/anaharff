@@ -7,6 +7,7 @@ import { PageBody } from "@/components/PageBody";
 import { AuthProvider } from "@/components/AuthProvider";
 import { SiteContentProvider } from "@/hooks/useSiteContent";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
+import SentryClientInit from "@/components/SentryClientInit";
 import { getSiteOrigin, siteConfig } from "@/lib/seo";
 
 const cormorant = Cormorant_Garamond({
@@ -80,6 +81,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${cormorant.variable} ${lato.variable}`}>
       <body className="min-h-screen flex flex-col font-sans">
+        <SentryClientInit />
         <SiteJsonLd />
         <AuthProvider>
           <SiteContentProvider>

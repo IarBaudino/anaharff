@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "optimize:images": "node scripts/convert-to-avif.js",
     "optimize:image": "node scripts/optimize-image.js",
     "grant-admin": "node --env-file=.env.local scripts/grant-admin-by-email.cjs",
@@ -16,6 +18,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@supabase/supabase-js": "^2.49.8",
+    "@sentry/nextjs": "^9.47.1",
     "clsx": "^2.1.1",
     "firebase": "^12.4.0",
     "firebase-admin": "^12.7.0",
@@ -42,6 +45,7 @@
     "eslint-config-next": "^15.5.9",
     "sharp": "^0.34.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

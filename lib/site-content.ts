@@ -1,5 +1,6 @@
 import { ensureCurriculoLinea } from "@/lib/curriculo-display";
 import { normalizeTiendaEnvios, type TiendaEnvios } from "@/lib/shipping";
+import { normalizeStockValue } from "@/lib/stock";
 
 export type { TiendaEnvios };
 
@@ -10,6 +11,8 @@ export interface StoreItem {
   precio: number;
   /** Una imagen por producto (tarjeta, carrito, checkout). */
   imagenUrl: string;
+  /** Unidades disponibles; `null` = sin límite. */
+  stock?: number | null;
   /** @deprecated Ya no se usa en el inicio; quedó en datos viejos de Firestore. */
   destacarEnInicio?: boolean;
   /** @deprecated Ver `destacarEnInicio`. */
@@ -1193,6 +1196,7 @@ export function normalizeStoreItems(items: unknown): StoreItem[] {
       descripcion: typeof it.descripcion === "string" ? it.descripcion : "",
       precio: typeof it.precio === "number" ? it.precio : 0,
       imagenUrl,
+      stock: normalizeStockValue(it.stock),
       destacarEnInicio: Boolean(it.destacarEnInicio),
       destacadoOrden:
         typeof it.destacadoOrden === "number" && Number.isFinite(it.destacadoOrden)

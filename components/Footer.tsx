@@ -25,6 +25,9 @@ export function Footer({ className }: { className?: string }) {
           <Link href="/contacto" className="transition-colors hover:text-cream">
             Contacto
           </Link>
+          <Link href="/privacidad" className="transition-colors hover:text-cream">
+            Privacidad
+          </Link>
           <Link href="/tienda" className="transition-colors hover:text-cream">
             Tienda
           </Link>

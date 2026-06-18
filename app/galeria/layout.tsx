@@ -1,23 +1,16 @@
-import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import type { ReactNode } from "react";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 
 const title = "Portfolio";
-const description = "Álbumes fotográficos y series de Ana Harff en una sola navegación.";
+const description =
+  "Retrato, desnudo, familiar, eventos y naturaleza. Galerías de fotografía analógica de Ana Harff, Buenos Aires.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  alternates: { canonical: absoluteUrl("/galeria") },
-  openGraph: {
-    title: `${title} · ${siteConfig.name}`,
-    description,
-    url: absoluteUrl("/galeria"),
-    siteName: siteConfig.name,
-    locale: "es_AR",
-    type: "website",
-  },
-};
+  path: "/galeria",
+});
 
 export default function GaleriaLayout({ children }: { children: ReactNode }) {
   return children;

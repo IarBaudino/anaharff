@@ -16,5 +16,5 @@ export const siteConfig = {
   locale: "es_AR",
   defaultTitle: "Ana Harff | Fotografía analógica | Buenos Aires",
   defaultDescription:
-    "Fotografía analógica en Buenos Aires. Portfolio de retratos, desnudos artísticos y series. Igualdad, diversidad y autenticidad corporal.",
+    "Fotografía analógica en Buenos Aires. Portfolio: retrato, desnudo, familiar, eventos y naturaleza; series y proyectos personales. Ana Harff.",
 } as const;

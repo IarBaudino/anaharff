@@ -15,6 +15,7 @@ export default function robots(): MetadataRoute.Robots {
           "/tienda/exito",
           "/tienda/error",
           "/tienda/pendiente",
+          "/tienda/carrito",
         ],
       },
     ],

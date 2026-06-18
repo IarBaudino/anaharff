@@ -9,9 +9,11 @@ import { productGalleryUrls, type StoreItem } from "@/lib/site-content";
 export function AddToCartButton({
   item,
   className,
+  disabled = false,
 }: {
   item: StoreItem;
   className?: string;
+  disabled?: boolean;
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = useState(false);
@@ -25,6 +27,7 @@ export function AddToCartButton({
   }, []);
 
   const handleClick = useCallback(() => {
+    if (disabled) return;
     addItem({
       id: item.id,
       title: item.titulo,
@@ -35,12 +38,13 @@ export function AddToCartButton({
     setAdded(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setAdded(false), 2000);
-  }, [addItem, item, pics]);
+  }, [addItem, disabled, item, pics]);
 
   return (
     <button
       type="button"
       onClick={handleClick}
+      disabled={disabled}
       className={cn(
         "inline-flex items-center rounded-full border px-4 py-2.5 text-sm font-medium leading-5 shadow-sm transition-colors",
         added

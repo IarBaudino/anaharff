@@ -1,26 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 
 const title = "Blog";
 const description =
   "Notas sobre fotografía analógica, proceso creativo y proyectos. Ana Harff, Buenos Aires.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  alternates: { canonical: absoluteUrl("/blog") },
-  openGraph: {
-    title: `${title} · ${siteConfig.name}`,
-    description,
-    url: absoluteUrl("/blog"),
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${title} · ${siteConfig.name}`,
-    description,
-  },
-};
+  path: "/blog",
+});
 
 export default function BlogLayout({ children }: { children: ReactNode }) {
   return children;

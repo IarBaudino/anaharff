@@ -1,26 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { absoluteUrl, siteConfig } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo-metadata";
 
 const title = "Portfolio";
 const description =
-  "Galerías de fotografía analógica: desnudos, retratos, artístico y experimental. Ana Harff, Buenos Aires.";
+  "Retrato, desnudo, familiar, eventos y naturaleza. Galerías de fotografía analógica de Ana Harff, Buenos Aires.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title,
   description,
-  alternates: { canonical: absoluteUrl("/portfolio") },
-  openGraph: {
-    title: `${title} · ${siteConfig.name}`,
-    description,
-    url: absoluteUrl("/portfolio"),
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${title} · ${siteConfig.name}`,
-    description,
-  },
-};
+  path: "/portfolio",
+});
 
 export default function PortfolioLayout({ children }: { children: ReactNode }) {
   return children;

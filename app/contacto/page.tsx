@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { SectionDivider } from "@/components/SectionDivider";
 import { cn } from "@/lib/utils";
@@ -297,7 +298,11 @@ export default function ContactoPage() {
                 <strong className="font-medium text-charcoal">
                   solo para responder esta consulta
                 </strong>
-                , conforme a la normativa aplicable en Argentina (Ley 25.326).
+                , conforme a la{" "}
+                <Link href="/privacidad" className="text-accent underline underline-offset-2">
+                  política de privacidad
+                </Link>{" "}
+                y la normativa aplicable en Argentina (Ley 25.326).
               </span>
             </label>
             {errors.consentimiento && (

@@ -47,10 +47,10 @@ const baseNavItems: NavItem[] = [
 ];
 
 const railLink =
-  "block w-full py-2.5 pl-0.5 text-left font-display text-[0.8rem] font-light uppercase tracking-[0.18em] text-charcoal transition-colors hover:text-accent lg:text-[0.85rem]";
+  "block w-full py-2.5 pl-0.5 text-left font-display text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-charcoal transition-colors hover:text-accent lg:text-[0.85rem]";
 
 const railSubLink =
-  "block w-full py-1.5 pl-3 text-left font-display text-[0.72rem] font-light tracking-wide text-stone transition-colors hover:text-charcoal lg:text-[0.78rem]";
+  "block w-full py-1.5 pl-3 text-left font-display text-[0.72rem] font-medium tracking-wide text-stone transition-colors hover:text-charcoal lg:text-[0.78rem]";
 
 const navSocialIconClass =
   "inline-flex size-9 shrink-0 items-center justify-center rounded-md text-charcoal/70 transition-colors hover:bg-charcoal/[0.06] hover:text-charcoal";
@@ -103,8 +103,8 @@ function CartNavLink({
           /* railLink usa `block` y anulaba el flex: icono y texto quedaban en columna */
           "flex w-full min-w-0 flex-nowrap items-center gap-2 py-2.5 text-left transition-colors hover:text-accent",
           variant === "sidebar" &&
-            "font-display text-[0.8rem] font-light uppercase tracking-[0.18em] text-charcoal pl-0.5 lg:text-[0.85rem]",
-          variant === "drawer" && "justify-center text-center font-display text-lg font-light text-charcoal"
+            "font-display text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-charcoal pl-0.5 lg:text-[0.85rem]",
+          variant === "drawer" && "justify-center text-center font-display text-lg font-semibold text-charcoal"
         )}
       >
         <ShoppingCart className="size-4 shrink-0 opacity-80" strokeWidth={1.75} />
@@ -309,7 +309,7 @@ export function Header() {
       <header className="fixed inset-x-0 top-0 z-[100] flex h-14 items-center justify-between bg-[var(--color-cream)] px-3 lg:hidden">
         <Link
           href="/"
-          className="font-display text-lg font-light uppercase tracking-[0.12em] text-charcoal transition-colors hover:text-accent"
+          className="font-display text-lg font-semibold uppercase tracking-[0.12em] text-charcoal transition-colors hover:text-accent"
         >
           ANA HARFF
         </Link>

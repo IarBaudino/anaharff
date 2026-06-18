@@ -27,6 +27,7 @@ function IngresarForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/cuenta";
+  const resetOk = searchParams.get("reset") === "ok";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +65,12 @@ function IngresarForm() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md border border-charcoal/10 bg-cream p-8 rounded-lg shadow-sm"
       >
-        <h1 className="font-display text-3xl font-light mb-2">Ingresar</h1>
+        <h1 className="mb-2 font-display text-3xl font-light">Ingresar</h1>
+        {resetOk ? (
+          <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            Contraseña actualizada. Ya podés ingresar con tu nueva clave.
+          </p>
+        ) : null}
         <form onSubmit={onSubmit} className="space-y-4 mt-6">
           <div>
             <label className="block text-xs tracking-widest mb-2" htmlFor="email">
@@ -92,7 +98,10 @@ function IngresarForm() {
           </div>
           {error && <p className="text-sm text-red-700">{error}</p>}
           <p className="text-right text-xs">
-            <Link href="/cuenta/recuperar" className="text-accent underline underline-offset-2">
+            <Link
+              href={`/cuenta/recuperar?email=${encodeURIComponent(email)}`}
+              className="text-accent underline underline-offset-2"
+            >
               Olvidé mi contraseña
             </Link>
           </p>

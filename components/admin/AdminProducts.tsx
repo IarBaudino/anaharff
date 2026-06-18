@@ -240,6 +240,20 @@ export function AdminProducts() {
                   })
                 }
               />
+              <AdminInput
+                label="Stock"
+                hint="Unidades disponibles. Dejá vacío para sin límite; 0 = agotado."
+                example="5"
+                type="number"
+                min={0}
+                value={item.stock ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  updateItem(content, setContent, idx, {
+                    stock: raw === "" ? null : Math.max(0, Number(raw) || 0),
+                  });
+                }}
+              />
             </div>
             <AdminTextarea
               label="Descripción"
@@ -334,6 +348,7 @@ function addProduct(
       descripcion: "",
       precio: 0,
       imagenUrl: "",
+      stock: null,
     },
   ];
   setContent({

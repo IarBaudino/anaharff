@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import type { DocumentReference, Firestore } from "firebase-admin/firestore";
 import type { CheckoutLineItem, OrderRecord, OrderShipping, OrderStatus } from "@/lib/commerce-types";
 import { notifyOrderPaymentEmails } from "@/lib/email/order-notifications";
+import { decrementProductStock } from "@/lib/inventory";
 
 type MPPayer = { email?: string; first_name?: string; last_name?: string };
 
@@ -102,6 +103,20 @@ async function bumpCustomerOrderStats(db: Firestore, customerUid: string) {
   );
 }
 
+async function applyStockIfApproved(
+  db: Firestore,
+  orderRef: DocumentReference,
+  orderData: OrderRecord,
+  items: CheckoutLineItem[]
+) {
+  if (orderData.status !== "aprobado" || orderData.stockApplied) return;
+  await decrementProductStock(db, items);
+  await orderRef.update({
+    stockApplied: true,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
 export async function persistOrderFromPayment(params: {
   db: Firestore;
   payment: MPPayment;
@@ -171,6 +186,15 @@ export async function persistOrderFromPayment(params: {
       shipping: sessionShipping ?? prev.shipping ?? null,
     });
 
+    const mergedItems = items.length ? items : prev.items;
+    const mergedStatus = statusChanged ? orderStatus : prevStatus;
+    await applyStockIfApproved(
+      db,
+      doc.ref,
+      { ...prev, status: mergedStatus, stockApplied: prev.stockApplied },
+      mergedItems
+    );
+
     return { orderId: doc.id, created: false };
   }
 
@@ -222,6 +246,10 @@ export async function persistOrderFromPayment(params: {
     paymentId: String(paymentId),
     shipping: sessionShipping ?? null,
   });
+
+  if (orderStatus === "aprobado") {
+    await applyStockIfApproved(db, orderRef, record, items);
+  }
 
   return { orderId: orderRef.id, created: true };
 }

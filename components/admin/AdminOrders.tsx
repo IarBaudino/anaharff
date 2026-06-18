@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   collection,
   onSnapshot,
@@ -11,8 +11,11 @@ import {
   updateDoc,
   Timestamp,
 } from "firebase/firestore";
+import { Download, Search } from "lucide-react";
 import { db, isFirebaseConfigured } from "@/lib/firebase-client";
 import type { OrderRecord, OrderStatus } from "@/lib/commerce-types";
+import { orderStatusLabels } from "@/lib/order-labels";
+import { downloadCsv, ordersToCsv } from "@/lib/orders-csv";
 import { formatShippingAddressBlock } from "@/lib/shipping";
 
 function formatDate(d: unknown) {
@@ -26,14 +29,11 @@ function formatDate(d: unknown) {
   return String(d);
 }
 
-const statusLabels: Record<OrderStatus, string> = {
-  pendiente: "Pendiente",
-  aprobado: "Aprobado",
-  rechazado: "Rechazado",
-  en_preparacion: "En preparación",
-  completado: "Completado",
-  cancelado: "Cancelado",
-};
+function orderTimestamp(d: unknown): number {
+  if (d instanceof Timestamp) return d.toMillis();
+  if (d instanceof Date) return d.getTime();
+  return 0;
+}
 
 const adminStatuses: OrderStatus[] = [
   "aprobado",
@@ -44,10 +44,19 @@ const adminStatuses: OrderStatus[] = [
   "rechazado",
 ];
 
+const statusFilterOptions: { value: "" | OrderStatus; label: string }[] = [
+  { value: "", label: "Todos los estados" },
+  ...adminStatuses.map((s) => ({ value: s, label: orderStatusLabels[s] })),
+];
+
 export function AdminOrders() {
   const [orders, setOrders] = useState<(OrderRecord & { id: string })[]>([]);
   const [selected, setSelected] = useState<(OrderRecord & { id: string }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | OrderStatus>("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
     if (!isFirebaseConfigured || !db) {
@@ -55,7 +64,7 @@ export function AdminOrders() {
       return;
     }
 
-    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(80));
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(200));
 
     const unsub = onSnapshot(q, (snap) => {
       const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as OrderRecord) }));
@@ -65,6 +74,37 @@ export function AdminOrders() {
 
     return () => unsub();
   }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const fromMs = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null;
+    const toMs = dateTo ? new Date(`${dateTo}T23:59:59.999`).getTime() : null;
+
+    return orders.filter((o) => {
+      if (statusFilter && o.status !== statusFilter) return false;
+      const ts = orderTimestamp(o.createdAt);
+      if (fromMs !== null && ts < fromMs) return false;
+      if (toMs !== null && ts > toMs) return false;
+      if (!q) return true;
+      const haystack = [
+        o.id,
+        o.customerEmail,
+        o.payerName,
+        o.mercadoPagoPaymentId,
+        o.externalReference,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [orders, search, statusFilter, dateFrom, dateTo]);
+
+  function exportFiltered() {
+    if (!filtered.length) return;
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(`pedidos-anaharff-${stamp}.csv`, ordersToCsv(filtered));
+  }
 
   if (!isFirebaseConfigured) {
     return (
@@ -81,43 +121,103 @@ export function AdminOrders() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-2xl mb-2">Pedidos</h2>
+        <h2 className="mb-2 font-display text-2xl">Pedidos</h2>
         <p className="text-sm text-stone">
-          Pedidos que llegan desde la tienda (pago y confirmación). Podés actualizar el estado y
-          dejar notas para las entregas.
+          Pedidos desde la tienda. Filtrá, buscá y exportá a CSV para tu operación diaria.
         </p>
+      </div>
+
+      <div className="grid gap-3 rounded-lg border border-charcoal/10 bg-cream/60 p-4 md:grid-cols-2 lg:grid-cols-4">
+        <label className="block text-sm lg:col-span-2">
+          <span className="mb-1 block text-xs uppercase tracking-widest text-stone">Buscar</span>
+          <span className="relative flex">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Email, nombre, ID, MP…"
+              className="w-full rounded border border-charcoal/20 bg-cream py-2 pl-9 pr-3 text-sm"
+            />
+          </span>
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs uppercase tracking-widest text-stone">Estado</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "" | OrderStatus)}
+            className="w-full rounded border border-charcoal/20 bg-cream px-3 py-2 text-sm"
+          >
+            {statusFilterOptions.map((opt) => (
+              <option key={opt.value || "all"} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex items-end">
+          <button
+            type="button"
+            onClick={exportFiltered}
+            disabled={!filtered.length}
+            className="inline-flex w-full items-center justify-center gap-2 rounded border border-charcoal/25 px-4 py-2 text-sm hover:bg-charcoal/5 disabled:opacity-50"
+          >
+            <Download className="size-4" />
+            Exportar CSV ({filtered.length})
+          </button>
+        </div>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs uppercase tracking-widest text-stone">Desde</span>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full rounded border border-charcoal/20 bg-cream px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block text-xs uppercase tracking-widest text-stone">Hasta</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full rounded border border-charcoal/20 bg-cream px-3 py-2 text-sm"
+          />
+        </label>
       </div>
 
       {orders.length === 0 ? (
         <p className="text-stone">Todavía no hay pedidos registrados.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-stone">Ningún pedido coincide con los filtros.</p>
       ) : (
-        <div className="overflow-x-auto border border-charcoal/10 rounded-lg">
+        <div className="overflow-x-auto rounded-lg border border-charcoal/10">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-charcoal/10 text-left text-stone">
                 <th className="p-3 font-normal">Fecha</th>
                 <th className="p-3 font-normal">Estado</th>
                 <th className="p-3 font-normal">Cliente</th>
-                <th className="p-3 font-normal text-right">Total</th>
+                <th className="p-3 text-right font-normal">Total</th>
                 <th className="p-3 font-normal">MP</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => (
+              {filtered.map((o) => (
                 <tr
                   key={o.id}
-                  className="border-b border-charcoal/5 hover:bg-charcoal/[0.03] cursor-pointer"
+                  className="cursor-pointer border-b border-charcoal/5 hover:bg-charcoal/[0.03]"
                   onClick={() => setSelected(o)}
                 >
-                  <td className="p-3 whitespace-nowrap">{formatDate(o.createdAt)}</td>
-                  <td className="p-3">{statusLabels[o.status] ?? o.status}</td>
-                  <td className="p-3 max-w-[200px] truncate">
+                  <td className="whitespace-nowrap p-3">{formatDate(o.createdAt)}</td>
+                  <td className="p-3">{orderStatusLabels[o.status] ?? o.status}</td>
+                  <td className="max-w-[200px] truncate p-3">
                     {o.customerEmail || o.payerName || "—"}
                   </td>
                   <td className="p-3 text-right">
                     ${Number(o.total).toLocaleString("es-AR")} {o.currency_id}
                   </td>
-                  <td className="p-3 text-xs text-stone font-mono truncate max-w-[120px]">
+                  <td className="max-w-[120px] truncate p-3 font-mono text-xs text-stone">
                     {o.mercadoPagoPaymentId}
                   </td>
                 </tr>
@@ -167,42 +267,42 @@ function OrderDetail({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-charcoal/40 p-4">
-      <div className="bg-cream border border-charcoal/10 rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
-        <div className="flex justify-between items-start gap-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-charcoal/40 p-4 sm:items-center">
+      <div className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-lg border border-charcoal/10 bg-cream p-6 shadow-lg">
+        <div className="flex items-start justify-between gap-4">
           <h3 className="font-display text-xl">Pedido</h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-stone hover:text-charcoal text-sm"
+            className="text-sm text-stone hover:text-charcoal"
           >
             Cerrar
           </button>
         </div>
-        <p className="text-xs text-stone break-all">ID: {order.id}</p>
+        <p className="break-all text-xs text-stone">ID: {order.id}</p>
         <div>
-          <label className="block text-xs tracking-widest mb-1">Estado interno</label>
+          <label className="mb-1 block text-xs tracking-widest">Estado interno</label>
           <select
-            className="w-full px-3 py-2 border border-charcoal/20 bg-cream"
+            className="w-full border border-charcoal/20 bg-cream px-3 py-2"
             value={status}
             onChange={(e) => setStatus(e.target.value as OrderStatus)}
           >
             {adminStatuses.map((s) => (
               <option key={s} value={s}>
-                {statusLabels[s]}
+                {orderStatusLabels[s]}
               </option>
             ))}
           </select>
         </div>
         <div>
-          <label className="block text-xs tracking-widest mb-1">Notas (solo admin)</label>
+          <label className="mb-1 block text-xs tracking-widest">Notas (solo admin)</label>
           <textarea
-            className="w-full px-3 py-2 border border-charcoal/20 bg-cream min-h-[100px]"
+            className="min-h-[100px] w-full border border-charcoal/20 bg-cream px-3 py-2"
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
           />
         </div>
-        <div className="text-sm space-y-1">
+        <div className="space-y-1 text-sm">
           <p>
             <span className="text-stone">Payer:</span> {order.payerName || "—"}
           </p>
@@ -215,7 +315,7 @@ function OrderDetail({
         </div>
         {order.shipping ? (
           <div className="rounded border border-charcoal/10 bg-cream/60 p-3 text-sm">
-            <p className="text-xs uppercase tracking-widest text-stone mb-2">Envío</p>
+            <p className="mb-2 text-xs uppercase tracking-widest text-stone">Envío</p>
             <p className="mb-2">
               {order.shipping.zonaLabel} —{" "}
               {order.shipping.cost > 0
@@ -227,7 +327,7 @@ function OrderDetail({
             </pre>
           </div>
         ) : null}
-        <ul className="text-sm border-t border-charcoal/10 pt-3 space-y-2">
+        <ul className="space-y-2 border-t border-charcoal/10 pt-3 text-sm">
           {(order.items ?? []).map((item, i) => (
             <li key={i}>
               {item.title} × {item.quantity} — ${item.unit_price.toLocaleString("es-AR")}
@@ -239,11 +339,11 @@ function OrderDetail({
             type="button"
             onClick={save}
             disabled={saving}
-            className="px-6 py-2 bg-charcoal text-cream text-xs tracking-widest uppercase disabled:opacity-50"
+            className="bg-charcoal px-6 py-2 text-xs uppercase tracking-widest text-cream disabled:opacity-50"
           >
             {saving ? "Guardando…" : "Guardar"}
           </button>
-          <button type="button" onClick={onClose} className="px-6 py-2 border border-charcoal/20 text-sm">
+          <button type="button" onClick={onClose} className="border border-charcoal/20 px-6 py-2 text-sm">
             Cancelar
           </button>
         </div>
