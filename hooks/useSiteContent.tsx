@@ -19,6 +19,7 @@ import {
 
 const CONTENT_DOC = "site/content";
 
+/* eslint-disable no-unused-vars -- nombres en firmas del contexto */
 export type SiteContentContextValue = {
   content: SiteContent;
   setContent: Dispatch<SetStateAction<SiteContent>>;
@@ -29,6 +30,7 @@ export type SiteContentContextValue = {
   isFirebaseConfigured: boolean;
   reload: () => Promise<void>;
 };
+/* eslint-enable no-unused-vars */
 
 const SiteContentContext = createContext<SiteContentContextValue | null>(null);
 

@@ -12,6 +12,7 @@ export interface CartItem {
   picture_url?: string;
 }
 
+/* eslint-disable no-unused-vars -- nombres en firmas del store */
 type CartState = {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
@@ -21,6 +22,7 @@ type CartState = {
   decrementBy: (id: string, quantity: number) => void;
   clear: () => void;
 };
+/* eslint-enable no-unused-vars */
 
 export const useCartStore = create<CartState>()(
   persist(

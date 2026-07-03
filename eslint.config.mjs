@@ -13,6 +13,9 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals"),
   js.configs.recommended,
+  {
+    ignores: [".next/**", ".next-dev/**", "node_modules/**"],
+  },
 ];
 
 export default eslintConfig;

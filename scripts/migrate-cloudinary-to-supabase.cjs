@@ -78,7 +78,7 @@ function guessExt(contentType, sourceUrl) {
   return m?.[1]?.toLowerCase() || "jpg";
 }
 
-function storagePathFor(sourceUrl) {
+function storagePathFor() {
   const stamp = Date.now();
   const rand = Math.random().toString(36).slice(2, 9);
   return `${PREFIX}/migrated/${stamp}-${rand}.jpg`;
@@ -129,7 +129,7 @@ async function main() {
     console.log(`\n→ ${sourceUrl}`);
 
     if (DRY_RUN) {
-      urlMap[sourceUrl] = publicUrlFor(storagePathFor(sourceUrl));
+      urlMap[sourceUrl] = publicUrlFor(storagePathFor());
       continue;
     }
 
@@ -142,7 +142,7 @@ async function main() {
     const buffer = Buffer.from(await res.arrayBuffer());
     const contentType = res.headers.get("content-type") || "image/jpeg";
     const ext = guessExt(contentType, sourceUrl);
-    const objectPath = storagePathFor(sourceUrl).replace(/\.jpg$/, `.${ext}`);
+    const objectPath = storagePathFor().replace(/\.jpg$/, `.${ext}`);
 
     const { error } = await supabase.storage.from(BUCKET).upload(objectPath, buffer, {
       contentType,
