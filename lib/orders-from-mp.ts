@@ -32,7 +32,11 @@ export async function fetchMercadoPagoPayment(
   const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error("[mp] fetch payment failed", res.status, paymentId, body.slice(0, 300));
+    return null;
+  }
   return (await res.json()) as MPPayment;
 }
 
@@ -41,16 +45,28 @@ function itemsFromPaymentOrSession(
   sessionItems: CheckoutLineItem[]
 ): CheckoutLineItem[] {
   const extra = payment.additional_info?.items;
-  if (extra?.length) {
-    return extra.map((row) => ({
-      id: row.id || "item",
-      title: row.title || "Producto",
-      quantity: Number(row.quantity) || 1,
-      unit_price: Number(row.unit_price) || 0,
-      currency_id: payment.currency_id || "ARS",
-    }));
-  }
-  return sessionItems;
+  const raw: CheckoutLineItem[] = extra?.length
+    ? extra.map((row) => ({
+        id: row.id || "item",
+        title: row.title || "Producto",
+        quantity: Number(row.quantity) || 1,
+        unit_price: Number(row.unit_price) || 0,
+        currency_id: payment.currency_id || "ARS",
+      }))
+    : sessionItems;
+
+  return raw.map((item) => {
+    const clean: CheckoutLineItem = {
+      id: String(item.id || "item"),
+      title: String(item.title || "Producto"),
+      quantity: Number(item.quantity) || 1,
+      unit_price: Number(item.unit_price) || 0,
+      currency_id: item.currency_id || "ARS",
+    };
+    if (item.description) clean.description = String(item.description);
+    if (item.picture_url) clean.picture_url = String(item.picture_url);
+    return clean;
+  });
 }
 
 type OrderEmailContext = {
@@ -131,7 +147,11 @@ export async function persistOrderFromPayment(params: {
   const existing = await ordersCol
     .where("mercadoPagoPaymentId", "==", String(paymentId))
     .limit(1)
-    .get();
+    .get()
+    .catch((err) => {
+      console.error("[orders] lookup by payment id:", err);
+      return null;
+    });
 
   const items = itemsFromPaymentOrSession(payment, sessionItems);
   const total =
@@ -145,7 +165,7 @@ export async function persistOrderFromPayment(params: {
 
   const orderStatus = mapMpStatusToOrder(payment.status);
 
-  if (!existing.empty) {
+  if (existing && !existing.empty) {
     const doc = existing.docs[0]!;
     const prev = doc.data() as OrderRecord;
     const prevStatus = prev.status;
@@ -200,7 +220,7 @@ export async function persistOrderFromPayment(params: {
 
   const orderRef = ordersCol.doc();
 
-  const record: OrderRecord = {
+  const record: Record<string, unknown> = {
     status: orderStatus,
     items,
     total,
@@ -208,47 +228,89 @@ export async function persistOrderFromPayment(params: {
     customerUid,
     customerEmail,
     payerName,
-    shipping: sessionShipping ?? undefined,
     mercadoPagoPaymentId: String(paymentId),
     mercadoPagoPreferenceId: preferenceId,
     mercadoPagoStatus: payment.status ?? null,
     externalReference: payment.external_reference ?? null,
     notasAdmin: "",
-    createdAt: FieldValue.serverTimestamp() as never,
-    updatedAt: FieldValue.serverTimestamp() as never,
+    stockApplied: false,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   };
+
+  const shipping = sessionShipping ?? null;
+  if (shipping) {
+    record.shipping = shipping;
+  }
 
   await orderRef.set(record);
 
   if (customerUid && orderStatus === "aprobado") {
-    await bumpCustomerOrderStats(db, customerUid);
+    try {
+      await bumpCustomerOrderStats(db, customerUid);
+    } catch (e) {
+      console.error("[orders] bumpCustomerOrderStats:", e);
+    }
   }
 
   if (preferenceId) {
-    await db.collection("checkout_sessions").doc(preferenceId).set(
-      {
-        status: orderStatus === "aprobado" ? "completado" : "pendiente",
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+    try {
+      await db.collection("checkout_sessions").doc(preferenceId).set(
+        {
+          status: orderStatus === "aprobado" ? "completado" : "pendiente",
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (e) {
+      console.error("[orders] checkout_sessions update:", e);
+    }
   }
 
-  await sendOrderEmailsAndMark(db, orderRef, {
-    orderId: orderRef.id,
-    orderStatus,
-    previousNotifiedStatus: null,
-    customerEmail,
-    payerName,
-    items,
-    total,
-    currency_id: record.currency_id,
-    paymentId: String(paymentId),
-    shipping: sessionShipping ?? null,
-  });
+  try {
+    await sendOrderEmailsAndMark(db, orderRef, {
+      orderId: orderRef.id,
+      orderStatus,
+      previousNotifiedStatus: null,
+      customerEmail,
+      payerName,
+      items,
+      total,
+      currency_id: String(record.currency_id),
+      paymentId: String(paymentId),
+      shipping,
+    });
+  } catch (e) {
+    console.error("[orders] emails:", e);
+  }
 
   if (orderStatus === "aprobado") {
-    await applyStockIfApproved(db, orderRef, record, items);
+    try {
+      await applyStockIfApproved(
+        db,
+        orderRef,
+        {
+          status: orderStatus,
+          items,
+          total,
+          currency_id: String(record.currency_id),
+          customerUid,
+          customerEmail,
+          payerName,
+          shipping: shipping ?? undefined,
+          mercadoPagoPaymentId: String(paymentId),
+          mercadoPagoPreferenceId: preferenceId,
+          mercadoPagoStatus: payment.status ?? null,
+          externalReference: payment.external_reference ?? null,
+          stockApplied: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        items
+      );
+    } catch (e) {
+      console.error("[orders] stock:", e);
+    }
   }
 
   return { orderId: orderRef.id, created: true };

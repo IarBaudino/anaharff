@@ -63,6 +63,14 @@ export async function POST(request: NextRequest) {
     });
   } catch (e) {
     console.error("sync-payment:", e);
-    return NextResponse.json({ error: "Error al sincronizar" }, { status: 500 });
+    const message = e instanceof Error ? e.message : "Error al sincronizar";
+    return NextResponse.json(
+      {
+        error: message.includes("FIREBASE") || message.includes("Firebase")
+          ? message
+          : `Error al sincronizar: ${message}`,
+      },
+      { status: 500 }
+    );
   }
 }
