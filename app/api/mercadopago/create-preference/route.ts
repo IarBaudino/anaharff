@@ -167,17 +167,30 @@ export async function POST(request: NextRequest) {
     const preferenceId = result.id as string;
 
     const db = getAdminDb();
-    if (db) {
-      await db.collection("checkout_sessions").doc(preferenceId).set({
-        preferenceId,
-        items: normalizedItems,
-        shipping: orderShipping,
-        customerUid: customerUid ?? null,
-        customerEmail: customerEmail ?? null,
-        status: "pendiente",
-        createdAt: FieldValue.serverTimestamp(),
-      });
+    if (!db) {
+      console.error(
+        "MercadoPago: preferencia creada pero FIREBASE_SERVICE_ACCOUNT_KEY no está disponible; el pedido no se podrá guardar."
+      );
+      return NextResponse.json(
+        {
+          error:
+            "El pago se puede iniciar, pero el servidor no puede guardar pedidos (falta Firebase Admin). Revisá FIREBASE_SERVICE_ACCOUNT_KEY en Vercel.",
+          preferenceId,
+          initPoint: result.init_point || result.sandbox_init_point,
+        },
+        { status: 503 }
+      );
     }
+
+    await db.collection("checkout_sessions").doc(preferenceId).set({
+      preferenceId,
+      items: normalizedItems,
+      shipping: orderShipping,
+      customerUid: customerUid ?? null,
+      customerEmail: customerEmail ?? null,
+      status: "pendiente",
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
     return NextResponse.json({
       preferenceId,

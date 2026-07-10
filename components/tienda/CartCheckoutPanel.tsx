@@ -6,6 +6,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { useAuth } from "@/components/AuthProvider";
 import { CheckoutButton } from "@/components/tienda/CheckoutButton";
 import { ShippingAddressForm } from "@/components/shipping/ShippingAddressForm";
+import { ensureCustomerProfile } from "@/lib/customer-profile";
 import { db } from "@/lib/firebase-client";
 import type { CheckoutLineItem } from "@/lib/commerce-types";
 import type { TiendaEnvios } from "@/lib/site-content";
@@ -91,6 +92,7 @@ export function CartCheckoutPanel({
     if (!saveForLater || !user || !db) return;
     const normalized = normalizeShippingAddress(address);
     if (!normalized) return;
+    await ensureCustomerProfile(user);
     await updateDoc(doc(db, "customers", user.uid), { envio: normalized });
   }
 
@@ -176,7 +178,13 @@ export function CartCheckoutPanel({
             throw new Error(err);
           }
           setFormError(null);
-          await persistAddressIfNeeded();
+          try {
+            await persistAddressIfNeeded();
+          } catch {
+            throw new Error(
+              "No se pudo guardar la dirección. Completá tu perfil en Cuenta o desmarcá «Guardar esta dirección» e intentá de nuevo."
+            );
+          }
         }}
         onSuccessRedirect={(url) => {
           window.location.href = url;
