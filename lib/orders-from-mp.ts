@@ -140,8 +140,19 @@ export async function persistOrderFromPayment(params: {
   preferenceId: string | null;
   sessionItems: CheckoutLineItem[];
   sessionShipping?: OrderShipping | null;
+  sessionCustomerUid?: string | null;
+  sessionCustomerEmail?: string | null;
 }): Promise<{ orderId: string; created: boolean }> {
-  const { db, payment, paymentId, preferenceId, sessionItems, sessionShipping } = params;
+  const {
+    db,
+    payment,
+    paymentId,
+    preferenceId,
+    sessionItems,
+    sessionShipping,
+    sessionCustomerUid,
+    sessionCustomerEmail,
+  } = params;
 
   const ordersCol = db.collection("orders");
   const existing = await ordersCol
@@ -157,8 +168,16 @@ export async function persistOrderFromPayment(params: {
   const total =
     payment.transaction_amount ?? items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
 
-  const customerUid = payment.metadata?.customer_uid || null;
-  const customerEmail = payment.payer?.email || payment.metadata?.customer_email || null;
+  // Prioridad: sesión del checkout (cuenta del sitio) > metadata MP > email del pagador de prueba.
+  const customerUid =
+    sessionCustomerUid ||
+    payment.metadata?.customer_uid ||
+    null;
+  const customerEmail =
+    sessionCustomerEmail ||
+    payment.metadata?.customer_email ||
+    payment.payer?.email ||
+    null;
   const payerName =
     [payment.payer?.first_name, payment.payer?.last_name].filter(Boolean).join(" ").trim() ||
     null;
@@ -170,16 +189,34 @@ export async function persistOrderFromPayment(params: {
     const prev = doc.data() as OrderRecord;
     const prevStatus = prev.status;
     const statusChanged = prevStatus !== orderStatus;
-
+    const linkPatch: Record<string, unknown> = {
+      updatedAt: FieldValue.serverTimestamp(),
+    };
     if (statusChanged) {
-      await doc.ref.update({
-        status: orderStatus,
-        mercadoPagoStatus: payment.status ?? null,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      linkPatch.status = orderStatus;
+      linkPatch.mercadoPagoStatus = payment.status ?? null;
+    }
+    // Repara pedidos viejos que quedaron con email del TESTUSER de MP.
+    if (customerUid && !prev.customerUid) linkPatch.customerUid = customerUid;
+    if (customerEmail && customerEmail !== prev.customerEmail) {
+      const prevLooksLikeMpTest =
+        !prev.customerEmail ||
+        String(prev.customerEmail).toLowerCase().includes("testuser") ||
+        String(prev.customerEmail).toLowerCase().endsWith("@testuser.com");
+      if (prevLooksLikeMpTest || !prev.customerEmail) {
+        linkPatch.customerEmail = customerEmail;
+      }
+    }
 
-      if (orderStatus === "aprobado" && prevStatus !== "aprobado" && customerUid) {
+    if (Object.keys(linkPatch).length > 1 || statusChanged) {
+      await doc.ref.update(linkPatch);
+    }
+
+    if (statusChanged && orderStatus === "aprobado" && prevStatus !== "aprobado" && customerUid) {
+      try {
         await bumpCustomerOrderStats(db, customerUid);
+      } catch (e) {
+        console.error("[orders] bumpCustomerOrderStats:", e);
       }
     }
 
@@ -193,27 +230,35 @@ export async function persistOrderFromPayment(params: {
       );
     }
 
-    await sendOrderEmailsAndMark(db, doc.ref, {
-      orderId: doc.id,
-      orderStatus,
-      previousNotifiedStatus: prev.lastEmailNotifiedStatus ?? null,
-      customerEmail: customerEmail ?? prev.customerEmail,
-      payerName: payerName ?? prev.payerName,
-      items: items.length ? items : prev.items,
-      total,
-      currency_id: payment.currency_id || prev.currency_id || "ARS",
-      paymentId: String(paymentId),
-      shipping: sessionShipping ?? prev.shipping ?? null,
-    });
+    try {
+      await sendOrderEmailsAndMark(db, doc.ref, {
+        orderId: doc.id,
+        orderStatus,
+        previousNotifiedStatus: prev.lastEmailNotifiedStatus ?? null,
+        customerEmail: customerEmail ?? prev.customerEmail,
+        payerName: payerName ?? prev.payerName,
+        items: items.length ? items : prev.items,
+        total,
+        currency_id: payment.currency_id || prev.currency_id || "ARS",
+        paymentId: String(paymentId),
+        shipping: sessionShipping ?? prev.shipping ?? null,
+      });
+    } catch (e) {
+      console.error("[orders] emails:", e);
+    }
 
     const mergedItems = items.length ? items : prev.items;
     const mergedStatus = statusChanged ? orderStatus : prevStatus;
-    await applyStockIfApproved(
-      db,
-      doc.ref,
-      { ...prev, status: mergedStatus, stockApplied: prev.stockApplied },
-      mergedItems
-    );
+    try {
+      await applyStockIfApproved(
+        db,
+        doc.ref,
+        { ...prev, status: mergedStatus, stockApplied: prev.stockApplied },
+        mergedItems
+      );
+    } catch (e) {
+      console.error("[orders] stock:", e);
+    }
 
     return { orderId: doc.id, created: false };
   }
@@ -327,12 +372,24 @@ export async function loadCheckoutSession(
 export async function loadCheckoutSessionData(
   db: Firestore,
   preferenceId: string
-): Promise<{ items: CheckoutLineItem[]; shipping?: OrderShipping | null }> {
+): Promise<{
+  items: CheckoutLineItem[];
+  shipping?: OrderShipping | null;
+  customerUid?: string | null;
+  customerEmail?: string | null;
+}> {
   const snap = await db.collection("checkout_sessions").doc(preferenceId).get();
   if (!snap.exists) return { items: [] };
-  const data = snap.data() as { items?: CheckoutLineItem[]; shipping?: OrderShipping };
+  const data = snap.data() as {
+    items?: CheckoutLineItem[];
+    shipping?: OrderShipping;
+    customerUid?: string | null;
+    customerEmail?: string | null;
+  };
   return {
     items: data.items ?? [],
     shipping: data.shipping ?? null,
+    customerUid: data.customerUid ?? null,
+    customerEmail: data.customerEmail ?? null,
   };
 }

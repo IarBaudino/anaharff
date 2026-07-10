@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const session = preferenceId
       ? await loadCheckoutSessionData(db, preferenceId)
-      : { items: [], shipping: null };
+      : { items: [], shipping: null, customerUid: null, customerEmail: null };
 
     const result = await persistOrderFromPayment({
       db,
@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       preferenceId,
       sessionItems: session.items,
       sessionShipping: session.shipping,
+      sessionCustomerUid: session.customerUid,
+      sessionCustomerEmail: session.customerEmail,
     });
 
     return NextResponse.json({

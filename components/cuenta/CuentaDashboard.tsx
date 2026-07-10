@@ -21,6 +21,7 @@ import {
   updateDoc,
   where,
   Timestamp,
+  type DocumentData,
 } from "firebase/firestore";
 import { Package, Truck, User } from "lucide-react";
 import { auth, db, isFirebaseConfigured } from "@/lib/firebase-client";
@@ -149,10 +150,22 @@ export function CuentaDashboard() {
       setUidLoading(false);
       return;
     }
+    const firestore = db;
 
     setUidLoading(true);
+    let unsubFallback: (() => void) | undefined;
+
+    const mapDocs = (snap: { docs: { id: string; data: () => DocumentData }[] }) =>
+      snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as OrderRecord) }))
+        .sort((a, b) => {
+          const ta = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : 0;
+          const tb = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : 0;
+          return tb - ta;
+        });
+
     const qUid = query(
-      collection(db, "orders"),
+      collection(firestore, "orders"),
       where("customerUid", "==", user.uid),
       orderBy("createdAt", "desc"),
       limit(40)
@@ -161,16 +174,34 @@ export function CuentaDashboard() {
     const unsub = onSnapshot(
       qUid,
       (snap) => {
-        setOrdersUid(snap.docs.map((d) => ({ id: d.id, ...(d.data() as OrderRecord) })));
+        setOrdersUid(mapDocs(snap));
         setUidLoading(false);
       },
       () => {
-        setOrdersUid([]);
-        setUidLoading(false);
+        const qSimple = query(
+          collection(firestore, "orders"),
+          where("customerUid", "==", user.uid),
+          limit(40)
+        );
+        unsubFallback = onSnapshot(
+          qSimple,
+          (snap) => {
+            setOrdersUid(mapDocs(snap));
+            setUidLoading(false);
+          },
+          (err) => {
+            console.error("[cuenta] orders by uid:", err);
+            setOrdersUid([]);
+            setUidLoading(false);
+          }
+        );
       }
     );
 
-    return () => unsub();
+    return () => {
+      unsub();
+      unsubFallback?.();
+    };
   }, [user]);
 
   useEffect(() => {
@@ -179,6 +210,7 @@ export function CuentaDashboard() {
       setEmailLoading(false);
       return;
     }
+    const firestore = db;
 
     const email = user.email?.trim();
     if (!email) {
@@ -188,8 +220,19 @@ export function CuentaDashboard() {
     }
 
     setEmailLoading(true);
+    let unsubFallback: (() => void) | undefined;
+
+    const mapDocs = (snap: { docs: { id: string; data: () => DocumentData }[] }) =>
+      snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as OrderRecord) }))
+        .sort((a, b) => {
+          const ta = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : 0;
+          const tb = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : 0;
+          return tb - ta;
+        });
+
     const qEmail = query(
-      collection(db, "orders"),
+      collection(firestore, "orders"),
       where("customerEmail", "==", email),
       orderBy("createdAt", "desc"),
       limit(40)
@@ -198,16 +241,34 @@ export function CuentaDashboard() {
     const unsub = onSnapshot(
       qEmail,
       (snap) => {
-        setOrdersEmail(snap.docs.map((d) => ({ id: d.id, ...(d.data() as OrderRecord) })));
+        setOrdersEmail(mapDocs(snap));
         setEmailLoading(false);
       },
       () => {
-        setOrdersEmail([]);
-        setEmailLoading(false);
+        const qSimple = query(
+          collection(firestore, "orders"),
+          where("customerEmail", "==", email),
+          limit(40)
+        );
+        unsubFallback = onSnapshot(
+          qSimple,
+          (snap) => {
+            setOrdersEmail(mapDocs(snap));
+            setEmailLoading(false);
+          },
+          (err) => {
+            console.error("[cuenta] orders by email:", err);
+            setOrdersEmail([]);
+            setEmailLoading(false);
+          }
+        );
       }
     );
 
-    return () => unsub();
+    return () => {
+      unsub();
+      unsubFallback?.();
+    };
   }, [user]);
 
   useEffect(() => {
