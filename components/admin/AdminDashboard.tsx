@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, FolderTree, Home, ImagePlus, ShoppingBag, User, Users } from "lucide-react";
+import { BookOpen, FileText, FolderTree, Home, ImagePlus, ShoppingBag, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminEditorBlog } from "@/components/admin/AdminEditorBlog";
 import { AdminEditorHome } from "@/components/admin/AdminEditorHome";
 import { AdminEditorSobre } from "@/components/admin/AdminEditorSobre";
+import { AdminEditorTerminos } from "@/components/admin/AdminEditorTerminos";
 import { AdminOrders } from "@/components/admin/AdminOrders";
 import { AdminCustomers } from "@/components/admin/AdminCustomers";
 import { AdminProducts } from "@/components/admin/AdminProducts";
@@ -19,6 +20,7 @@ const tabs = [
   { id: "blog", label: "Blog", icon: BookOpen },
   { id: "colecciones", label: "Portfolio", icon: FolderTree },
   { id: "productos", label: "Productos", icon: ImagePlus },
+  { id: "terminos", label: "Términos", icon: FileText },
   { id: "pedidos", label: "Pedidos", icon: ShoppingBag },
   { id: "clientes", label: "Clientes", icon: Users },
 ] as const;
@@ -61,6 +63,7 @@ export function AdminDashboard() {
           {tab === "blog" && <AdminEditorBlog />}
           {tab === "colecciones" && <AdminCollections />}
           {tab === "productos" && <AdminProducts />}
+          {tab === "terminos" && <AdminEditorTerminos />}
           {tab === "pedidos" && <AdminOrders />}
           {tab === "clientes" && <AdminCustomers />}
         </AdminPanelUiProvider>

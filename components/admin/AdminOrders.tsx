@@ -12,7 +12,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { Download, Search } from "lucide-react";
-import { db, isFirebaseConfigured } from "@/lib/firebase-client";
+import { db, auth, isFirebaseConfigured } from "@/lib/firebase-client";
+import { useSiteContent } from "@/hooks/useSiteContent";
 import type { OrderRecord, OrderStatus } from "@/lib/commerce-types";
 import { orderStatusLabels } from "@/lib/order-labels";
 import { downloadCsv, ordersToCsv } from "@/lib/orders-csv";
@@ -249,7 +250,13 @@ function OrderDetail({
 }) {
   const [status, setStatus] = useState<OrderStatus>(order.status);
   const [notas, setNotas] = useState(order.notasAdmin ?? "");
+  const [empresaId, setEmpresaId] = useState(order.envioEmpresaId ?? "");
+  const [trackingNumero, setTrackingNumero] = useState(order.trackingNumero ?? "");
   const [saving, setSaving] = useState(false);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
+  const { content } = useSiteContent();
+  const empresas = content.tienda.empresasEnvio ?? [];
 
   async function save() {
     if (!db) return;
@@ -263,6 +270,57 @@ function OrderDetail({
       onSaved();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function notifyDispatch() {
+    setDispatchMsg(null);
+    if (!empresaId || !trackingNumero.trim()) {
+      setDispatchMsg("Elegí la empresa y escribí el número de seguimiento.");
+      return;
+    }
+    const token = await auth?.currentUser?.getIdToken();
+    if (!token) {
+      setDispatchMsg("Tenés que estar ingresada como administradora.");
+      return;
+    }
+    setDispatching(true);
+    try {
+      const res = await fetch("/api/orders/dispatch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orderId: order.id,
+          empresaId,
+          trackingNumero: trackingNumero.trim(),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        warning?: string;
+        emailed?: boolean;
+      };
+      if (!res.ok) {
+        setDispatchMsg(data.error || "No se pudo registrar el despacho.");
+        return;
+      }
+      setStatus((current) =>
+        current === "rechazado" || current === "cancelado" || current === "completado"
+          ? current
+          : "en_preparacion"
+      );
+      setDispatchMsg(
+        data.emailed
+          ? "Listo. Le avisamos al cliente por mail."
+          : data.warning || "Pedido actualizado."
+      );
+    } catch {
+      setDispatchMsg("No se pudo conectar. Probá de nuevo.");
+    } finally {
+      setDispatching(false);
     }
   }
 
@@ -293,6 +351,46 @@ function OrderDetail({
               </option>
             ))}
           </select>
+        </div>
+        <div className="space-y-3 rounded border border-charcoal/10 bg-cream/60 p-3">
+          <p className="text-xs uppercase tracking-widest text-stone">Despacho</p>
+          <label className="block text-xs tracking-widest">
+            Empresa
+            <select
+              className="mt-1 w-full border border-charcoal/20 bg-cream px-3 py-2 text-sm"
+              value={empresaId}
+              onChange={(e) => setEmpresaId(e.target.value)}
+            >
+              <option value="">Elegí una empresa</option>
+              {empresas.map((empresa) => (
+                <option key={empresa.id} value={empresa.id}>
+                  {empresa.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-xs tracking-widest">
+            Número de seguimiento
+            <input
+              className="mt-1 w-full border border-charcoal/20 bg-cream px-3 py-2 text-sm"
+              value={trackingNumero}
+              onChange={(e) => setTrackingNumero(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => void notifyDispatch()}
+            disabled={dispatching}
+            className="border border-charcoal/25 px-4 py-2 text-xs uppercase tracking-widest disabled:opacity-50"
+          >
+            {dispatching ? "Enviando…" : "Avisar despacho"}
+          </button>
+          {dispatchMsg ? <p className="text-sm text-charcoal/80">{dispatchMsg}</p> : null}
+          {empresas.length === 0 ? (
+            <p className="text-xs text-stone">
+              Agregá empresas en Productos y guardá antes de despachar.
+            </p>
+          ) : null}
         </div>
         <div>
           <label className="mb-1 block text-xs tracking-widest">Notas (solo admin)</label>

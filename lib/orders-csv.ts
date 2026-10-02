@@ -31,6 +31,8 @@ export function ordersToCsv(orders: (OrderRecord & { id: string })[]): string {
     "items",
     "envio_zona",
     "envio_costo",
+    "envio_empresa",
+    "tracking",
   ];
 
   const rows = orders.map((o) => {
@@ -49,6 +51,8 @@ export function ordersToCsv(orders: (OrderRecord & { id: string })[]): string {
       itemsSummary,
       o.shipping?.zonaLabel ?? "",
       o.shipping?.cost ?? "",
+      o.envioEmpresaNombre ?? "",
+      o.trackingNumero ?? "",
     ]
       .map(csvCell)
       .join(",");

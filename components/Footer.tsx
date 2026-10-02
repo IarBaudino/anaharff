@@ -28,6 +28,9 @@ export function Footer({ className }: { className?: string }) {
           <Link href="/privacidad" className="transition-colors hover:text-cream">
             Privacidad
           </Link>
+          <Link href="/terminos" className="transition-colors hover:text-cream">
+            Términos
+          </Link>
           <Link href="/tienda" className="transition-colors hover:text-cream">
             Tienda
           </Link>

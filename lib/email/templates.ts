@@ -272,3 +272,34 @@ export function orderRejectedAdminEmail(payload: OrderEmailPayload) {
     html,
   };
 }
+
+export function orderDispatchedCustomerEmail(params: {
+  orderId: string;
+  customerEmail: string;
+  payerName: string | null;
+  empresaNombre: string;
+  trackingNumero: string;
+  trackingUrl?: string | null;
+}) {
+  const saludo = params.payerName?.trim() ? escapeHtml(params.payerName.trim()) : "hola";
+  const cuentaUrl = absoluteUrl("/cuenta");
+  const link = params.trackingUrl?.trim()
+    ? `<p style="margin:0 0 16px;"><a href="${escapeHtml(params.trackingUrl.trim())}" style="color:#5c4d3d;">Seguir envío</a></p>`
+    : "";
+
+  const html = layout(
+    "Tu pedido está en camino",
+    `<p style="margin:0 0 16px;">${saludo}, despachamos tu impresión.</p>
+     <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${escapeHtml(params.empresaNombre)}</p>
+     <p style="margin:0 0 16px;"><strong>Número de seguimiento:</strong> ${escapeHtml(params.trackingNumero)}</p>
+     ${link}
+     <p style="margin:0 0 16px;font-size:13px;color:#8c8c8c;">Pedido #${escapeHtml(params.orderId.slice(0, 8))}</p>
+     <p style="margin:0;"><a href="${cuentaUrl}" style="color:#5c4d3d;">Ver mis pedidos</a></p>`
+  );
+
+  return {
+    subject: "Tu pedido en Ana Harff — despachado",
+    html,
+    to: params.customerEmail,
+  };
+}

@@ -4,6 +4,14 @@ import { normalizeStockValue } from "@/lib/stock";
 
 export type { TiendaEnvios };
 
+/** Empresa de envío que Ana elige al despachar un pedido. */
+export interface EmpresaEnvio {
+  id: string;
+  nombre: string;
+  /** URL de seguimiento. `{numero}` se reemplaza por el tracking. */
+  urlTracking: string;
+}
+
 export interface StoreItem {
   id: string;
   titulo: string;
@@ -205,9 +213,14 @@ export interface SiteContent {
     descripcion: string;
     /** Costos de envío en ARS por zona. */
     envios: TiendaEnvios;
+    empresasEnvio: EmpresaEnvio[];
     /** @deprecated Usar `home.destacadosCantidad`. */
     destacadosCantidad?: 3 | 4 | 6;
     items: StoreItem[];
+  };
+  legal: {
+    terminosTitulo: string;
+    terminosCuerpo: string;
   };
 }
 
@@ -468,7 +481,15 @@ export const defaultSiteContent: SiteContent = {
       restoArgentina: 8000,
       internacional: 25000,
     },
+    empresasEnvio: [
+      { id: "correo-argentino", nombre: "Correo Argentino", urlTracking: "" },
+      { id: "andreani", nombre: "Andreani", urlTracking: "" },
+    ],
     items: [],
+  },
+  legal: {
+    terminosTitulo: "Términos y condiciones",
+    terminosCuerpo: "",
   },
 };
 
@@ -1162,6 +1183,53 @@ export function mergeSiteContentFromFirestore(partial: Partial<SiteContent>): Si
       projects: normalizeSeriesProjects(partial.series?.projects),
     },
     tienda,
+    legal: normalizeLegal(partial.legal),
+  };
+}
+
+export function normalizeEmpresasEnvio(raw: unknown): EmpresaEnvio[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((row, i) => {
+      const it = (row ?? {}) as Partial<EmpresaEnvio>;
+      const nombre = typeof it.nombre === "string" ? it.nombre.trim() : "";
+      if (!nombre) return null;
+      return {
+        id: typeof it.id === "string" && it.id.trim() ? it.id.trim() : `envio-${i + 1}`,
+        nombre,
+        urlTracking: typeof it.urlTracking === "string" ? it.urlTracking.trim() : "",
+      };
+    })
+    .filter((row): row is EmpresaEnvio => row !== null);
+}
+
+export function trackingUrlFor(empresa: Pick<EmpresaEnvio, "urlTracking">, numero: string): string {
+  const template = empresa.urlTracking.trim();
+  const clean = numero.trim();
+  if (!template || !clean) return "";
+  if (template.includes("{numero}")) {
+    return safeTrackingUrl(template.replaceAll("{numero}", encodeURIComponent(clean)));
+  }
+  return safeTrackingUrl(template);
+}
+
+function safeTrackingUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.toString();
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function normalizeLegal(raw: unknown): SiteContent["legal"] {
+  const row = raw && typeof raw === "object" ? (raw as Partial<SiteContent["legal"]>) : {};
+  const titulo = typeof row.terminosTitulo === "string" ? row.terminosTitulo.trim() : "";
+  const cuerpo = typeof row.terminosCuerpo === "string" ? row.terminosCuerpo : "";
+  return {
+    terminosTitulo: titulo || defaultSiteContent.legal.terminosTitulo,
+    terminosCuerpo: cuerpo,
   };
 }
 
@@ -1178,6 +1246,9 @@ export function mergeTiendaFromPartial(
     ...defaultSiteContent.tienda,
     ...partial,
     envios: normalizeTiendaEnvios(partial.envios ?? defaultSiteContent.tienda.envios),
+    empresasEnvio: normalizeEmpresasEnvio(
+      partial.empresasEnvio ?? defaultSiteContent.tienda.empresasEnvio
+    ),
     items,
   };
 }

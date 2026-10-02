@@ -56,6 +56,10 @@ export interface OrderRecord {
   lastEmailNotifiedStatus?: OrderStatus | null;
   /** Evita descontar stock más de una vez por el mismo pedido. */
   stockApplied?: boolean;
+  envioEmpresaId?: string | null;
+  envioEmpresaNombre?: string | null;
+  trackingNumero?: string | null;
+  trackingUrl?: string | null;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

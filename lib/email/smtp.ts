@@ -64,7 +64,7 @@ export async function sendViaSmtp(
       return {
         ok: false,
         error:
-          "smtp_auth_failed: revisá SMTP_USER y la contraseña de aplicación de Google (16 caracteres)",
+          "smtp_auth_failed: revisá SMTP_USER, SMTP_PASS y el host (Gmail o Zoho)",
       };
     }
     return { ok: false, error: msg };

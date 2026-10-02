@@ -36,27 +36,30 @@ Solo esos usuarios pueden entrar a `/admin` (después de iniciar sesión en `/ad
 - Guardar sesiones de checkout al crear preferencias de MercadoPago
 - Registrar pedidos desde el webhook y desde la página de éxito
 
-## Email (Gmail SMTP)
+## Email (SMTP)
 
-Los mails salen del Gmail de Ana (sin Brevo ni Resend).
+Contacto, bienvenida y mails de compra salen por SMTP (`nodemailer`).
 
-1. [Google → Seguridad](https://myaccount.google.com/security) → activar **verificación en 2 pasos**
-2. **Contraseñas de aplicaciones** → generar una para «Correo»
-3. En Vercel (y `.env.local`):
-   - `SMTP_USER` — Gmail de Ana
-   - `SMTP_PASS` — contraseña de aplicación (16 caracteres, sin espacios o con espacios, da igual)
-   - `EMAIL_FROM` — ej. `Ana Harff <gmail@gmail.com>`
-   - `ADMIN_EMAIL` — misma bandeja para contacto y avisos de venta
-   - `NEXT_PUBLIC_APP_URL` — URL del sitio (links en los mails)
+**Hoy (sin dominio):** Gmail + contraseña de aplicación.
+
+**Con `anaharff.com` + Zoho:** ver checklist completo en [`docs/DOMAIN-ZOHO.md`](docs/DOMAIN-ZOHO.md). Resumen en Vercel:
+
+```env
+NEXT_PUBLIC_APP_URL=https://anaharff.com
+SMTP_HOST=smtp.zoho.com
+SMTP_PORT=587
+SMTP_USER=hola@anaharff.com
+SMTP_PASS=...
+EMAIL_FROM=Ana Harff <hola@anaharff.com>
+ADMIN_EMAIL=pedidos@anaharff.com
+```
 
 Opcional: `SMTP_HOST` (default `smtp.gmail.com`), `SMTP_PORT` (default `587`).
-
-Envía: contacto, bienvenida al registrarse y mails de pago pendiente / aprobado / rechazado.
 
 ## MercadoPago
 
 - Access token en `MERCADOPAGO_ACCESS_TOKEN`
-- URL pública en `NEXT_PUBLIC_APP_URL` (ej. tu dominio de Vercel)
+- URL pública en `NEXT_PUBLIC_APP_URL` (ej. `https://anaharff.com` o tu URL de Vercel)
 
 **Webhook (recomendado):** en el panel de MercadoPago, notificaciones → URL:
 

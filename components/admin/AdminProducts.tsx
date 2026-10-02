@@ -204,6 +204,51 @@ export function AdminProducts() {
         </div>
       </section>
 
+      <section className="space-y-4 rounded-lg border border-charcoal/10 bg-cream/60 p-4">
+        <p className="text-sm font-medium text-charcoal">Empresas de envío</p>
+        <HelpText>
+          Ana elige una de estas al despachar un pedido. En la URL de seguimiento podés usar{" "}
+          <strong>{"{numero}"}</strong> donde va el tracking. Si la dejás vacía, el mail igual manda
+          el número.
+        </HelpText>
+        {(content.tienda.empresasEnvio ?? []).map((empresa, idx) => (
+          <div key={empresa.id} className="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <AdminInput
+              label="Nombre"
+              example="Andreani"
+              value={empresa.nombre}
+              onChange={(e) =>
+                updateEmpresa(content, setContent, idx, { nombre: e.target.value })
+              }
+            />
+            <AdminInput
+              label="URL de seguimiento"
+              example="https://www.andreani.com/#!/informacionEnvio/{numero}"
+              value={empresa.urlTracking}
+              onChange={(e) =>
+                updateEmpresa(content, setContent, idx, { urlTracking: e.target.value })
+              }
+            />
+            <button
+              type="button"
+              onClick={() => removeEmpresa(content, setContent, idx)}
+              className="inline-flex items-center gap-1 rounded border border-red-200 px-3 py-2 text-xs text-red-800 hover:bg-red-50"
+            >
+              <Trash2 className="size-3.5" />
+              Quitar
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => addEmpresa(content, setContent)}
+          className="inline-flex items-center gap-2 rounded border border-charcoal/25 px-4 py-2 text-sm hover:bg-charcoal/5"
+        >
+          <Plus className="size-4" />
+          Añadir empresa
+        </button>
+      </section>
+
       <section className="space-y-4">
         <p className="text-sm font-medium text-charcoal">Productos (impresiones)</p>
         {content.tienda.items.map((item, idx) => (
@@ -320,6 +365,50 @@ export function AdminProducts() {
       </div>
     </div>
   );
+}
+
+function addEmpresa(
+  content: SiteContent,
+  setContent: ReturnType<typeof useSiteContent>["setContent"]
+) {
+  setContent({
+    ...content,
+    tienda: {
+      ...content.tienda,
+      empresasEnvio: [
+        ...(content.tienda.empresasEnvio ?? []),
+        { id: newManagedItemId("envio"), nombre: "", urlTracking: "" },
+      ],
+    },
+  });
+}
+
+function updateEmpresa(
+  content: SiteContent,
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  idx: number,
+  patch: Partial<(typeof content.tienda.empresasEnvio)[number]>
+) {
+  const next = [...(content.tienda.empresasEnvio ?? [])];
+  next[idx] = { ...next[idx], ...patch };
+  setContent({
+    ...content,
+    tienda: { ...content.tienda, empresasEnvio: next },
+  });
+}
+
+function removeEmpresa(
+  content: SiteContent,
+  setContent: ReturnType<typeof useSiteContent>["setContent"],
+  idx: number
+) {
+  setContent({
+    ...content,
+    tienda: {
+      ...content.tienda,
+      empresasEnvio: (content.tienda.empresasEnvio ?? []).filter((_, i) => i !== idx),
+    },
+  });
 }
 
 function updateItem(

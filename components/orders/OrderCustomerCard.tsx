@@ -86,6 +86,24 @@ export function OrderCustomerCard({ order }: { order: OrderRecord & { id: string
           ) : (
             <p className="text-stone">Sin datos de envío registrados.</p>
           )}
+          {order.trackingNumero ? (
+            <div>
+              <p className="text-xs uppercase tracking-widest text-stone">Seguimiento</p>
+              <p className="mt-1">
+                {order.envioEmpresaNombre || "Envío"} · {order.trackingNumero}
+              </p>
+              {order.trackingUrl ? (
+                <a
+                  href={order.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-xs text-accent underline underline-offset-2"
+                >
+                  Seguir envío
+                </a>
+              ) : null}
+            </div>
+          ) : null}
           {order.mercadoPagoPaymentId ? (
             <p>
               <span className="text-stone">Pago Mercado Pago:</span>{" "}

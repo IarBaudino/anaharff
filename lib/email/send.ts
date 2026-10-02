@@ -10,6 +10,7 @@ import {
   orderRejectedAdminEmail,
   orderRejectedCustomerEmail,
   welcomeCustomerEmail,
+  orderDispatchedCustomerEmail,
   type ContactEmailPayload,
   type OrderEmailPayload,
 } from "@/lib/email/templates";
@@ -110,4 +111,23 @@ export async function sendOrderPaymentEmails(status: OrderStatus, payload: Order
     orderRejectedCustomerEmail(payload),
     orderRejectedAdminEmail(payload)
   );
+}
+
+export async function sendDispatchEmail(params: {
+  orderId: string;
+  customerEmail: string;
+  payerName: string | null;
+  empresaNombre: string;
+  trackingNumero: string;
+  trackingUrl?: string | null;
+}) {
+  if (!params.customerEmail.includes("@")) {
+    return { ok: false, error: "invalid_recipient" };
+  }
+  const mail = orderDispatchedCustomerEmail(params);
+  return sendEmail({
+    to: mail.to,
+    subject: mail.subject,
+    html: mail.html,
+  });
 }

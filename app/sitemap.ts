@@ -12,6 +12,7 @@ const staticRoutes: { path: string; changeFrequency: MetadataRoute.Sitemap[0]["c
   { path: "/sobre-mi/curriculo", changeFrequency: "monthly", priority: 0.7 },
   { path: "/contacto", changeFrequency: "monthly", priority: 0.7 },
   { path: "/privacidad", changeFrequency: "yearly", priority: 0.4 },
+  { path: "/terminos", changeFrequency: "yearly", priority: 0.4 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.7 },
   { path: "/tienda", changeFrequency: "weekly", priority: 0.8 },
 ];

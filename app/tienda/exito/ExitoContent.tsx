@@ -99,7 +99,7 @@ export function ExitoContent() {
     if (data.orderId) setOrderId(data.orderId);
     setSyncMsg(
       data.created
-        ? "Tu pedido quedó registrado. Podés verlo en tu cuenta y en el panel de administración."
+        ? "Tu pedido quedó registrado. Podés verlo en tu cuenta."
         : "Pedido ya registrado."
     );
     return true;

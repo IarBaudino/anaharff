@@ -1,10 +1,10 @@
 import { siteConfig } from "@/lib/seo";
 
-const DEFAULT_FROM = "Ana Harff <hola@gmail.com>";
+const DEFAULT_FROM = "Ana Harff <hola@anaharff.com>";
 
 /**
- * Gmail SMTP: la clienta usa su Gmail + contraseña de aplicación (Google → Seguridad).
- * Sin cuentas en Brevo/Resend ni dominio propio.
+ * SMTP genérico (Gmail hoy; Zoho con @anaharff.com cuando el DNS esté listo).
+ * Ver docs/DOMAIN-ZOHO.md.
  */
 export function isEmailConfigured(): boolean {
   const user = process.env.SMTP_USER?.trim();
