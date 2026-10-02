@@ -117,8 +117,8 @@ export async function sendDispatchEmail(params: {
   orderId: string;
   customerEmail: string;
   payerName: string | null;
-  empresaNombre: string;
-  trackingNumero: string;
+  empresaNombre?: string | null;
+  trackingNumero?: string | null;
   trackingUrl?: string | null;
 }) {
   if (!params.customerEmail.includes("@")) {

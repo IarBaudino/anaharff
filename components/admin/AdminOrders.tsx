@@ -252,6 +252,7 @@ function OrderDetail({
   const [notas, setNotas] = useState(order.notasAdmin ?? "");
   const [empresaId, setEmpresaId] = useState(order.envioEmpresaId ?? "");
   const [trackingNumero, setTrackingNumero] = useState(order.trackingNumero ?? "");
+  const [trackingUrl, setTrackingUrl] = useState(order.trackingUrl ?? "");
   const [saving, setSaving] = useState(false);
   const [dispatching, setDispatching] = useState(false);
   const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
@@ -275,8 +276,8 @@ function OrderDetail({
 
   async function notifyDispatch() {
     setDispatchMsg(null);
-    if (!empresaId || !trackingNumero.trim()) {
-      setDispatchMsg("Elegí la empresa y escribí el número de seguimiento.");
+    if (!trackingNumero.trim() && !trackingUrl.trim()) {
+      setDispatchMsg("Escribí el número de seguimiento, la URL, o los dos.");
       return;
     }
     const token = await auth?.currentUser?.getIdToken();
@@ -296,6 +297,7 @@ function OrderDetail({
           orderId: order.id,
           empresaId,
           trackingNumero: trackingNumero.trim(),
+          trackingUrl: trackingUrl.trim(),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -369,12 +371,24 @@ function OrderDetail({
               ))}
             </select>
           </label>
+          <p className="text-xs text-stone">
+            Número, URL de seguimiento, o los dos. Con uno alcanza.
+          </p>
           <label className="block text-xs tracking-widest">
             Número de seguimiento
             <input
               className="mt-1 w-full border border-charcoal/20 bg-cream px-3 py-2 text-sm"
               value={trackingNumero}
               onChange={(e) => setTrackingNumero(e.target.value)}
+            />
+          </label>
+          <label className="block text-xs tracking-widest">
+            URL de seguimiento
+            <input
+              className="mt-1 w-full border border-charcoal/20 bg-cream px-3 py-2 text-sm"
+              placeholder="https://"
+              value={trackingUrl}
+              onChange={(e) => setTrackingUrl(e.target.value)}
             />
           </label>
           <button

@@ -277,12 +277,18 @@ export function orderDispatchedCustomerEmail(params: {
   orderId: string;
   customerEmail: string;
   payerName: string | null;
-  empresaNombre: string;
-  trackingNumero: string;
+  empresaNombre?: string | null;
+  trackingNumero?: string | null;
   trackingUrl?: string | null;
 }) {
   const saludo = params.payerName?.trim() ? escapeHtml(params.payerName.trim()) : "hola";
   const cuentaUrl = absoluteUrl("/cuenta");
+  const empresa = params.empresaNombre?.trim()
+    ? `<p style="margin:0 0 8px;"><strong>Empresa:</strong> ${escapeHtml(params.empresaNombre.trim())}</p>`
+    : "";
+  const numero = params.trackingNumero?.trim()
+    ? `<p style="margin:0 0 16px;"><strong>Número de seguimiento:</strong> ${escapeHtml(params.trackingNumero.trim())}</p>`
+    : "";
   const link = params.trackingUrl?.trim()
     ? `<p style="margin:0 0 16px;"><a href="${escapeHtml(params.trackingUrl.trim())}" style="color:#5c4d3d;">Seguir envío</a></p>`
     : "";
@@ -290,8 +296,8 @@ export function orderDispatchedCustomerEmail(params: {
   const html = layout(
     "Tu pedido está en camino",
     `<p style="margin:0 0 16px;">${saludo}, despachamos tu impresión.</p>
-     <p style="margin:0 0 8px;"><strong>Empresa:</strong> ${escapeHtml(params.empresaNombre)}</p>
-     <p style="margin:0 0 16px;"><strong>Número de seguimiento:</strong> ${escapeHtml(params.trackingNumero)}</p>
+     ${empresa}
+     ${numero}
      ${link}
      <p style="margin:0 0 16px;font-size:13px;color:#8c8c8c;">Pedido #${escapeHtml(params.orderId.slice(0, 8))}</p>
      <p style="margin:0;"><a href="${cuentaUrl}" style="color:#5c4d3d;">Ver mis pedidos</a></p>`

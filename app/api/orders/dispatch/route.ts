@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { sendDispatchEmail } from "@/lib/email/send";
 import { getServerSiteContent } from "@/lib/site-content-server";
-import { trackingUrlFor } from "@/lib/site-content";
+import { safeTrackingUrl, trackingUrlFor } from "@/lib/site-content";
 import { isAdminIdToken } from "@/lib/verify-admin-token";
 import type { OrderRecord } from "@/lib/commerce-types";
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "El servidor no puede guardar pedidos." }, { status: 500 });
   }
 
-  let body: { orderId?: string; empresaId?: string; trackingNumero?: string };
+  let body: { orderId?: string; empresaId?: string; trackingNumero?: string; trackingUrl?: string };
   try {
     body = await request.json();
   } catch {
@@ -29,18 +29,29 @@ export async function POST(request: NextRequest) {
   const orderId = body.orderId?.trim() ?? "";
   const empresaId = body.empresaId?.trim() ?? "";
   const trackingNumero = body.trackingNumero?.trim() ?? "";
-  if (!orderId || !empresaId || !trackingNumero) {
+  const trackingUrlInput = body.trackingUrl?.trim() ?? "";
+  if (!orderId || (!trackingNumero && !trackingUrlInput)) {
     return NextResponse.json(
-      { error: "Elegí la empresa y escribí el número de seguimiento." },
+      { error: "Escribí el número de seguimiento, la URL, o los dos." },
       { status: 400 }
     );
   }
 
   const site = await getServerSiteContent();
-  const empresa = site.tienda.empresasEnvio.find((e) => e.id === empresaId);
-  if (!empresa) {
+  const empresa = empresaId
+    ? site.tienda.empresasEnvio.find((e) => e.id === empresaId)
+    : undefined;
+  if (empresaId && !empresa) {
     return NextResponse.json(
       { error: "Esa empresa no está en la lista. Agregala en Productos y guardá." },
+      { status: 400 }
+    );
+  }
+
+  const pastedUrl = trackingUrlInput ? safeTrackingUrl(trackingUrlInput) : "";
+  if (trackingUrlInput && !pastedUrl) {
+    return NextResponse.json(
+      { error: "La URL tiene que empezar con http:// o https://." },
       { status: 400 }
     );
   }
@@ -52,7 +63,8 @@ export async function POST(request: NextRequest) {
   }
 
   const order = snap.data() as OrderRecord;
-  const trackingUrl = trackingUrlFor(empresa, trackingNumero);
+  const trackingUrl =
+    pastedUrl || (empresa && trackingNumero ? trackingUrlFor(empresa, trackingNumero) : "");
 
   const keepStatus =
     order.status === "rechazado" ||
@@ -60,9 +72,9 @@ export async function POST(request: NextRequest) {
     order.status === "completado";
 
   await ref.update({
-    envioEmpresaId: empresa.id,
-    envioEmpresaNombre: empresa.nombre,
-    trackingNumero,
+    envioEmpresaId: empresa?.id ?? null,
+    envioEmpresaNombre: empresa?.nombre ?? null,
+    trackingNumero: trackingNumero || null,
     trackingUrl: trackingUrl || null,
     status: keepStatus ? order.status : "en_preparacion",
     updatedAt: FieldValue.serverTimestamp(),
@@ -81,7 +93,7 @@ export async function POST(request: NextRequest) {
     orderId,
     customerEmail: email,
     payerName: order.payerName,
-    empresaNombre: empresa.nombre,
+    empresaNombre: empresa?.nombre,
     trackingNumero,
     trackingUrl,
   });

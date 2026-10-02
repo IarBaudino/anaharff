@@ -86,11 +86,12 @@ export function OrderCustomerCard({ order }: { order: OrderRecord & { id: string
           ) : (
             <p className="text-stone">Sin datos de envío registrados.</p>
           )}
-          {order.trackingNumero ? (
+          {order.trackingNumero || order.trackingUrl ? (
             <div>
               <p className="text-xs uppercase tracking-widest text-stone">Seguimiento</p>
               <p className="mt-1">
-                {order.envioEmpresaNombre || "Envío"} · {order.trackingNumero}
+                {[order.envioEmpresaNombre, order.trackingNumero].filter(Boolean).join(" · ") ||
+                  "Envío"}
               </p>
               {order.trackingUrl ? (
                 <a
